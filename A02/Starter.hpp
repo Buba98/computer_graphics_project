@@ -34,7 +34,7 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 const std::vector<const char *> validationLayers = {
 	"VK_LAYER_KHRONOS_validation"};
 
-std::vector<const char *> deviceExtensions = {
+const std::vector<const char *> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
 struct Vertex
@@ -412,8 +412,6 @@ protected:
 
 	void createInstance()
 	{
-		std::cout << "Starting createInstance()\n"
-				  << std::flush;
 		VkApplicationInfo appInfo{};
 		appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 		appInfo.pApplicationName = windowTitle.c_str();
@@ -430,8 +428,8 @@ protected:
 		const char **glfwExtensions;
 		glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
-		//		createInfo.enabledExtensionCount = glfwExtensionCount;
-		//		createInfo.ppEnabledExtensionNames = glfwExtensions;
+		createInfo.enabledExtensionCount = glfwExtensionCount;
+		createInfo.ppEnabledExtensionNames = glfwExtensions;
 
 		createInfo.enabledLayerCount = 0;
 
@@ -439,8 +437,6 @@ protected:
 		createInfo.enabledExtensionCount =
 			static_cast<uint32_t>(extensions.size());
 		createInfo.ppEnabledExtensionNames = extensions.data();
-
-		createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
 		if (!checkValidationLayerSupport())
 		{
@@ -473,40 +469,9 @@ protected:
 
 		std::vector<const char *> extensions(glfwExtensions,
 											 glfwExtensions + glfwExtensionCount);
-
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-		if (checkIfItHasExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME))
-		{
-			extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-			deviceExtensions.push_back("VK_KHR_portability_subset");
-		}
-		if (checkIfItHasExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
-		{
-			extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-		}
 
 		return extensions;
-	}
-
-	bool checkIfItHasExtension(const char *ext)
-	{
-		uint32_t extCount;
-		vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
-
-		std::vector<VkExtensionProperties> availableExt(extCount);
-		vkEnumerateInstanceExtensionProperties(nullptr, &extCount,
-											   availableExt.data());
-
-		bool found = false;
-		for (const auto &extProp : availableExt)
-		{
-			if (strcmp(ext, extProp.extensionName) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-		return found;
 	}
 
 	bool checkValidationLayerSupport()
