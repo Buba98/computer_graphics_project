@@ -447,14 +447,16 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 			glfwExtensions + glfwExtensionCount);
 			
 		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);		
-		// if(checkIfItHasExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) {
-		// 	extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-		// 	deviceExtensions.push_back("VK_KHR_portability_subset");
+		if(checkIfItHasExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) {
+			extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+		}
+		if(checkIfItHasExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
 
-		// }
-		// if(checkIfItHasExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
-		// 	extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-		// }
+			extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+			#ifdef VK_ENABLE_BETA_EXTENSIONS
+				deviceExtensions.push_back("VK_KHR_portability_subset");
+			#endif
+		}
 		
 		return extensions;
 	}
