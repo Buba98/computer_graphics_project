@@ -90,27 +90,100 @@ void Assignment08::createMazeMesh(int row, int col, char **maze) {
         }
     }
 
-    //Create horizontal ceilings
-    for (int i = 0; i < (order - 1) * 2 - 3; i = i + 4) {
+//    //Create horizontal ceilings
+//    for (int i = 0; i < (order - 1) * 2 - 3; i = i + 4) {
+//
+//        if ((int) vPos[i * 3] % 2 == 1) {
+//            continue;
+//        }
+//
+//        vIdx.push_back(i + 1);
+//        vIdx.push_back(i + 3);
+//        vPos.push_back(vPos[(i + 1) * 3] + 1.0);
+//        vPos.push_back(1.0);
+//        vPos.push_back(vPos[(i + 1) * 3 + 2]);
+//        vIdx.push_back(vPos.size() / 3 - 1);
+//
+//
+//        vIdx.push_back(vPos.size() / 3 - 1);
+//        vIdx.push_back(i + 3);
+//        vPos.push_back(vPos[(i + 3) * 3] + 1.0);
+//        vPos.push_back(1.0);
+//        vPos.push_back(vPos[(i + 3) * 3 + 2]);
+//        vIdx.push_back(vPos.size() / 3 - 1);
+//    }
 
-        if ((int) vPos[i * 3] % 2 == 1) {
-            continue;
+    int visits[row][col];
+
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < col; ++j) {
+            if (maze[i][j] == '#') {
+                visits[i][j] = 1;
+            } else {
+                visits[i][j] = 0;
+            }
         }
+    }
 
-        vIdx.push_back(i + 1);
-        vIdx.push_back(i + 3);
-        vPos.push_back(vPos[(i + 1) * 3] + 1.0);
-        vPos.push_back(1.0);
-        vPos.push_back(vPos[(i + 1) * 3 + 2]);
-        vIdx.push_back(vPos.size() / 3 - 1);
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < col; ++j) {
+            if (visits[i][j] == 1) {
+                if (j + 1 < col && visits[i][j + 1] == 1) {
+                    int k;
+                    for (k = 0; k + j < col && visits[i][j + k] == 1; ++k) {
+                        visits[i][j + k] = 0;
+                    }
+                    //horizontal ceiling
+                    vPos.push_back(i);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vPos.push_back(i + 1);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vPos.push_back(i);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j + k);
+                    vIdx.push_back(vPos.size() / 3 - 1);
 
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vIdx.push_back(vPos.size() / 3 - 2);
+                    vPos.push_back(i + 1);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j + k);
+                    vIdx.push_back(vPos.size() / 3 - 1);
 
-        vIdx.push_back(vPos.size() / 3 - 1);
-        vIdx.push_back(i + 3);
-        vPos.push_back(vPos[(i + 3) * 3] + 1.0);
-        vPos.push_back(1.0);
-        vPos.push_back(vPos[(i + 3) * 3 + 2]);
-        vIdx.push_back(vPos.size() / 3 - 1);
+                } else {
+                    //vertical ceiling
+                    int k;
+                    for (k = 0; k + j < row && visits[i + k][j + k] == 1; ++k) {
+                        visits[i + k][j] = 0;
+                    }
+                    //horizontal ceiling
+                    vPos.push_back(i);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vPos.push_back(i);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j + 1);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vPos.push_back(i + k);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                    vIdx.push_back(vPos.size() / 3 - 2);
+                    vPos.push_back(i + k);
+                    vPos.push_back(1.0);
+                    vPos.push_back(j + 1);
+                    vIdx.push_back(vPos.size() / 3 - 1);
+                }
+                visits[i][j] = 0;
+            }
+        }
     }
 
     //Create vertical ceilings
