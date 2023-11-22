@@ -156,7 +156,7 @@ void Assignment14::createCylinderMesh(std::vector <Vertex> &vDef, std::vector <u
 
     // Fill array vPos with the positions of the vertices of the mesh
 
-    float increment = 0.1f;
+    float increment = 0.01f;
     int runs = (int) (2.0f / increment);
 
     glm::vec3 norm_top = glm::vec3({0, 1, 0});
@@ -193,12 +193,9 @@ void Assignment14::createCylinderMesh(std::vector <Vertex> &vDef, std::vector <u
         glm::vec3 surface_bottom = glm::vec3({cos(angle), -1, sin(angle)});
         glm::vec3 surface_top = glm::vec3({cos(angle), 1, sin(angle)});
 
-        glm::vec3 d_surface_x = glm::vec3({-sin(angle), 0, cos(angle)});
-        glm::vec3 d_surface_z = glm::vec3({cos(angle), 0, sin(angle)});
+        glm::vec3 normal = glm::vec3({cos(angle), 0, sin(angle)});
 
-        glm::vec3 normal = cross(d_surface_x, d_surface_z);
-
-        normal = glm::normalize(normal);
+        // normal = glm::normalize(normal);
 
         vDef.push_back({surface_bottom, normal});
         vDef.push_back({surface_top, normal});
