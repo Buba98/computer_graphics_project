@@ -40,34 +40,54 @@ void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World) 
 
     // Game Logic implementation
     // Current Player Position - statc variables make sure thattheri value remain unchanged in subsequent calls to the procedure
-    glm::vec3 Up = glm::vec3(0, 1, 0);
     static glm::vec3 Pos = StartingPosition;
-    static float yaw, pitch, roll;
+    static float yaw = 0, pitch = 0, roll = 0;
+    static float yawNew = 0, pitchNew = 0, rollNew = 0;
+    const float lambda = 10;
 
-    glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
+
+    glm::vec3 c, a;
+
+    glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
     glm::vec3 uy = glm::vec3(0, 1, 0);
-    glm::vec3 uz = glm::vec3(glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1));
+    glm::vec3 uz = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1));
 
-    pitch += ROT_SPEED * r.x * deltaT;
+    pitchNew += ROT_SPEED * r.x * deltaT;
+    pitchNew = glm::clamp(pitchNew, minPitch, maxPitch);
+    pitch = pitch * glm::exp(-lambda * deltaT) + pitchNew * (1 - glm::exp(-lambda * deltaT)); // Pitch damping
     pitch = glm::clamp(pitch, minPitch, maxPitch);
-    yaw += ROT_SPEED * r.y * deltaT;
-    roll += ROT_SPEED * r.z * deltaT;
+
+    yawNew += ROT_SPEED * r.y * deltaT;
+    yaw = yaw * glm::exp(-lambda * deltaT) + yawNew * (1 - glm::exp(-lambda * deltaT)); // Yaw damping
+
+    rollNew += ROT_SPEED * r.z * deltaT;
+    roll = roll * glm::exp(-lambda * deltaT) + rollNew * (1 - glm::exp(-lambda * deltaT)); // Roll damping
 
     Pos += ux * MOVE_SPEED * m.x * deltaT;
     Pos += uy * MOVE_SPEED * m.y * deltaT;
     Pos += uz * MOVE_SPEED * m.z * deltaT;
 
-    glm::mat4 Rot = glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) *
-                    glm::rotate(glm::mat4(1), pitch, glm::vec3(1, 0, 0)) *
-                    glm::rotate(glm::mat4(1), roll, glm::vec3(0, 0, 1));
+    if (fire) {
+        World = glm::translate(glm::mat4(1), Pos) *
+                glm::rotate(glm::mat4(1), 0.0f, glm::vec3(0, 1, 0));
 
+        c = glm::translate(glm::mat4(1), Pos) *
+            glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) *
+            glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
+        a = glm::translate(glm::mat4(1), Pos) *
+            glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) *
+            glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+    }
+    else {
+        World = glm::translate(glm::mat4(1), Pos) *
+                glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0));
+
+        c = World * glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
+        a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+    }
+
+    glm::mat4 View = glm::rotate(glm::mat4(1), -roll, glm::vec3(0,0,1)) * glm::lookAt(c, a, uy);
     glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
     Proj[1][1] *= -1;
-    glm::vec3 Cam = glm::vec3(0, camHeight, camDist);
-    glm::mat4 Tran = glm::translate(glm::mat4(1), glm::vec3 (Rot * glm::vec4(Cam, 1)));
-    glm::mat4 View = glm::lookAt(glm::vec3(Tran * glm::vec4(Pos, 1)), Pos, Up);
     ViewPrj = Proj * View;
-
-    Tran = glm::translate(glm::mat4(1), Pos);
-    World = Tran * Rot;
 }
