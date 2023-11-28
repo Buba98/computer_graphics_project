@@ -44,7 +44,7 @@ void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World) 
     static float yaw = 0, pitch = 0, roll = 0;
     static float yawNew = 0, pitchNew = 0, rollNew = 0;
     const float lambda = 10;
-    static glm::vec3 cameraPosition, newCamPosition;
+    static glm::vec3 cameraPosition, newCameraPosition;
     glm::vec3 a;
 
     glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
@@ -66,26 +66,25 @@ void GameLogic(Assignment07 *A, float Ar, glm::mat4 &ViewPrj, glm::mat4 &World) 
     Pos += uy * MOVE_SPEED * m.y * deltaT;
     Pos += uz * MOVE_SPEED * m.z * deltaT;
 
+    // With fire the character rotates with the camera
     if (fire) {
         World = glm::translate(glm::mat4(1), Pos) *
-                glm::rotate(glm::mat4(1), 0.0f, glm::vec3(0, 1, 0));
+                glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) *
+                glm::rotate(glm::mat4(1), -pitch, glm::vec3(1, 0, 0)) *
+                glm::rotate(glm::mat4(1), roll, glm::vec3(0, 0, 1));
 
-        newCamPosition = glm::translate(glm::mat4(1), Pos) *
-                         glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) *
-                         glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
-        a = glm::translate(glm::mat4(1), Pos) *
-            glm::rotate(glm::mat4(1), yaw, glm::vec3(0, 1, 0)) *
-            glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+        newCameraPosition = World * glm::vec4(0, camHeight, camDist, 1);
     } else {
         World = glm::translate(glm::mat4(1), Pos) *
                 glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0));
 
-        newCamPosition = World * glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
-        a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+        newCameraPosition = World * glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
     }
 
+    a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+
     cameraPosition = cameraPosition * glm::exp(-lambda * deltaT) +
-                     newCamPosition * (1 - glm::exp(-lambda * deltaT)); // Camera damping
+                     newCameraPosition * (1 - glm::exp(-lambda * deltaT)); // Camera damping
 
     glm::mat4 View = glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) * glm::lookAt(cameraPosition, a, uy);
     glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
