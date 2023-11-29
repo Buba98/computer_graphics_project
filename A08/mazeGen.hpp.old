@@ -1,0 +1,249 @@
+using namespace std;
+
+void Assignment08::createMazeMesh(int row, int col, char **maze) {
+
+    int numVertices = 0;
+    int k;
+
+    // 2D mash
+    // 1. create floor
+
+    int cachedVertices[row + 1][col + 1][2];
+
+    for (int i = 0; i < row + 1; ++i) {
+        for (int j = 0; j < col + 1; ++j) {
+            cachedVertices[i][j][0] = -1;
+            cachedVertices[i][j][1] = -1;
+        }
+    }
+
+    vPos.push_back(0.0f);
+    vPos.push_back(0.0f);
+    vPos.push_back(0.0f);
+    cachedVertices[0][0][0] = numVertices;
+    numVertices++;
+
+    vPos.push_back((float) col);
+    vPos.push_back(0.0f);
+    vPos.push_back(0.0f);
+    cachedVertices[0][col][0] = numVertices;
+    numVertices++;
+
+    vPos.push_back((float) col);
+    vPos.push_back(0.0f);
+    vPos.push_back((float) row);
+    cachedVertices[row][col][0] = numVertices;
+    numVertices++;
+
+    vPos.push_back(0.0f);
+    vPos.push_back(0.0f);
+    vPos.push_back((float) row);
+    cachedVertices[row][0][0] = numVertices;
+    numVertices++;
+
+    vIdx.push_back(0);
+    vIdx.push_back(1);
+    vIdx.push_back(2);
+
+    vIdx.push_back(0);
+    vIdx.push_back(2);
+    vIdx.push_back(3);
+
+    // 2.1. create wall in z direction
+    for (int j = 0; j < col; j++) {
+        for (int i = 0; i < row - 1; i++) {
+            if (maze[i][j] == '#' && maze[i + 1][j] == '#') {
+                vPos.push_back((float) j);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) j);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) j + 1);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) j + 1);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                k = i + 1;
+
+                while (k + 1 < row && maze[k + 1][j] == '#') {
+                    k++;
+                }
+
+                vPos.push_back((float) j);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) k + 1);
+                numVertices++;
+
+                vPos.push_back((float) j);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) k + 1);
+                numVertices++;
+
+                vPos.push_back((float) j + 1);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) k + 1);
+                numVertices++;
+
+                vPos.push_back((float) j + 1);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) k + 1);
+                numVertices++;
+
+                vIdx.push_back(numVertices - 8);
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 4);
+
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 3);
+                vIdx.push_back(numVertices - 4);
+
+                vIdx.push_back(numVertices - 6);
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 2);
+
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 1);
+                vIdx.push_back(numVertices - 2);
+
+                if (!((j + 1 < col && maze[i][j + 1] == '#') || (j - 1 >= 0 && maze[i][j - 1] == '#'))) {
+                    vIdx.push_back(numVertices - 8);
+                    vIdx.push_back(numVertices - 7);
+                    vIdx.push_back(numVertices - 6);
+
+                    vIdx.push_back(numVertices - 7);
+                    vIdx.push_back(numVertices - 6);
+                    vIdx.push_back(numVertices - 5);
+                }
+
+                if (!((j + 1 < col && maze[k][j + 1] == '#') || (j - 1 >= 0 && maze[k][j - 1] == '#'))) {
+                    vIdx.push_back(numVertices - 4);
+                    vIdx.push_back(numVertices - 3);
+                    vIdx.push_back(numVertices - 2);
+
+                    vIdx.push_back(numVertices - 3);
+                    vIdx.push_back(numVertices - 2);
+                    vIdx.push_back(numVertices - 1);
+                }
+
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 3);
+
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 3);
+                vIdx.push_back(numVertices - 1);
+
+                i = k;
+            }
+        }
+    }
+
+    // 2.2. create wall in x direction
+    for (int i = 0; i < row; i++) {
+        for (int j = 0; j < col - 1; j++) {
+            if (maze[i][j] == '#' && maze[i][j + 1] == '#') {
+                vPos.push_back((float) j);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) j);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) j);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i + 1);
+                numVertices++;
+
+                vPos.push_back((float) j);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i + 1);
+                numVertices++;
+
+                k = j + 1;
+
+                while (k + 1 < col && maze[i][k + 1] == '#') {
+                    k++;
+                }
+
+                vPos.push_back((float) k + 1);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) k + 1);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i);
+                numVertices++;
+
+                vPos.push_back((float) k + 1);
+                vPos.push_back(0.0f);
+                vPos.push_back((float) i + 1);
+                numVertices++;
+
+                vPos.push_back((float) k + 1);
+                vPos.push_back(1.0f);
+                vPos.push_back((float) i + 1);
+                numVertices++;
+
+                vIdx.push_back(numVertices - 8);
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 4);
+
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 3);
+                vIdx.push_back(numVertices - 4);
+
+                vIdx.push_back(numVertices - 6);
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 2);
+
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 1);
+                vIdx.push_back(numVertices - 2);
+
+                if (!((i + 1 < row && maze[i + 1][j] == '#') || (i - 1 >= 0 && maze[i - 1][j] == '#'))) {
+                    vIdx.push_back(numVertices - 8);
+                    vIdx.push_back(numVertices - 7);
+                    vIdx.push_back(numVertices - 6);
+
+                    vIdx.push_back(numVertices - 7);
+                    vIdx.push_back(numVertices - 6);
+                    vIdx.push_back(numVertices - 5);
+                }
+
+                if (!((i + 1 < row && maze[i + 1][k] == '#') || (i - 1 >= 0 && maze[i - 1][k] == '#'))) {
+                    vIdx.push_back(numVertices - 4);
+                    vIdx.push_back(numVertices - 3);
+                    vIdx.push_back(numVertices - 2);
+
+                    vIdx.push_back(numVertices - 3);
+                    vIdx.push_back(numVertices - 2);
+                    vIdx.push_back(numVertices - 1);
+                }
+
+                vIdx.push_back(numVertices - 7);
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 3);
+
+                vIdx.push_back(numVertices - 5);
+                vIdx.push_back(numVertices - 3);
+                vIdx.push_back(numVertices - 1);
+
+                j = k;
+            }
+        }
+    }
+}
