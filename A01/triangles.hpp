@@ -19,13 +19,13 @@ void SetupTriangles(Assignment01 *A)
 	 an example to help students not familiar with C++.
 	***************/
 
-	A->Triangle(-0.25, 0.1, 0.1, -0.4, 0.1, 0.6, 1, 0, 0);											  // Draws the body red triangole
-	A->Triangle(0.1, 0.3, 0.1, -0.4, 0.4, 0, 0, 1, 0);												  // Draws the body green triangle
-	A->Triangle(0.1, -0.4, 0.3, -0.15, 0.3, -0.65, 171 / MAX_BYTE, 85 / MAX_BYTE, 186 / MAX_BYTE);	  // Draws the head purple triangle
-	A->Triangle(0.5, -0.4, 0.3, -0.15, 0.3, -0.65, 171 / MAX_BYTE, 85 / MAX_BYTE, 186 / MAX_BYTE);	  // Draws the head purple triangle
-	A->Triangle(0.3, -0.65, 0.5, -0.4, 0.5, -0.9, 129 / MAX_BYTE, 211 / MAX_BYTE, 225 / MAX_BYTE);	  // Draws the right ear triangle
-	A->Triangle(0.3, -0.65, 0.1, -0.4, 0.1, -0.9, 250 / MAX_BYTE, 168 / MAX_BYTE, 190 / MAX_BYTE);	  // Draws the left ear triangle
-	A->Triangle(-0.25, 0.1, 0.25, 0.85, -0.25, 0.85, 69 / MAX_BYTE, 175 / MAX_BYTE, 225 / MAX_BYTE);  // Draws the back triangle
-	A->Triangle(-0.25, 0.85, -0.45, 0.6, -0.65, 0.85, 173 / MAX_BYTE, 200 / MAX_BYTE, 1 / MAX_BYTE); // Draws the rightmost tail triangle
-	A->Triangle(-0.8, 0.6, -0.45, 0.6, -0.65, 0.85, 173 / MAX_BYTE, 200 / MAX_BYTE, 1 / MAX_BYTE);	  // Draws the leftmost tail triangle
+	A->Triangle(-0.25,0.1,		0.115,-0.4,		0.115,0.63,		1,0,0); 		// Center RED
+	A->Triangle(0.12,0.3,		0.375,-0.04,	0.12,-0.4,		1,0.6,0); 		// Right YELLOW
+	A->Triangle(-0.255,0.85,	-0.255,0.11,	0.26,0.85,		0,0.35,1); 		// Bottom BLUE
+	A->Triangle(-0.255,0.85,	-0.45,0.6,		-0.625,0.85,	0.35,0.5,0.1); 	// Left GREEN
+	A->Triangle(-0.8,0.6,		-0.45,0.6,		-0.625,0.85,	0.35,0.5,0.1); 	// Left GREEN
+	A->Triangle(0.12,-0.405,	0.3,-0.15,		0.3,-0.66,		0.4,0.1,0.45); 	// Top PURPLE
+	A->Triangle(0.49,-0.405,	0.3,-0.15,		0.3,-0.66,		0.4,0.1,0.45); 	// Top PURPLE
+	A->Triangle(0.12,-0.41,		0.12,-0.93,		0.295,-0.67,	0.9,0.5,0.5); 	// Top PINK
+	A->Triangle(0.49,-0.41,		0.49,-0.93,		0.305,-0.67,	0,0.8,0.9); 	// Top BLUE
 }
