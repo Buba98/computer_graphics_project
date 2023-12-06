@@ -9,7 +9,7 @@ void Assignment08::createMazeMesh(int row, int col, char **maze) {
 
     // 1. create floor
 
-    int cachedVertices[16][16][2];
+    int cachedVertices[row + 1][col + 1][2];
 
     for (int i = 0; i < row + 1; ++i) {
         for (int j = 0; j < col + 1; ++j) {
