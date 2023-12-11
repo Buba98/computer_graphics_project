@@ -15,7 +15,7 @@
   - [ ] Make the road infinite
   - [ ] Add cars on the road
 - [ ] Add scenary
-  - [ ] Add a skybox
+  - [EOLO] Add a skybox
   - [ ] Add the terrain around the road
   - [ ] Add trees on the border of the road
 - [ ] Add a splash screen

@@ -73,8 +73,6 @@ protected:
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
 
-    float CamH, CamRadius, CamPitch, CamYaw;
-
     void setWindowParameters() {
         windowWidth = 800;
         windowHeight = 600;
@@ -136,12 +134,6 @@ protected:
 
         // Init textures
         TRoad.init(this, "textures/road.png");
-
-        // Init local variables
-        CamH = 1.0f;
-        CamRadius = 3.0f;
-        CamPitch = glm::radians(15.f);
-        CamYaw = glm::radians(30.f);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -204,62 +196,105 @@ protected:
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
 
-        float deltaT;
-        glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-        bool fire = false;
-        getSixAxis(deltaT, m, r, fire);
+        glm::mat4 ViewProj;
+        glm::vec3 camPos;
+        glm::mat4 World;
 
-        // To debounce the pressing of the fire button, and start the event when the key is released
-        static bool wasFire = false;
-        bool handleFire = (wasFire && (!fire));
-        wasFire = fire;
-
-        // Parameters
-        // Camera FOV-y, Near Plane and Far Plane
-        const float FOVy = glm::radians(90.0f);
-        const float nearPlane = 0.1f;
-        const float farPlane = 100.0f;
-        const float rotSpeed = glm::radians(90.0f);
-        const float movSpeed = 1.0f;
-
-        CamH += m.z * movSpeed * deltaT;
-        CamRadius -= m.x * movSpeed * deltaT;
-        CamPitch -= r.x * rotSpeed * deltaT;
-        CamYaw += r.y * rotSpeed * deltaT;
-
-        glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
-        Prj[1][1] *= -1;
-        glm::vec3 camTarget = glm::vec3(0, CamH, 0);
-        glm::vec3 camPos = camTarget +
-                           CamRadius * glm::vec3(cos(CamPitch) * sin(CamYaw),
-                                                 sin(CamPitch),
-                                                 cos(CamPitch) * cos(CamYaw));
-        glm::mat4 View = glm::lookAt(camPos, camTarget, glm::vec3(0, 1, 0));
+        cameraPosition(ViewProj, World, camPos);
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
-        gubo.eyePos = camPos;
-
+        gubo.eyePos = glm::vec3(100.0f, 100.0f, 100.0f);
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        glm::mat4 World = glm::mat4(1.0f);
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mvpMat = Prj * View * World;
-        uboMoto.mMat = World;
-        uboMoto.nMat = glm::inverse(glm::transpose(World));
+        uboMoto.mMat = World * glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0));
+        uboMoto.mvpMat = ViewProj * uboMoto.mMat;
+        uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
 
-        World = glm::mat4(1.0f);
-        uboRoad.amb = 1.0f;
-        uboRoad.gamma = 180.0f;
-        uboRoad.sColor = glm::vec3(1.0f);
-        uboRoad.mvpMat = Prj * View * World;
-        uboRoad.mMat = World;
-        uboRoad.nMat = glm::inverse(glm::transpose(World));
-        DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
+
+//        World = glm::mat4(1.0f);
+//        uboRoad.amb = 1.0f;
+//        uboRoad.gamma = 180.0f;
+//        uboRoad.sColor = glm::vec3(1.0f);
+//        uboRoad.mvpMat = ViewProj * World;
+//        uboRoad.mMat = World;
+//        uboRoad.nMat = glm::inverse(glm::transpose(World));
+//        DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
+    }
+
+    void cameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &camPos) {
+        const float FOVy = glm::radians(90.0f);
+        const float nearPlane = 0.1f;
+        const float farPlane = 100.0f;
+
+        const glm::vec3 startingPos = glm::vec3(0.0f, 0.0f, 0.0f);
+
+        const float camHeight = 0.25f;
+        const float camDist = 1.5f;
+
+        const float minPitch = glm::radians(-8.75f);
+        const float maxPitch = glm::radians(60.0f);
+
+        const float rotSpeed = glm::radians(90.0f);
+        const float movSpeed = 1.0f;
+
+        float deltaT;
+        glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+
+        bool fire = false;
+        getSixAxis(deltaT, m, r, fire);
+
+        static bool wasFire = false;
+        bool handleFire = (wasFire && (!fire));
+        wasFire = fire;
+
+        static glm::vec3 pos = startingPos;
+        static float yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
+        static float yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
+
+        const float lambda = 10.0f;
+
+        static glm::vec3 newCameraPos;
+        glm::vec3 a;
+
+        glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
+        glm::vec3 uy = glm::vec3(0, 1, 0);
+        glm::vec3 uz = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(0, 0, -1, 1));
+
+        pitchNew += rotSpeed * r.x * deltaT;
+        pitchNew = glm::clamp(pitchNew, minPitch, maxPitch);
+        pitch = pitch * glm::exp(-lambda * deltaT) + pitchNew * (1 - glm::exp(-lambda * deltaT)); // Pitch damping
+        pitch = glm::clamp(pitch, minPitch, maxPitch);
+
+        yawNew += rotSpeed * r.y * deltaT;
+        yaw = yaw * glm::exp(-lambda * deltaT) + yawNew * (1 - glm::exp(-lambda * deltaT)); // Yaw damping
+
+        rollNew += rotSpeed * r.z * deltaT;
+        roll = roll * glm::exp(-lambda * deltaT) + rollNew * (1 - glm::exp(-lambda * deltaT)); // Roll damping
+
+        pos += ux * movSpeed * m.x * deltaT;
+        pos += uz * movSpeed * m.z * deltaT;
+        pos += uy * movSpeed * m.y * deltaT;
+
+        World = glm::translate(glm::mat4(1), pos) *
+                glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0));
+
+        newCameraPos = World * glm::vec4(0, camHeight + camDist * glm::sin(pitch), camDist * glm::cos(pitch), 1);
+
+        a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, camHeight, 0, 0);
+
+        camPos = camPos * glm::exp(-lambda * deltaT) +
+                 newCameraPos * (1 - glm::exp(-lambda * deltaT)); // Camera damping
+
+        glm::mat4 View = glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) * glm::lookAt(camPos, a, uy);
+        glm::mat4 Proj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
+        Proj[1][1] *= -1;
+        ViewProj = Proj * View;
     }
 };
 
