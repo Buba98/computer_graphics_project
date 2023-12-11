@@ -22,17 +22,17 @@
 #include <chrono>
 
 #define TINYOBJLOADER_IMPLEMENTATION
-#include "headers/tiny_obj_loader.h"
+#include <tiny_obj_loader.h>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "headers/stb_image.h"
+#include <stb_image.h>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #define TINYGLTF_NOEXCEPTION
 #define JSON_NOEXCEPTION
 #define TINYGLTF_NO_INCLUDE_STB_IMAGE
-#include "headers/tiny_gltf.h"
+#include <tiny_gltf.h>
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>

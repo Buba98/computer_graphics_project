@@ -1,0 +1,42 @@
+# TO DO LIST:
+- [ ] Add a moto
+  - [x] Export the moto from blender in obj format
+  - [x] Add the moto model to the scene
+  - [ ] Make the moto move on a straight line
+  - [ ] Make the moto accelerate with time (speed = speed + acceleration * time)
+  - [ ] Make the moto turn left and right
+  - [ ] Animate the turning of the moto
+  - [ ] Bound the camera to the moto (the camera should follow the moto)
+  - [ ] Implement camera damping (the camera should not follow the moto instantly)
+- [ ] Add road
+  - [x] Add a road texture
+  - [x] Add a road model
+  - [ ] Add guardrails on the road
+  - [ ] Make the road infinite
+  - [ ] Add cars on the road
+- [ ] Add scenary
+  - [ ] Add a skybox
+  - [ ] Add the terrain around the road
+  - [ ] Add trees on the border of the road
+- [ ] Add a splash screen
+  - [ ] Add a splash screen image
+  - [ ] Explain the goal of the game
+  - [ ] Explain the controls
+  - [ ] Explain the rules
+  - [ ] Add a button to start the game
+  - [ ] Add the photo of Sandro
+- [ ] Add game logic
+  - [ ] Add score counter
+  - [ ] Add timer counter
+  - [ ] Detect collisions
+    - [ ] Detect collisions with the guardrails
+    - [ ] Detect collisions with cars
+- [ ] Color all the obj
+- [ ] Create shaders
+  - [ ] Create a shader for the road
+  - [ ] Create a shader for the terrain
+  - [ ] Create a shader for the skybox
+  - [ ] Create a shader for the trees
+  - [ ] Create a shader for the guardrails
+  - [ ] Create a shader for the cars
+  - [ ] Create a shader for the moto
