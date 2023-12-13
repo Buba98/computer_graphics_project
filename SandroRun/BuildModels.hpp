@@ -113,7 +113,7 @@ void SandroRun::terrainModel() {
 
 void SandroRun::skyboxModel() {
     MSkybox.init(this, &VMesh, "models/skyboxCube.obj", OBJ);
-    const char* T2fn[] = {
+    const char *T2fn[] = {
             "textures/skybox/right.png",
             "textures/skybox/left.png",
             "textures/skybox/top.png",

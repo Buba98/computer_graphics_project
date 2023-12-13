@@ -44,6 +44,12 @@ struct VertexVColor {
     glm::vec3 color;
 };
 
+struct VertexSkybox {
+    glm::vec3 pos;
+    glm::vec3 norm;
+    glm::vec2 texCoord;
+};
+
 class SandroRun : public BaseProject {
 protected:
     float Ar;
@@ -57,6 +63,7 @@ protected:
     // Vertex descriptors
     VertexDescriptor VVColor;
     VertexDescriptor VMesh;
+    VertexDescriptor VSkybox;
 
     // Pipelines
     Pipeline PVColor;
@@ -67,7 +74,7 @@ protected:
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
-    Model<VertexMesh> MSkybox;
+    Model<VertexSkybox> MSkybox;
 
     // Descriptor sets
     DescriptorSet DSGubo;
@@ -125,6 +132,10 @@ protected:
                    {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),  sizeof(glm::vec3), POSITION},
                     {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm), sizeof(glm::vec3), NORMAL},
                     {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexMesh, UV),   sizeof(glm::vec2), UV}});
+        VSkybox.init(this, {{0, sizeof(VertexSkybox), VK_VERTEX_INPUT_RATE_VERTEX}},
+                     {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSkybox, pos),      sizeof(glm::vec3), POSITION},
+                      {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSkybox, norm),     sizeof(glm::vec3), NORMAL},
+                      {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexSkybox, texCoord), sizeof(glm::vec2), OTHER}});
 
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
@@ -158,7 +169,7 @@ protected:
         DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                         {1, TEXTURE, 0,                        &TTerrain}});
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
-                                         {1, TEXTURE, 0,                        &TSkybox}});
+                                         {1, TEXTURE, 0,                          &TSkybox}});
 
     }
 
@@ -268,16 +279,18 @@ protected:
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
 
-        World = glm::mat4(1.0f);
-        uboSkybox.mMat = World;
-        uboSkybox.nMat = uboSkybox.mMat;
-        uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
+        uboSkybox.mMat = glm::mat4(2.0f);
+        uboSkybox.nMat = glm::mat4(2.0f);
+        uboSkybox.mvpMat = glm::mat3(ViewProj);
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
     }
 
     void roadModel();
+
     void terrainModel();
+
     void skyboxModel();
+
     void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
 };
 
