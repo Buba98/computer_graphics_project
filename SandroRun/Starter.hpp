@@ -299,7 +299,7 @@ struct DescriptorSet {
 		std::vector<DescriptorSetElement> E);
 	void cleanup();
   	void bind(VkCommandBuffer commandBuffer, Pipeline &P, int setId, int currentImage);
-  	void map(int currentImage, void *src, int size, int slot);
+  	void map(uint32_t currentImage, void *src, int size, int slot);
 };
 
 
@@ -2839,7 +2839,7 @@ void DescriptorSet::bind(VkCommandBuffer commandBuffer, Pipeline &P, int setId,
 					0, nullptr);
 }
 
-void DescriptorSet::map(int currentImage, void *src, int size, int slot) {
+void DescriptorSet::map(uint32_t currentImage, void *src, int size, int slot) {
 	void* data;
 
 	vkMapMemory(BP->device, uniformBuffersMemory[slot][currentImage], 0,

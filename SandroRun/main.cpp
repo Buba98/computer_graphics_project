@@ -44,12 +44,6 @@ struct VertexVColor {
     glm::vec3 color;
 };
 
-struct VertexSkybox {
-    glm::vec3 pos;
-    glm::vec3 norm;
-    glm::vec2 texCoord;
-};
-
 class SandroRun : public BaseProject {
 protected:
     float Ar;
@@ -63,7 +57,6 @@ protected:
     // Vertex descriptors
     VertexDescriptor VVColor;
     VertexDescriptor VMesh;
-    VertexDescriptor VSkybox;
 
     // Pipelines
     Pipeline PVColor;
@@ -74,7 +67,7 @@ protected:
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
-    Model<VertexSkybox> MSkybox;
+    Model<VertexMesh> MSkybox;
 
     // Descriptor sets
     DescriptorSet DSGubo;
@@ -95,7 +88,7 @@ protected:
     MeshUniformBlock uboTerrain;
     SkyboxUniformBlock uboSkybox;
 
-    void setWindowParameters() {
+    void setWindowParameters() override {
         windowWidth = 1280;
         windowHeight = 720;
         windowTitle = "Sandro Run";
@@ -109,11 +102,11 @@ protected:
         Ar = (float) windowWidth / (float) windowHeight;
     }
 
-    void onWindowResize(int w, int h) {
+    void onWindowResize(int w, int h) override {
         Ar = (float) w / (float) h;
     }
 
-    void localInit() {
+    void localInit() override {
 
         // Init Descriptor Sets Layouts
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
@@ -132,10 +125,6 @@ protected:
                    {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),  sizeof(glm::vec3), POSITION},
                     {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm), sizeof(glm::vec3), NORMAL},
                     {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexMesh, UV),   sizeof(glm::vec2), UV}});
-        VSkybox.init(this, {{0, sizeof(VertexSkybox), VK_VERTEX_INPUT_RATE_VERTEX}},
-                     {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSkybox, pos),      sizeof(glm::vec3), POSITION},
-                      {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexSkybox, norm),     sizeof(glm::vec3), NORMAL},
-                      {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexSkybox, texCoord), sizeof(glm::vec2), OTHER}});
 
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
@@ -155,7 +144,7 @@ protected:
         // Init textures
     }
 
-    void pipelinesAndDescriptorSetsInit() {
+    void pipelinesAndDescriptorSetsInit() override {
         // Init pipelines
         PSkybox.create();
         PVColor.create();
@@ -173,7 +162,7 @@ protected:
 
     }
 
-    void pipelinesAndDescriptorSetsCleanup() {
+    void pipelinesAndDescriptorSetsCleanup() override {
         // Cleanup pipelines
         PVColor.cleanup();
         PMesh.cleanup();
@@ -187,7 +176,7 @@ protected:
         DSGubo.cleanup();
     }
 
-    void localCleanup() {
+    void localCleanup() override {
         // Cleanup textures
         TRoad.cleanup();
         TTerrain.cleanup();
@@ -211,7 +200,7 @@ protected:
         PSkybox.destroy();
     }
 
-    void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
+    void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
         DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
         PVColor.bind(commandBuffer);
         MMoto.bind(commandBuffer);
@@ -236,7 +225,7 @@ protected:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
     }
 
-    void updateUniformBuffer(uint32_t currentImage) {
+    void updateUniformBuffer(uint32_t currentImage) override {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
@@ -279,8 +268,8 @@ protected:
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
 
-        uboSkybox.mMat = glm::mat4(2.0f);
-        uboSkybox.nMat = glm::mat4(2.0f);
+        uboSkybox.mMat = glm::mat4(1.0f);
+        uboSkybox.nMat = glm::mat4(1.0f);
         uboSkybox.mvpMat = glm::mat3(ViewProj);
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
     }
