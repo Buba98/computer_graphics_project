@@ -42,7 +42,6 @@ class SandroRun : public BaseProject {
 protected:
     float Ar;
 
-
     // Descriptor sets layouts
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
@@ -59,33 +58,36 @@ protected:
     // Models
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
+    Model<VertexMesh> MTerrain;
 
     // Descriptor sets
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSRoad;
+    DescriptorSet DSTerrain;
 
     // Textures
     Texture TRoad;
+    Texture TTerrain;
 
     // Uniform blocks
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
+    MeshUniformBlock uboTerrain;
 
     float CamH, CamRadius, CamPitch, CamYaw;
 
     void setWindowParameters() {
         windowWidth = 800;
         windowHeight = 600;
-        windowTitle = "A16";
+        windowTitle = "Sandro Run";
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
 
-        uniformBlocksInPool = 3;
-        texturesInPool = 1;
-        setsInPool = 3;
-
+        uniformBlocksInPool = 4;
+        texturesInPool = 2;
+        setsInPool = 4;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -119,29 +121,21 @@ protected:
 
         // Init Models
         MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
-        MRoad.vertices = {{{0.0f,  0.0f, 0.0f},
-                                  {0.0f, 1.0f, 0.0f},
-                                  {0.0f, 0.0f}},
-                          {{20.0f, 0.0f, 0.0f},
-                                  {0.0f, 1.0f, 0.0f},
-                                  {1.0f, 0.0f}},
-                          {{0.0f,  0.0f, 10.0f},
-                                  {0.0f, 1.0f, 0.0f},
-                                  {0.0f, 1.0f}},
-                          {{20.0f, 0.0f, 10.0f},
-                                  {0.0f, 1.0f, 0.0f},
-                                  {1.0f, 1.0f}}};
-        MRoad.indices = {2, 1, 0, 1, 2, 3};
+        roadModel();
         MRoad.initMesh(this, &VMesh);
+
+        terrainModel();
+        MTerrain.initMesh(this, &VMesh);
 
         // Init textures
         TRoad.init(this, "textures/road.png");
+        TTerrain.init(this, "textures/grass.jpg");
 
         // Init local variables
         CamH = 1.0f;
         CamRadius = 3.0f;
-        CamPitch = glm::radians(15.f);
-        CamYaw = glm::radians(30.f);
+        CamPitch = glm::radians(0.0f);
+        CamYaw = glm::radians(0.0f);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -154,6 +148,9 @@ protected:
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
+        DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                        {1, TEXTURE, 0,                        &TTerrain}});
+
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -164,6 +161,7 @@ protected:
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
         DSRoad.cleanup();
+        DSTerrain.cleanup();
         DSGubo.cleanup();
     }
 
@@ -174,6 +172,7 @@ protected:
         // Cleanup models
         MMoto.cleanup();
         MRoad.cleanup();
+        MTerrain.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLVColor.cleanup();
@@ -197,6 +196,12 @@ protected:
         MRoad.bind(commandBuffer);
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
+
+        DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+        PMesh.bind(commandBuffer);
+        MTerrain.bind(commandBuffer);
+        DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -223,7 +228,7 @@ protected:
         const float movSpeed = 1.0f;
 
         CamH += m.z * movSpeed * deltaT;
-        CamRadius -= m.x * movSpeed * deltaT;
+        CamRadius -= m.x * movSpeed * deltaT * 10;
         CamPitch -= r.x * rotSpeed * deltaT;
         CamYaw += r.y * rotSpeed * deltaT;
 
@@ -260,10 +265,24 @@ protected:
         uboRoad.mMat = World;
         uboRoad.nMat = glm::inverse(glm::transpose(World));
         DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
+
+        World = glm::mat4(1.0f);
+        uboTerrain.amb = 1.0f;
+        uboTerrain.gamma = 180.0f;
+        uboTerrain.sColor = glm::vec3(1.0f);
+        uboTerrain.mvpMat = Prj * View * World;
+        uboTerrain.mMat = World;
+        uboTerrain.nMat = glm::inverse(glm::transpose(World));
+        DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
     }
+
+    void roadModel();
+    void terrainModel();
 };
 
-// This is the main: probably you do not need to touch this!
+#include "BuildModels.hpp"
+
+
 int main() {
     SandroRun app;
 
