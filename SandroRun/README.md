@@ -16,7 +16,7 @@
   - [ ] Add cars on the road
 - [ ] Add scenary
   - [ ] Add a skybox
-  - [ ] Add the terrain around the road
+  - [x] Add the terrain around the road
   - [ ] Add trees on the border of the road
 - [ ] Add a splash screen
   - [ ] Add a splash screen image

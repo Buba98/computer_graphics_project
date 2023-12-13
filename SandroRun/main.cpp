@@ -42,6 +42,7 @@ class SandroRun : public BaseProject {
 protected:
     float Ar;
 
+
     // Descriptor sets layouts
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
@@ -76,14 +77,12 @@ protected:
     MeshUniformBlock uboRoad;
     MeshUniformBlock uboTerrain;
 
-    float CamH, CamRadius, CamPitch, CamYaw;
-
     void setWindowParameters() {
-        windowWidth = 800;
-        windowHeight = 600;
+        windowWidth = 1280;
+        windowHeight = 720;
         windowTitle = "Sandro Run";
         windowResizable = GLFW_TRUE;
-        initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
+        initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 4;
         texturesInPool = 2;
@@ -130,12 +129,6 @@ protected:
         // Init textures
         TRoad.init(this, "textures/road.png");
         TTerrain.init(this, "textures/grass.jpg");
-
-        // Init local variables
-        CamH = 1.0f;
-        CamRadius = 3.0f;
-        CamPitch = glm::radians(0.0f);
-        CamYaw = glm::radians(0.0f);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -209,59 +202,31 @@ protected:
             glfwSetWindowShouldClose(window, GL_TRUE);
         }
 
-        float deltaT;
-        glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-        bool fire = false;
-        getSixAxis(deltaT, m, r, fire);
+        glm::mat4 ViewProj;
+        glm::mat4 World;
+        static glm::vec3 camPos;
 
-        // To debounce the pressing of the fire button, and start the event when the key is released
-        static bool wasFire = false;
-        bool handleFire = (wasFire && (!fire));
-        wasFire = fire;
-
-        // Parameters
-        // Camera FOV-y, Near Plane and Far Plane
-        const float FOVy = glm::radians(90.0f);
-        const float nearPlane = 0.1f;
-        const float farPlane = 100.0f;
-        const float rotSpeed = glm::radians(90.0f);
-        const float movSpeed = 1.0f;
-
-        CamH += m.z * movSpeed * deltaT;
-        CamRadius -= m.x * movSpeed * deltaT * 10;
-        CamPitch -= r.x * rotSpeed * deltaT;
-        CamYaw += r.y * rotSpeed * deltaT;
-
-        glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
-        Prj[1][1] *= -1;
-        glm::vec3 camTarget = glm::vec3(0, CamH, 0);
-        glm::vec3 camPos = camTarget +
-                           CamRadius * glm::vec3(cos(CamPitch) * sin(CamYaw),
-                                                 sin(CamPitch),
-                                                 cos(CamPitch) * cos(CamYaw));
-        glm::mat4 View = glm::lookAt(camPos, camTarget, glm::vec3(0, 1, 0));
+        updateCameraPosition(ViewProj, World, camPos);
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
         gubo.eyePos = camPos;
-
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        glm::mat4 World = glm::mat4(1.0f);
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mvpMat = Prj * View * World;
         uboMoto.mMat = World;
-        uboMoto.nMat = glm::inverse(glm::transpose(World));
+        uboMoto.mvpMat = ViewProj * uboMoto.mMat;
+        uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
 
         World = glm::mat4(1.0f);
         uboRoad.amb = 1.0f;
         uboRoad.gamma = 180.0f;
         uboRoad.sColor = glm::vec3(1.0f);
-        uboRoad.mvpMat = Prj * View * World;
+        uboRoad.mvpMat = ViewProj * World;
         uboRoad.mMat = World;
         uboRoad.nMat = glm::inverse(glm::transpose(World));
         DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
@@ -270,7 +235,7 @@ protected:
         uboTerrain.amb = 1.0f;
         uboTerrain.gamma = 180.0f;
         uboTerrain.sColor = glm::vec3(1.0f);
-        uboTerrain.mvpMat = Prj * View * World;
+        uboTerrain.mvpMat = ViewProj * World;
         uboTerrain.mMat = World;
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
@@ -278,9 +243,11 @@ protected:
 
     void roadModel();
     void terrainModel();
+    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
 };
 
 #include "BuildModels.hpp"
+#include "CameraHandle.hpp"
 
 
 int main() {
