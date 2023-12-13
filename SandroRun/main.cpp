@@ -198,13 +198,14 @@ protected:
 
         glm::mat4 ViewProj;
         glm::mat4 World;
+        static glm::vec3 camPos;
 
-        updateCameraPosition(ViewProj, World);
+        updateCameraPosition(ViewProj, World, camPos);
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
-        gubo.eyePos = glm::vec3(100.0f, 100.0f, 100.0f);
+        gubo.eyePos = camPos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
         uboMoto.amb = 1.0f;
@@ -216,17 +217,17 @@ protected:
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
 
 
-       World = glm::mat4(1.0f);
-       uboRoad.amb = 1.0f;
-       uboRoad.gamma = 180.0f;
-       uboRoad.sColor = glm::vec3(1.0f);
-       uboRoad.mvpMat = ViewProj * World;
-       uboRoad.mMat = World;
-       uboRoad.nMat = glm::inverse(glm::transpose(World));
-       DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
+        World = glm::mat4(1.0f);
+        uboRoad.amb = 1.0f;
+        uboRoad.gamma = 180.0f;
+        uboRoad.sColor = glm::vec3(1.0f);
+        uboRoad.mvpMat = ViewProj * World;
+        uboRoad.mMat = World;
+        uboRoad.nMat = glm::inverse(glm::transpose(World));
+        DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
     }
 
-    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
+    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition) {
         const float FOV_Y = glm::radians(45.0f);
         const float NEAR_PLANE = 0.1f;
         const float FAR_PLANE = 100.0f;
@@ -258,7 +259,7 @@ protected:
 
         const float LAMBDA = 10.0f;
 
-        static glm::vec3 cameraPosition, newCameraPosition;
+        static glm::vec3 newCameraPosition;
         glm::vec3 a;
 
         glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
@@ -288,7 +289,7 @@ protected:
         a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, CAM_HEIGHT, 0, 0);
 
         cameraPosition = cameraPosition * glm::exp(-LAMBDA * deltaT) +
-                 newCameraPosition * (1 - glm::exp(-LAMBDA * deltaT)); // Camera damping
+                         newCameraPosition * (1 - glm::exp(-LAMBDA * deltaT)); // Camera damping
 
         glm::mat4 View = glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) * glm::lookAt(cameraPosition, a, uy);
         glm::mat4 Proj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
