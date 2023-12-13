@@ -10,6 +10,12 @@ struct MeshUniformBlock {
     alignas(16) glm::mat4 nMat;
 };
 
+struct SkyboxUniformBlock {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+
 struct OverlayUniformBlock {
     alignas(4) float visible;
 };
@@ -42,11 +48,11 @@ class SandroRun : public BaseProject {
 protected:
     float Ar;
 
-
     // Descriptor sets layouts
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
+    DescriptorSetLayout DSLSkybox;
 
     // Vertex descriptors
     VertexDescriptor VVColor;
@@ -55,27 +61,32 @@ protected:
     // Pipelines
     Pipeline PVColor;
     Pipeline PMesh;
+    Pipeline PSkybox;
 
     // Models
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
+    Model<VertexMesh> MSkybox;
 
     // Descriptor sets
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSRoad;
     DescriptorSet DSTerrain;
+    DescriptorSet DSSkybox;
 
     // Textures
     Texture TRoad;
     Texture TTerrain;
+    Texture TSkybox;
 
     // Uniform blocks
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
     MeshUniformBlock uboTerrain;
+    SkyboxUniformBlock uboSkybox;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -84,9 +95,9 @@ protected:
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 4;
-        texturesInPool = 2;
-        setsInPool = 4;
+        uniformBlocksInPool = 5;
+        texturesInPool = 3;
+        setsInPool = 5;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -101,6 +112,8 @@ protected:
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+        DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
+                              {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
 
         // Init Vertex Descriptors
@@ -116,9 +129,11 @@ protected:
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
-
+        PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
+        PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
 
         // Init Models
+        skyboxModel();
         MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
         roadModel();
         MRoad.initMesh(this, &VMesh);
@@ -127,12 +142,11 @@ protected:
         MTerrain.initMesh(this, &VMesh);
 
         // Init textures
-        TRoad.init(this, "textures/road.png");
-        TTerrain.init(this, "textures/grass.jpg");
     }
 
     void pipelinesAndDescriptorSetsInit() {
         // Init pipelines
+        PSkybox.create();
         PVColor.create();
         PMesh.create();
 
@@ -143,6 +157,8 @@ protected:
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                         {1, TEXTURE, 0,                        &TTerrain}});
+        DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
+                                         {1, TEXTURE, 0,                        &TSkybox}});
 
     }
 
@@ -150,31 +166,38 @@ protected:
         // Cleanup pipelines
         PVColor.cleanup();
         PMesh.cleanup();
+        PSkybox.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
         DSRoad.cleanup();
         DSTerrain.cleanup();
+        DSSkybox.cleanup();
         DSGubo.cleanup();
     }
 
     void localCleanup() {
         // Cleanup textures
         TRoad.cleanup();
+        TTerrain.cleanup();
+        TSkybox.cleanup();
 
         // Cleanup models
         MMoto.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
+        MSkybox.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLVColor.cleanup();
         DSLMesh.cleanup();
+        DSLSkybox.cleanup();
         DSLGubo.cleanup();
 
         // Destroy pipelines
         PVColor.destroy();
         PMesh.destroy();
+        PSkybox.destroy();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -195,6 +218,11 @@ protected:
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
+
+        PSkybox.bind(commandBuffer);
+        MSkybox.bind(commandBuffer);
+        DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -239,10 +267,17 @@ protected:
         uboTerrain.mMat = World;
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
+
+        World = glm::mat4(1.0f);
+        uboSkybox.mMat = World;
+        uboSkybox.nMat = uboSkybox.mMat;
+        uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
+        DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
     }
 
     void roadModel();
     void terrainModel();
+    void skyboxModel();
     void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
 };
 
