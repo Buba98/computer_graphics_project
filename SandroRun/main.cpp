@@ -268,8 +268,9 @@ protected:
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
 
-        uboSkybox.mMat = glm::mat4(1.0f);
-        uboSkybox.nMat = glm::mat4(1.0f);
+        World = glm::mat4(1.0f);
+        uboSkybox.mMat = World;
+        uboSkybox.nMat = glm::inverse(glm::transpose(World));
         uboSkybox.mvpMat = glm::mat3(ViewProj);
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
     }
