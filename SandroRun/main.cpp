@@ -150,12 +150,9 @@ protected:
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
 
         roadModel();
-
         terrainModel();
 
         // Init textures
-        TRoad.init(this, "textures/road.png");
-        TTerrain.init(this, "textures/grass.jpg");
         TRail.init(this, "textures/guardrail.jpg");
 
         // Init other stuff
