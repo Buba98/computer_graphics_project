@@ -49,21 +49,25 @@ protected:
     float Ar;
 
     // Descriptor sets layouts
+    DescriptorSetLayout DSLOverlay;
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
 
     // Vertex descriptors
+    VertexDescriptor VOverlay;
     VertexDescriptor VVColor;
     VertexDescriptor VMesh;
 
     // Pipelines
+    Pipeline POverlay;
     Pipeline PVColor;
     Pipeline PMesh;
     Pipeline PSkybox;
 
     // Models
+    Model<VertexOverlay> MSplash;
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
@@ -71,6 +75,7 @@ protected:
     Model<VertexMesh> MRail;
 
     // Descriptor sets
+    DescriptorSet DSSplash;
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSRoad;
@@ -80,12 +85,14 @@ protected:
     DescriptorSet DSSkybox;
 
     // Textures
+    Texture TSplash;
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
     Texture TSkybox;
 
     // Uniform blocks
+    OverlayUniformBlock uboSplash;
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
@@ -94,6 +101,7 @@ protected:
     MeshUniformBlock uboRail;
 
     // Other stuff
+    int gameState = 0;
     glm::vec3 pos;
     float yaw, pitch, roll;
     float yawNew, pitchNew, rollNew;
@@ -107,9 +115,9 @@ protected:
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 10;
-        texturesInPool = 4;
-        setsInPool = 10;
+        uniformBlocksInPool = 20;
+        texturesInPool = 15;
+        setsInPool = 20;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -121,6 +129,8 @@ protected:
     void localInit() {
 
         // Init Descriptor Sets Layouts
+        DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -129,6 +139,9 @@ protected:
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
 
         // Init Vertex Descriptors
+        VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
+                      {{0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos), sizeof(glm::vec2), OTHER},
+                       {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),  sizeof(glm::vec2), UV}});
         VVColor.init(this, {{0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}},
                      {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, pos),   sizeof(glm::vec3), POSITION},
                       {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, norm),  sizeof(glm::vec3), NORMAL},
@@ -139,6 +152,8 @@ protected:
                     {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexMesh, UV),   sizeof(glm::vec2), UV}});
 
         // Init Pipelines
+        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
+        POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
@@ -149,13 +164,11 @@ protected:
         MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
 
+        splashModel();
         roadModel();
-
         terrainModel();
 
         // Init textures
-        TRoad.init(this, "textures/road.png");
-        TTerrain.init(this, "textures/grass.jpg");
         TRail.init(this, "textures/guardrail.jpg");
 
         // Init other stuff
@@ -168,11 +181,14 @@ protected:
 
     void pipelinesAndDescriptorSetsInit() {
         // Init pipelines
+        POverlay.create();
         PSkybox.create();
         PVColor.create();
         PMesh.create();
 
         // Init Descriptor Sets
+        DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                                          {1, TEXTURE, 0,                           &TSplash}});
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad}});
@@ -189,6 +205,7 @@ protected:
 
     void pipelinesAndDescriptorSetsCleanup() {
         // Cleanup pipelines
+        POverlay.cleanup();
         PVColor.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
@@ -200,18 +217,20 @@ protected:
         DSRailLeft.cleanup();
         DSRailRight.cleanup();
         DSSkybox.cleanup();
+        DSSplash.cleanup();
         DSGubo.cleanup();
     }
 
     void localCleanup() {
         // Cleanup textures
+        TSplash.cleanup();
         TRoad.cleanup();
         TTerrain.cleanup();
         TRail.cleanup();
-        TTerrain.cleanup();
         TSkybox.cleanup();
 
         // Cleanup models
+        MSplash.cleanup();
         MMoto.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
@@ -219,18 +238,25 @@ protected:
         MSkybox.cleanup();
 
         // Cleanup descriptor sets layouts
+        DSLOverlay.cleanup();
         DSLVColor.cleanup();
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
 
         // Destroy pipelines
+        POverlay.destroy();
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
+        POverlay.bind(commandBuffer);
+        MSplash.bind(commandBuffer);
+        DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+
         DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
         PVColor.bind(commandBuffer);
         MMoto.bind(commandBuffer);
@@ -268,7 +294,18 @@ protected:
         glm::mat4 ViewProj;
         glm::mat4 World;
 
-        updateCameraPosition(ViewProj, World);
+        // main state machine implementation
+        switch (gameState) {
+            case 0: // initial state - show splash screen
+                if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                    gameState = 1; // jump to the wait key state
+                }
+                break;
+            case 1: // run
+                updateCameraPosition(ViewProj, World);
+                break;
+        }
+
 
         int shift = pos.z / 120;
 
@@ -326,7 +363,12 @@ protected:
         uboRail.mvpMat = ViewProj * uboRail.mMat;
         uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
         DSRailRight.map(currentImage, &uboRail, sizeof(uboRail), 0);
+
+        uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
+        DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
+
+    void splashModel();
 
     void roadModel();
 

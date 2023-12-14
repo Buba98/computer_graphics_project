@@ -141,3 +141,14 @@ void SandroRun::skyboxModel() {
     };
     TSkybox.initCubic(this, T2fn);
 }
+
+void SandroRun::splashModel() {
+    MSplash.vertices = {{{-1.0f, -1.0f}, {0.0f, 0.0f}},
+                        {{-1.0f, 1.0f},  {0.0f, 1.0f}},
+                        {{1.0f,  -1.0f}, {1.0f, 0.0f}},
+                        {{1.0f,  1.0f},  {1.0f, 1.0f}}};
+    MSplash.indices = {0, 1, 2, 1, 2, 3};
+    MSplash.initMesh(this, &VOverlay);
+
+    TSplash.init(this, "textures/splashScreen.png");
+}
