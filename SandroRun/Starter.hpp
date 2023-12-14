@@ -299,7 +299,7 @@ struct DescriptorSet {
 		std::vector<DescriptorSetElement> E);
 	void cleanup();
   	void bind(VkCommandBuffer commandBuffer, Pipeline &P, int setId, int currentImage);
-  	void map(int currentImage, void *src, int size, int slot);
+  	void map(uint32_t currentImage, void *src, int size, int slot);
 };
 
 
@@ -1770,76 +1770,75 @@ std::cout << "Starting createInstance()\n"  << std::flush;
 			}
 		}
 	}
-		
-	void getSixAxis(float &deltaT, glm::vec3 &m, glm::vec3 &r, bool &fire) {
-		static auto startTime = std::chrono::high_resolution_clock::now();
-		static float lastTime = 0.0f;
-		
-		auto currentTime = std::chrono::high_resolution_clock::now();
-		float time = std::chrono::duration<float, std::chrono::seconds::period>
-					(currentTime - startTime).count();
-		deltaT = time - lastTime;
-		lastTime = time;
 
-		static double old_xpos = 0, old_ypos = 0;
-		double xpos, ypos;
-		glfwGetCursorPos(window, &xpos, &ypos);
-		double m_dx = xpos - old_xpos;
-		double m_dy = ypos - old_ypos;
-		old_xpos = xpos; old_ypos = ypos;
+    void getSixAxis(float &deltaT, glm::vec3 &m, glm::vec3 &r, bool &fire, float &time) {
+        static auto startTime = std::chrono::high_resolution_clock::now();
+        static float lastTime = 0.0f;
 
-		const float MOUSE_RES = 10.0f;				
-		glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
-		if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-			r.y = -m_dx / MOUSE_RES;
-			r.x = -m_dy / MOUSE_RES;
-		}
+        auto currentTime = std::chrono::high_resolution_clock::now();
+        time = std::chrono::duration<float, std::chrono::seconds::period>
+                (currentTime - startTime).count();
+        deltaT = time - lastTime;
+        lastTime = time;
 
-		if(glfwGetKey(window, GLFW_KEY_LEFT)) {
-			r.y = -1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_RIGHT)) {
-			r.y = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_UP)) {
-			r.x = -1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_DOWN)) {
-			r.x = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_Q)) {
-			r.z = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_E)) {
-			r.z = -1.0f;
-		}
+        static double old_xpos = 0, old_ypos = 0;
+        double xpos, ypos;
+        glfwGetCursorPos(window, &xpos, &ypos);
+        double m_dx = xpos - old_xpos;
+        double m_dy = ypos - old_ypos;
+        old_xpos = xpos; old_ypos = ypos;
 
-		if(glfwGetKey(window, GLFW_KEY_A)) {
-			m.x = -1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_D)) {
-			m.x = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_S)) {
-			m.z = -1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_W)) {
-			m.z = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_R)) {
-			m.y = 1.0f;
-		}
-		if(glfwGetKey(window, GLFW_KEY_F)) {
-			m.y = -1.0f;
-		}
-		
-		fire = glfwGetKey(window, GLFW_KEY_SPACE) | glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
-		handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
-		handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
-		handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
-		handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
-	}
-	
+        const float MOUSE_RES = 10.0f;
+        glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
+        if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+            r.y = -m_dx / MOUSE_RES;
+            r.x = -m_dy / MOUSE_RES;
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_LEFT)) {
+            r.y = -1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_RIGHT)) {
+            r.y = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_UP)) {
+            r.x = -1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_DOWN)) {
+            r.x = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_Q)) {
+            r.z = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_E)) {
+            r.z = -1.0f;
+        }
+
+        if(glfwGetKey(window, GLFW_KEY_A)) {
+            m.x = -1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_D)) {
+            m.x = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_S)) {
+            m.z = -1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_W)) {
+            m.z = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_R)) {
+            m.y = 1.0f;
+        }
+        if(glfwGetKey(window, GLFW_KEY_F)) {
+            m.y = -1.0f;
+        }
+
+        fire = glfwGetKey(window, GLFW_KEY_SPACE);
+        handleGamePad(GLFW_JOYSTICK_1,m,r,fire);
+        handleGamePad(GLFW_JOYSTICK_2,m,r,fire);
+        handleGamePad(GLFW_JOYSTICK_3,m,r,fire);
+        handleGamePad(GLFW_JOYSTICK_4,m,r,fire);
+    }
 	// Public part of the base class
 	public:
 	// Debug commands
@@ -2839,7 +2838,7 @@ void DescriptorSet::bind(VkCommandBuffer commandBuffer, Pipeline &P, int setId,
 					0, nullptr);
 }
 
-void DescriptorSet::map(int currentImage, void *src, int size, int slot) {
+void DescriptorSet::map(uint32_t currentImage, void *src, int size, int slot) {
 	void* data;
 
 	vkMapMemory(BP->device, uniformBuffersMemory[slot][currentImage], 0,

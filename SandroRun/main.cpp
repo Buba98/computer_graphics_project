@@ -10,6 +10,12 @@ struct MeshUniformBlock {
     alignas(16) glm::mat4 nMat;
 };
 
+struct SkyboxUniformBlock {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+
 struct OverlayUniformBlock {
     alignas(4) float visible;
 };
@@ -46,6 +52,7 @@ protected:
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
+    DescriptorSetLayout DSLSkybox;
 
     // Vertex descriptors
     VertexDescriptor VVColor;
@@ -54,11 +61,13 @@ protected:
     // Pipelines
     Pipeline PVColor;
     Pipeline PMesh;
+    Pipeline PSkybox;
 
     // Models
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
+    Model<VertexMesh> MSkybox;
     Model<VertexMesh> MRail;
 
     // Descriptor sets
@@ -68,22 +77,30 @@ protected:
     DescriptorSet DSTerrain;
     DescriptorSet DSRailLeft;
     DescriptorSet DSRailRight;
+    DescriptorSet DSSkybox;
 
     // Textures
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
+    Texture TSkybox;
 
     // Uniform blocks
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
     MeshUniformBlock uboTerrain;
+    SkyboxUniformBlock uboSkybox;
     MeshUniformBlock uboRail;
 
+    // Other stuff
     glm::vec3 pos;
+    float yaw, pitch, roll;
+    float yawNew, pitchNew, rollNew;
+    glm::vec3 cameraPosition, newCameraPosition;
+    float speed;
 
-    void setWindowParameters() {
+    void setWindowParameters() override {
         windowWidth = 1280;
         windowHeight = 720;
         windowTitle = "Sandro Run";
@@ -91,7 +108,7 @@ protected:
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 10;
-        texturesInPool = 3;
+        texturesInPool = 4;
         setsInPool = 10;
 
         Ar = (float) windowWidth / (float) windowHeight;
@@ -107,6 +124,8 @@ protected:
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+        DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
+                              {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
 
         // Init Vertex Descriptors
@@ -122,8 +141,11 @@ protected:
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
+        PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
+        PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
 
         // Init Models
+        skyboxModel();
         MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
 
@@ -138,10 +160,15 @@ protected:
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
+        yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
+        yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
+        cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+        speed = 0;
     }
 
     void pipelinesAndDescriptorSetsInit() {
         // Init pipelines
+        PSkybox.create();
         PVColor.create();
         PMesh.create();
 
@@ -155,6 +182,8 @@ protected:
                                          {1, TEXTURE, 0,                        &TRail}});
         DSRailRight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                           {1, TEXTURE, 0,                        &TRail}});
+        DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
+                                         {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
     }
 
@@ -162,6 +191,7 @@ protected:
         // Cleanup pipelines
         PVColor.cleanup();
         PMesh.cleanup();
+        PSkybox.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
@@ -169,6 +199,7 @@ protected:
         DSTerrain.cleanup();
         DSRailLeft.cleanup();
         DSRailRight.cleanup();
+        DSSkybox.cleanup();
         DSGubo.cleanup();
     }
 
@@ -177,21 +208,26 @@ protected:
         TRoad.cleanup();
         TTerrain.cleanup();
         TRail.cleanup();
+        TTerrain.cleanup();
+        TSkybox.cleanup();
 
         // Cleanup models
         MMoto.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
         MRail.cleanup();
+        MSkybox.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLVColor.cleanup();
         DSLMesh.cleanup();
+        DSLSkybox.cleanup();
         DSLGubo.cleanup();
 
         // Destroy pipelines
         PVColor.destroy();
         PMesh.destroy();
+        PSkybox.destroy();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -217,6 +253,11 @@ protected:
 
         DSRailRight.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
+
+        PSkybox.bind(commandBuffer);
+        MSkybox.bind(commandBuffer);
+        DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -226,17 +267,21 @@ protected:
 
         glm::mat4 ViewProj;
         glm::mat4 World;
-        static glm::vec3 camPos;
 
-        updateCameraPosition(ViewProj, World, camPos);
+        updateCameraPosition(ViewProj, World, currentImage);
 
         int shift = pos.z / 120;
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
-        gubo.eyePos = camPos;
+        gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
+
+        uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
+        uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
+        uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
+        DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
@@ -287,7 +332,9 @@ protected:
 
     void terrainModel();
 
-    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
+    void skyboxModel();
+
+    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World);
 };
 
 #include "BuildModels.hpp"

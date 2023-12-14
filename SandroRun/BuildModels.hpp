@@ -31,6 +31,7 @@ void SandroRun::roadModel() {
     }
 
     MRoad.initMesh(this, &VMesh);
+    TRoad.init(this, "textures/road.png");
 }
 
 void SandroRun::terrainModel() {
@@ -125,4 +126,18 @@ void SandroRun::terrainModel() {
     }
 
     MTerrain.initMesh(this, &VMesh);
+    TTerrain.init(this, "textures/grass.jpg");
+}
+
+void SandroRun::skyboxModel() {
+    MSkybox.init(this, &VMesh, "models/skyboxCube.obj", OBJ);
+    const char *T2fn[] = {
+            "textures/skybox/left.png",
+            "textures/skybox/right.png",
+            "textures/skybox/top.png",
+            "textures/skybox/bottom.png",
+            "textures/skybox/back.png",
+            "textures/skybox/front.png"
+    };
+    TSkybox.initCubic(this, T2fn);
 }

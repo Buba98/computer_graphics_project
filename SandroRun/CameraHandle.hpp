@@ -1,4 +1,6 @@
-void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition) {
+void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
+
+    const float ROAD_WIDTH = 8.68f;
     const float FOV_Y = glm::radians(45.0f);
     const float NEAR_PLANE = 0.1f;
     const float FAR_PLANE = 100.0f;
@@ -13,10 +15,11 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm:
     const float MOV_SPEED = 3.0f;
 
     float deltaT;
-    glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+    float time;
+    auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 
     bool fire = false;
-    getSixAxis(deltaT, m, r, fire);
+    getSixAxis(deltaT, m, r, fire, time);
 
     // static bool wasFire = false;
     // bool handleFire = (wasFire && (!fire));
@@ -27,7 +30,6 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm:
 
     const float LAMBDA = 10.0f;
 
-    static glm::vec3 newCameraPosition;
     glm::vec3 a;
 
     glm::vec3 ux = glm::vec3(glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) * glm::vec4(1, 0, 0, 1));
@@ -45,8 +47,12 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm:
     rollNew += ROT_SPEED * r.z * deltaT;
     roll = roll * glm::exp(-LAMBDA * deltaT) + rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Roll damping
 
-    pos += ux * MOV_SPEED * m.x * deltaT;
-    pos += uz * MOV_SPEED * m.z * deltaT;
+    if (abs(pos.x) < ROAD_WIDTH || pos.x * m.x < 0)
+        pos += ux * MOV_SPEED * m.x * deltaT;
+
+    speed = (log(time * .1f + 1) + 1) * .1f;
+    pos += uz * MOV_SPEED * speed;
+
     pos += uy * MOV_SPEED * m.y * deltaT;
 
     World = glm::translate(glm::mat4(1), pos) *
