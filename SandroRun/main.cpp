@@ -245,7 +245,7 @@ protected:
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mMat = World;
+        uboMoto.mMat = World * glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0));
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
         uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
