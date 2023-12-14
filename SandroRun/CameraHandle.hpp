@@ -3,12 +3,10 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm:
     const float NEAR_PLANE = 0.1f;
     const float FAR_PLANE = 100.0f;
 
-    const glm::vec3 STARTING_POS = glm::vec3(0.0f, 0.0f, 0.0f);
-
     const float CAM_HEIGHT = 0.75f;
     const float CAM_DIST = 3.5f;
 
-    const float MIN_PITCH = glm::radians(-30.0f);
+    const float MIN_PITCH = glm::radians(-10.0f);
     const float MAX_PITCH = glm::radians(80.0f);
 
     const float ROT_SPEED = glm::radians(120.0f);
@@ -24,7 +22,6 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm:
     // bool handleFire = (wasFire && (!fire));
     // wasFire = fire;
 
-    static glm::vec3 pos = STARTING_POS;
     static float yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
     static float yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
 

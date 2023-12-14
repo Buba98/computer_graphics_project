@@ -36,6 +36,9 @@ void SandroRun::roadModel() {
 void SandroRun::terrainModel() {
 
     // Right side
+    float uPos = 0.0f;
+    int inv = -1;
+
     for (int i = 0; i <= 240; i++) {
         for (int j = 0; j <= 60; j++) {
 
@@ -55,8 +58,13 @@ void SandroRun::terrainModel() {
             glm::vec3 normal = cross(d_surface_z, d_surface_x);
             normal = glm::normalize(normal);
 
-            MTerrain.vertices.push_back({surface, normal, {i / 240.0f, j / 60.0f}});
+            MTerrain.vertices.push_back({surface, normal, {uPos, j / 60.0f}});
+
         }
+        if (i % 60 == 0) {
+            inv *= -1;
+        }
+        uPos += inv * 1.0f / 60.0f;
     }
     for (int i = 0; i < 240; ++i) {
         for (int j = 0; j < 60; ++j) {
@@ -69,6 +77,9 @@ void SandroRun::terrainModel() {
             MTerrain.indices.push_back((i + 1) * 61 + j + 1);
         }
     }
+
+    uPos = 0.0f;
+    inv = -1;
 
     // Left side
     for (int i = 0; i <= 240; i++) {
@@ -90,8 +101,12 @@ void SandroRun::terrainModel() {
             glm::vec3 normal = cross(d_surface_z, d_surface_x);
             normal = glm::normalize(normal);
 
-            MTerrain.vertices.push_back({surface, normal, {i / 240.0f, j / 60.0f}});
+            MTerrain.vertices.push_back({surface, normal, {uPos, j / 60.0f}});
         }
+        if (i % 60 == 0) {
+            inv *= -1;
+        }
+        uPos += inv * 1.0f / 60.0f;
     }
 
     int offset = 241 * 61;

@@ -6,13 +6,13 @@
   - [ ] Make the moto accelerate with time (speed = speed + acceleration * time)
   - [ ] Make the moto turn left and right
   - [ ] Animate the turning of the moto
-  - [ ] Bound the camera to the moto (the camera should follow the moto)
-  - [ ] Implement camera damping (the camera should not follow the moto instantly)
+  - [x] Bound the camera to the moto (the camera should follow the moto)
+  - [x] Implement camera damping (the camera should not follow the moto instantly)
 - [ ] Add road
   - [x] Add a road texture
   - [x] Add a road model
-  - [ ] Add guardrails on the road
-  - [ ] Make the road infinite
+  - [x] Add guardrails on the road
+  - [x] Make the road infinite
   - [ ] Add cars on the road
 - [ ] Add scenary
   - [ ] Add a skybox

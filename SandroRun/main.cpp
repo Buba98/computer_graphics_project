@@ -81,6 +81,8 @@ protected:
     MeshUniformBlock uboTerrain;
     MeshUniformBlock uboRail;
 
+    glm::vec3 pos;
+
     void setWindowParameters() {
         windowWidth = 1280;
         windowHeight = 720;
@@ -133,6 +135,9 @@ protected:
         TRoad.init(this, "textures/road.png");
         TTerrain.init(this, "textures/grass.jpg");
         TRail.init(this, "textures/guardrail.jpg");
+
+        // Init other stuff
+        pos = glm::vec3(0.0f, 0.0f, 0.0f);
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -225,6 +230,8 @@ protected:
 
         updateCameraPosition(ViewProj, World, camPos);
 
+        int shift = pos.z / 120;
+
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
@@ -243,7 +250,7 @@ protected:
         uboRoad.amb = 1.0f;
         uboRoad.gamma = 180.0f;
         uboRoad.sColor = glm::vec3(1.0f);
-        uboRoad.mMat = World;
+        uboRoad.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * 120));
         uboRoad.mvpMat = ViewProj * uboRoad.mMat;
         uboRoad.nMat = glm::inverse(glm::transpose(uboRoad.mMat));
         DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
@@ -252,7 +259,7 @@ protected:
         uboTerrain.amb = 1.0f;
         uboTerrain.gamma = 180.0f;
         uboTerrain.sColor = glm::vec3(1.0f);
-        uboTerrain.mMat = World;
+        uboTerrain.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * 120));
         uboTerrain.mvpMat = ViewProj * uboTerrain.mMat;
         uboTerrain.nMat = glm::inverse(glm::transpose(uboTerrain.mMat));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
@@ -261,14 +268,14 @@ protected:
         uboRail.amb = 1.0f;
         uboRail.gamma = 180.0f;
         uboRail.sColor = glm::vec3(1.0f);
-        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(-10, 0, 0)) *
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(-10, 0, shift * 120)) *
                        glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
                        glm::scale(glm::mat4(1), glm::vec3(0.21555f));
         uboRail.mvpMat = ViewProj * uboRail.mMat;
         uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
         DSRailLeft.map(currentImage, &uboRail, sizeof(uboRail), 0);
 
-        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(10, 0, -230)) *
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(10, 0, -230 + shift * 120)) *
                        glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
                        glm::scale(glm::mat4(1), glm::vec3(0.21555f));
         uboRail.mvpMat = ViewProj * uboRail.mMat;
