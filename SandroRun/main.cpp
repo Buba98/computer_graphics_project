@@ -206,7 +206,6 @@ protected:
     void localCleanup() {
         // Cleanup textures
         TRoad.cleanup();
-        TTerrain.cleanup();
         TRail.cleanup();
         TTerrain.cleanup();
         TSkybox.cleanup();
