@@ -2,8 +2,8 @@
 - [ ] Add a moto
   - [x] Export the moto from blender in obj format
   - [x] Add the moto model to the scene
-  - [ ] Make the moto move on a straight line
-  - [ ] Make the moto accelerate with time (speed = speed + acceleration * time)
+  - [x] Make the moto move on a straight line
+  - [x] Make the moto accelerate with time (log)
   - [ ] Make the moto turn left and right
   - [ ] Animate the turning of the moto
   - [x] Bound the camera to the moto (the camera should follow the moto)
@@ -15,7 +15,7 @@
   - [x] Make the road infinite
   - [ ] Add cars on the road
 - [ ] Add scenary
-  - [ ] Add a skybox
+  - [x] Add a skybox
   - [x] Add the terrain around the road
   - [ ] Add trees on the border of the road
 - [ ] Add a splash screen
@@ -35,8 +35,8 @@
 - [ ] Create shaders
   - [ ] Create a shader for the road
   - [ ] Create a shader for the terrain
-  - [ ] Create a shader for the skybox
+  - [x] Create a shader for the skybox
   - [ ] Create a shader for the trees
-  - [ ] Create a shader for the guardrails
+  - [x] Create a shader for the guardrails
   - [ ] Create a shader for the cars
   - [ ] Create a shader for the moto
