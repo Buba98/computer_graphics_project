@@ -88,6 +88,12 @@ protected:
     MeshUniformBlock uboTerrain;
     SkyboxUniformBlock uboSkybox;
 
+    glm::vec3 pos;
+    float yaw, pitch, roll;
+    float yawNew, pitchNew, rollNew;
+    glm::vec3 cameraPosition, newCameraPosition;
+    float speed;
+
     void setWindowParameters() override {
         windowWidth = 1280;
         windowHeight = 720;
@@ -141,7 +147,12 @@ protected:
         terrainModel();
         MTerrain.initMesh(this, &VMesh);
 
-        // Init textures
+        // Init other stuff
+        pos = glm::vec3(0.0f, 0.0f, 0.0f);
+        yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
+        yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
+        cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+        speed = 0;
     }
 
     void pipelinesAndDescriptorSetsInit() override {
@@ -159,7 +170,6 @@ protected:
                                         {1, TEXTURE, 0,                        &TTerrain}});
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox}});
-
     }
 
     void pipelinesAndDescriptorSetsCleanup() override {
@@ -232,15 +242,19 @@ protected:
 
         glm::mat4 ViewProj;
         glm::mat4 World;
-        static glm::vec3 camPos;
 
-        updateCameraPosition(ViewProj, World, camPos);
+        updateCameraPosition(ViewProj, World, currentImage);
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
-        gubo.eyePos = camPos;
+        gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
+
+        uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
+        uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
+        uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
+        DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
@@ -267,12 +281,6 @@ protected:
         uboTerrain.mMat = World;
         uboTerrain.nMat = glm::inverse(glm::transpose(World));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
-
-        World = glm::mat4(1.0f);
-        uboSkybox.mMat = World;
-        uboSkybox.nMat = glm::inverse(glm::transpose(World));
-        uboSkybox.mvpMat = glm::mat3(ViewProj);
-        DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
     }
 
     void roadModel();
@@ -281,9 +289,7 @@ protected:
 
     void skyboxModel();
 
-    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
-
-    void getSixAxis(float &deltaT, glm::vec3 &m, glm::vec3 &r, bool &fire) override;
+    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, uint32_t currentImage);
 };
 
 #include "BuildModels.hpp"
