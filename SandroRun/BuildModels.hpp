@@ -29,6 +29,8 @@ void SandroRun::roadModel() {
         MRoad.indices.push_back(i * 4);
         MRoad.indices.push_back(i * 4 + 3);
     }
+
+    MRoad.initMesh(this, &VMesh);
 }
 
 void SandroRun::terrainModel() {
@@ -106,4 +108,6 @@ void SandroRun::terrainModel() {
 
         }
     }
+
+    MTerrain.initMesh(this, &VMesh);
 }

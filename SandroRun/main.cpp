@@ -42,7 +42,6 @@ class SandroRun : public BaseProject {
 protected:
     float Ar;
 
-
     // Descriptor sets layouts
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
@@ -60,22 +59,27 @@ protected:
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
+    Model<VertexMesh> MRail;
 
     // Descriptor sets
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSRoad;
     DescriptorSet DSTerrain;
+    DescriptorSet DSRailLeft;
+    DescriptorSet DSRailRight;
 
     // Textures
     Texture TRoad;
     Texture TTerrain;
+    Texture TRail;
 
     // Uniform blocks
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
     MeshUniformBlock uboTerrain;
+    MeshUniformBlock uboRail;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -84,9 +88,9 @@ protected:
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 4;
-        texturesInPool = 2;
-        setsInPool = 4;
+        uniformBlocksInPool = 10;
+        texturesInPool = 3;
+        setsInPool = 10;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -117,18 +121,18 @@ protected:
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
 
-
         // Init Models
         MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
+        MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
+
         roadModel();
-        MRoad.initMesh(this, &VMesh);
 
         terrainModel();
-        MTerrain.initMesh(this, &VMesh);
 
         // Init textures
         TRoad.init(this, "textures/road.png");
         TTerrain.init(this, "textures/grass.jpg");
+        TRail.init(this, "textures/guardrail.jpg");
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -140,10 +144,13 @@ protected:
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad}});
-        DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                         {1, TEXTURE, 0,                        &TTerrain}});
-
+        DSRailLeft.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                         {1, TEXTURE, 0,                        &TRail}});
+        DSRailRight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                          {1, TEXTURE, 0,                        &TRail}});
+        DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -155,17 +162,22 @@ protected:
         DSMoto.cleanup();
         DSRoad.cleanup();
         DSTerrain.cleanup();
+        DSRailLeft.cleanup();
+        DSRailRight.cleanup();
         DSGubo.cleanup();
     }
 
     void localCleanup() {
         // Cleanup textures
         TRoad.cleanup();
+        TTerrain.cleanup();
+        TRail.cleanup();
 
         // Cleanup models
         MMoto.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
+        MRail.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLVColor.cleanup();
@@ -190,11 +202,16 @@ protected:
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
 
-        DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
-        PMesh.bind(commandBuffer);
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
+
+        MRail.bind(commandBuffer);
+        DSRailLeft.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
+
+        DSRailRight.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -226,23 +243,43 @@ protected:
         uboRoad.amb = 1.0f;
         uboRoad.gamma = 180.0f;
         uboRoad.sColor = glm::vec3(1.0f);
-        uboRoad.mvpMat = ViewProj * World;
         uboRoad.mMat = World;
-        uboRoad.nMat = glm::inverse(glm::transpose(World));
+        uboRoad.mvpMat = ViewProj * uboRoad.mMat;
+        uboRoad.nMat = glm::inverse(glm::transpose(uboRoad.mMat));
         DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
 
         World = glm::mat4(1.0f);
         uboTerrain.amb = 1.0f;
         uboTerrain.gamma = 180.0f;
         uboTerrain.sColor = glm::vec3(1.0f);
-        uboTerrain.mvpMat = ViewProj * World;
         uboTerrain.mMat = World;
-        uboTerrain.nMat = glm::inverse(glm::transpose(World));
+        uboTerrain.mvpMat = ViewProj * uboTerrain.mMat;
+        uboTerrain.nMat = glm::inverse(glm::transpose(uboTerrain.mMat));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
+
+        World = glm::mat4(1.0f);
+        uboRail.amb = 1.0f;
+        uboRail.gamma = 180.0f;
+        uboRail.sColor = glm::vec3(1.0f);
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(-10, 0, 0)) *
+                       glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
+                       glm::scale(glm::mat4(1), glm::vec3(0.21555f));
+        uboRail.mvpMat = ViewProj * uboRail.mMat;
+        uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
+        DSRailLeft.map(currentImage, &uboRail, sizeof(uboRail), 0);
+
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(10, 0, -230)) *
+                       glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
+                       glm::scale(glm::mat4(1), glm::vec3(0.21555f));
+        uboRail.mvpMat = ViewProj * uboRail.mMat;
+        uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
+        DSRailRight.map(currentImage, &uboRail, sizeof(uboRail), 0);
     }
 
     void roadModel();
+
     void terrainModel();
+
     void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
 };
 
