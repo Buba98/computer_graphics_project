@@ -268,7 +268,7 @@ protected:
         glm::mat4 ViewProj;
         glm::mat4 World;
 
-        updateCameraPosition(ViewProj, World, currentImage);
+        updateCameraPosition(ViewProj, World);
 
         int shift = pos.z / 120;
 
