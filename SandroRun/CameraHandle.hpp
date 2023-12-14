@@ -24,10 +24,7 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
     // static bool wasFire = false;
     // bool handleFire = (wasFire && (!fire));
     // wasFire = fire;
-
-    static float yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
-    static float yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
-
+    
     const float LAMBDA = 10.0f;
 
     glm::vec3 a;
