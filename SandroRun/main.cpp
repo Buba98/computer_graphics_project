@@ -282,6 +282,8 @@ protected:
     void skyboxModel();
 
     void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World, glm::vec3 &cameraPosition);
+
+    void getSixAxis(float &deltaT, glm::vec3 &m, glm::vec3 &r, bool &fire) override;
 };
 
 #include "BuildModels.hpp"
