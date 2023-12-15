@@ -97,7 +97,7 @@ protected:
     glm::vec3 pos;
     float yaw, pitch, roll;
     float yawNew, pitchNew, rollNew;
-    glm::vec3 cameraPosition, newCameraPosition;
+    glm::vec3 cameraPosition;
     float speed;
 
     void setWindowParameters() override {
@@ -157,8 +157,8 @@ protected:
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
-        yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
-        yawNew = 0.0f, pitchNew = 0.0f, rollNew = 0.0f;
+        yaw = 0.0f, pitch = M_PI / 2.5f, roll = 0.0f;
+        yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
         cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
         speed = 0;
     }
