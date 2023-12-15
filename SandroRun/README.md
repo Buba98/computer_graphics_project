@@ -4,16 +4,25 @@
   - [x] Add the moto model to the scene
   - [x] Make the moto move on a straight line
   - [x] Make the moto accelerate with time (log)
-  - [ ] Make the moto turn left and right
-  - [ ] Animate the turning of the moto
+  - [x] Make the moto turn left and right
+  - [x] Animate the turning of the moto
   - [x] Bound the camera to the moto (the camera should follow the moto)
   - [x] Implement camera damping (the camera should not follow the moto instantly)
+  - [x] Implement first person view from the moto
+  - [] Separate wheels models from moto model
+  - [] Animate the rotation of the wheels
+  - [] Implement the wheelie/nose-up (impennata)
 - [ ] Add road
   - [x] Add a road texture
   - [x] Add a road model
   - [x] Add guardrails on the road
   - [x] Make the road infinite
-  - [ ] Add cars on the road
+  [ ] Add cars
+  - [] Export the cars from blender in obj format
+  - [] Add the cars model to the scene
+  - [] Make the cars move on a straight line
+  - [] Make the cars appear and disappear and the beginning and at the end of the scene
+  - [] Handle the random generation of cars in different lanes
 - [ ] Add scenary
   - [x] Add a skybox
   - [x] Add the terrain around the road

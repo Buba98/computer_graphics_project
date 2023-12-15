@@ -99,6 +99,7 @@ protected:
     float yawNew, pitchNew, rollNew;
     glm::vec3 cameraPosition;
     float speed;
+    float motoRoll;
 
     void setWindowParameters() override {
         windowWidth = 1280;
@@ -162,6 +163,7 @@ protected:
         yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
         cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
         speed = 0;
+        motoRoll = 0;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -283,7 +285,7 @@ protected:
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mMat = World;
+        uboMoto.mMat = World * glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1));
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
         uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
