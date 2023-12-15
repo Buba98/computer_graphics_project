@@ -225,7 +225,6 @@ protected:
         // Cleanup textures
         TSplash.cleanup();
         TRoad.cleanup();
-        TTerrain.cleanup();
         TRail.cleanup();
         TSkybox.cleanup();
 
