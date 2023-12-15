@@ -227,6 +227,7 @@ protected:
         TRoad.cleanup();
         TRail.cleanup();
         TSkybox.cleanup();
+        TTerrain.cleanup();
 
         // Cleanup models
         MSplash.cleanup();
