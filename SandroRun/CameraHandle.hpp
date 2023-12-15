@@ -17,6 +17,9 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
     const float MIN_MOTO_ROLL = (float) (-M_PI / 4.0f);
     const float MAX_MOTO_ROLL = (float) (M_PI / 4.0f);
 
+    const float MIN_MOTO_PITCH = 0;
+    const float MAX_MOTO_PITCH = (float) (M_PI / 4.0f);
+
     float deltaT;
     float time;
     auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
@@ -29,7 +32,7 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
     wasFire = fire;
 
     static bool holdFire = false;
-    if(handleFire)
+    if (handleFire)
         holdFire = !holdFire;
 
     const float LAMBDA = 10.0f;
@@ -57,11 +60,17 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
     }
     motoRoll = glm::clamp(motoRoll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
 
-//    std::cout << "motoRoll: " << motoRoll << std::endl;
-
     pos += ux * MOV_SPEED * deltaT * -(4 * motoRoll * motoRoll * (motoRoll >= 0 ? 1 : -1));
     speed = (log(time * .1f + 1) + 1) * .1f;
     pos += uz * MOV_SPEED * speed;
+
+    motoPitch = motoPitch - m.z * deltaT * 2.0f;
+    if (m.z * deltaT == 0.0f) {
+        motoPitch = motoPitch * (1 - glm::exp(-200 * deltaT)); // Yaw damping
+        if (motoPitch < 0.001 * MAX_MOTO_ROLL)
+            motoPitch = 0.0f;
+    }
+    motoPitch = glm::clamp(motoPitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
 
     World = glm::translate(glm::mat4(1), pos);
 
@@ -73,7 +82,8 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
                glm::rotate(glm::mat4(1.0), yaw, glm::vec3(0, 1, 0)) *
                glm::rotate(glm::mat4(1.0), -motoRoll / 2.0f, glm::vec3(0, 0, 1)) *
                glm::translate(glm::mat4(1.0), -pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-motoRoll),
-                                                               (-CAM_HEIGHT - .25f) * cos(motoRoll), 0));
+                                                               (-CAM_HEIGHT - .25f) * cos(motoRoll) - (CAM_HEIGHT / 2) * sin(motoPitch),
+                                                               -sin(motoPitch)));
 
         cameraPosition = World * glm::vec4(0, CAM_HEIGHT, 0, 1);
     } else {

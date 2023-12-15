@@ -100,6 +100,7 @@ protected:
     glm::vec3 cameraPosition;
     float speed;
     float motoRoll;
+    float motoPitch;
 
     void setWindowParameters() override {
         windowWidth = 1280;
@@ -109,7 +110,7 @@ protected:
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 10;
-        texturesInPool = 4;
+        texturesInPool = 5;
         setsInPool = 10;
 
         Ar = (float) windowWidth / (float) windowHeight;
@@ -141,7 +142,7 @@ protected:
 
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
-        PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
+        PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
@@ -164,6 +165,7 @@ protected:
         cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
         speed = 0;
         motoRoll = 0;
+        motoPitch = 0;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -285,7 +287,9 @@ protected:
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mMat = World * glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1));
+        uboMoto.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .3f, .5f)) *
+                       glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
+                       glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
         uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
