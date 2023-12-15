@@ -1,4 +1,4 @@
-void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
+void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
 
     const float ROAD_WIDTH = 8.68f;
     const float FOV_Y = glm::radians(45.0f);
@@ -27,11 +27,8 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
     bool fire = false;
     getSixAxis(deltaT, m, r, fire, time);
 
-    static bool wasFire = false;
     bool handleFire = (wasFire && (!fire));
     wasFire = fire;
-
-    static bool holdFire = false;
     if (handleFire)
         holdFire = !holdFire;
 
@@ -82,7 +79,8 @@ void SandroRun::updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World) {
                glm::rotate(glm::mat4(1.0), yaw, glm::vec3(0, 1, 0)) *
                glm::rotate(glm::mat4(1.0), -motoRoll / 2.0f, glm::vec3(0, 0, 1)) *
                glm::translate(glm::mat4(1.0), -pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-motoRoll),
-                                                               (-CAM_HEIGHT - .25f) * cos(motoRoll) - (CAM_HEIGHT / 2) * sin(motoPitch),
+                                                               (-CAM_HEIGHT - .25f) * cos(motoRoll) -
+                                                               (CAM_HEIGHT / 2) * sin(motoPitch),
                                                                -sin(motoPitch)));
 
         cameraPosition = World * glm::vec4(0, CAM_HEIGHT, 0, 1);

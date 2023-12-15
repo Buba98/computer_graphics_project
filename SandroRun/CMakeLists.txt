@@ -27,8 +27,7 @@ list(APPEND SOURCE_FILES main.cpp)
 # Create the executable
 set(TARGET_BINARY_NAME sandro_run)
 add_executable(${TARGET_BINARY_NAME} ${HEADER_FILES}
-        Starter.hpp BuildModels.hpp ${SOURCE_FILES}
-        CameraHandle.hpp)
+        Starter.hpp BuildModels.hpp HandleCommands.hpp ${SOURCE_FILES})
 
 # Set the output directory for the executable
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)

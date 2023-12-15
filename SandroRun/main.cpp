@@ -101,6 +101,8 @@ protected:
     float speed;
     float motoRoll;
     float motoPitch;
+    bool wasFire;
+    bool holdFire;
 
     void setWindowParameters() override {
         windowWidth = 1280;
@@ -166,6 +168,8 @@ protected:
         speed = 0;
         motoRoll = 0;
         motoPitch = 0;
+        wasFire = false;
+        holdFire = false;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -269,7 +273,7 @@ protected:
         glm::mat4 ViewProj;
         glm::mat4 World;
 
-        updateCameraPosition(ViewProj, World);
+        handleCommands(ViewProj, World);
 
         int shift = pos.z / 120;
 
@@ -337,11 +341,11 @@ protected:
 
     void skyboxModel();
 
-    void updateCameraPosition(glm::mat4 &ViewProj, glm::mat4 &World);
+    void handleCommands(glm::mat4 &ViewProj, glm::mat4 &World);
 };
 
 #include "BuildModels.hpp"
-#include "CameraHandle.hpp"
+#include "HandleCommands.hpp"
 
 
 int main() {
