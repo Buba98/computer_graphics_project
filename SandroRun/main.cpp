@@ -1,5 +1,11 @@
 
 #include "Starter.hpp"
+#include "TextMaker.hpp"
+
+std::vector<SingleText> demoText = {
+        {1, {"Welcome to the Computer Graphics course!", "", "", ""}, 0, 0},
+        {1, {"placeholder",                              "", "", ""}, 0, 0}
+};
 
 struct MeshUniformBlock {
     alignas(4) float amb;
@@ -91,6 +97,9 @@ protected:
     Texture TRail;
     Texture TSkybox;
 
+    // Text
+    TextMaker txt;
+
     // Uniform blocks
     OverlayUniformBlock uboSplash;
     GlobalUniformBlock gubo;
@@ -102,6 +111,7 @@ protected:
 
     // Other stuff
     int gameState = 0;
+    int currText = 0;
     glm::vec3 pos;
     float yaw, pitch, roll;
     float yawNew, pitchNew, rollNew;
@@ -115,9 +125,9 @@ protected:
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 20;
-        texturesInPool = 15;
-        setsInPool = 20;
+        uniformBlocksInPool = 50;
+        texturesInPool = 50;
+        setsInPool = 50;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -127,6 +137,7 @@ protected:
     }
 
     void localInit() {
+        demoText[1] = {1, {"score before", "", "", ""}, 0, 0};
 
         // Init Descriptor Sets Layouts
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
@@ -171,6 +182,9 @@ protected:
         // Init textures
         TRail.init(this, "textures/guardrail.jpg");
 
+        // Text
+        txt.init(this, &demoText);
+
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
         yaw = 0.0f, pitch = 0.0f, roll = 0.0f;
@@ -201,6 +215,8 @@ protected:
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
+
+        txt.pipelinesAndDescriptorSetsInit();
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -219,6 +235,8 @@ protected:
         DSSkybox.cleanup();
         DSSplash.cleanup();
         DSGubo.cleanup();
+
+        txt.pipelinesAndDescriptorSetsCleanup();
     }
 
     void localCleanup() {
@@ -249,6 +267,8 @@ protected:
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
+
+        txt.localCleanup();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -284,7 +304,11 @@ protected:
         MSkybox.bind(commandBuffer);
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
+
+        txt.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
+
+    int num = 0;
 
     void updateUniformBuffer(uint32_t currentImage) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -299,10 +323,18 @@ protected:
             case 0: // initial state - show splash screen
                 if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                     gameState = 1; // jump to the wait key state
+                    currText = 1;
+                    RebuildPipeline();
                 }
                 break;
             case 1: // run
+                num++;
+                std::cout << num << std::endl;
                 updateCameraPosition(ViewProj, World);
+                if (num % 10 == 0) {
+                    currText = currText == 1? 0 : 1;
+                    RebuildPipeline();
+                }
                 break;
         }
 
