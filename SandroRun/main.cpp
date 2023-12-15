@@ -140,13 +140,14 @@ protected:
 
         // Init Pipelines
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
+        PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
 
         // Init Models
         skyboxModel();
-        MMoto.init(this, &VVColor, "models/moto.colored.obj", OBJ);
+        MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
 
         roadModel();
