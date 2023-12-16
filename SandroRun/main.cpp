@@ -1,5 +1,6 @@
 
 #include "Starter.hpp"
+#include "TextMaker.hpp"
 
 struct MeshUniformBlock {
     alignas(4) float amb;
@@ -49,21 +50,25 @@ protected:
     float Ar;
 
     // Descriptor sets layouts
+    DescriptorSetLayout DSLOverlay;
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
 
     // Vertex descriptors
+    VertexDescriptor VOverlay;
     VertexDescriptor VVColor;
     VertexDescriptor VMesh;
 
     // Pipelines
+    Pipeline POverlay;
     Pipeline PVColor;
     Pipeline PMesh;
     Pipeline PSkybox;
 
     // Models
+    Model<VertexOverlay> MSplash;
     Model<VertexVColor> MMoto;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
@@ -71,6 +76,7 @@ protected:
     Model<VertexMesh> MRail;
 
     // Descriptor sets
+    DescriptorSet DSSplash;
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSRoad;
@@ -80,12 +86,17 @@ protected:
     DescriptorSet DSSkybox;
 
     // Textures
+    Texture TSplash;
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
     Texture TSkybox;
 
+    // Text
+    TextMaker score;
+
     // Uniform blocks
+    OverlayUniformBlock uboSplash;
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
     MeshUniformBlock uboRoad;
@@ -94,6 +105,11 @@ protected:
     MeshUniformBlock uboRail;
 
     // Other stuff
+    std::vector<SingleText> demoText = {
+            {1, {"Sandro Run", "", "", ""}, 0, 0},
+    };
+    int gameState = 0;
+    int currText = 0;
     glm::vec3 pos;
     float yaw, pitch, roll;
     float yawNew, pitchNew, rollNew;
@@ -111,9 +127,9 @@ protected:
         windowResizable = GLFW_TRUE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 10;
-        texturesInPool = 5;
-        setsInPool = 10;
+        uniformBlocksInPool = 50;
+        texturesInPool = 50;
+        setsInPool = 50;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -123,8 +139,19 @@ protected:
     }
 
     void localInit() {
+        for (int i = 0; i < 100; ++i) {
+            auto str = std::to_string(i);
+            char *cstr = new char[str.length() + 1];
+            strcpy(cstr, str.c_str());
+            demoText.insert(
+                    demoText.end(),
+                    {2, {"score", cstr, "", ""}, 0, 0}
+            );
+        }
 
         // Init Descriptor Sets Layouts
+        DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -133,6 +160,9 @@ protected:
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
 
         // Init Vertex Descriptors
+        VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
+                      {{0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos), sizeof(glm::vec2), OTHER},
+                       {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),  sizeof(glm::vec2), UV}});
         VVColor.init(this, {{0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}},
                      {{0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, pos),   sizeof(glm::vec3), POSITION},
                       {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, norm),  sizeof(glm::vec3), NORMAL},
@@ -143,6 +173,8 @@ protected:
                     {0, 2, VK_FORMAT_R32G32_SFLOAT,    offsetof(VertexMesh, UV),   sizeof(glm::vec2), UV}});
 
         // Init Pipelines
+        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
+        POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
         PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
@@ -154,11 +186,15 @@ protected:
         MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
 
+        splashModel();
         roadModel();
         terrainModel();
 
         // Init textures
         TRail.init(this, "textures/guardrail.jpg");
+
+        // Text
+        score.init(this, &demoText);
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -174,11 +210,14 @@ protected:
 
     void pipelinesAndDescriptorSetsInit() {
         // Init pipelines
+        POverlay.create();
         PSkybox.create();
         PVColor.create();
         PMesh.create();
 
         // Init Descriptor Sets
+        DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                                          {1, TEXTURE, 0,                           &TSplash}});
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad}});
@@ -191,10 +230,13 @@ protected:
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
+
+        score.pipelinesAndDescriptorSetsInit();
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
         // Cleanup pipelines
+        POverlay.cleanup();
         PVColor.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
@@ -206,17 +248,22 @@ protected:
         DSRailLeft.cleanup();
         DSRailRight.cleanup();
         DSSkybox.cleanup();
+        DSSplash.cleanup();
         DSGubo.cleanup();
+
+        score.pipelinesAndDescriptorSetsCleanup();
     }
 
     void localCleanup() {
         // Cleanup textures
+        TSplash.cleanup();
         TRoad.cleanup();
         TRail.cleanup();
-        TTerrain.cleanup();
         TSkybox.cleanup();
+        TTerrain.cleanup();
 
         // Cleanup models
+        MSplash.cleanup();
         MMoto.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
@@ -224,18 +271,27 @@ protected:
         MSkybox.cleanup();
 
         // Cleanup descriptor sets layouts
+        DSLOverlay.cleanup();
         DSLVColor.cleanup();
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
 
         // Destroy pipelines
+        POverlay.destroy();
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
+
+        score.localCleanup();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
+        POverlay.bind(commandBuffer);
+        MSplash.bind(commandBuffer);
+        DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+
         DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
         PVColor.bind(commandBuffer);
         MMoto.bind(commandBuffer);
@@ -263,7 +319,11 @@ protected:
         MSkybox.bind(commandBuffer);
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
+
+        score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
+
+    int num = 0;
 
     void updateUniformBuffer(uint32_t currentImage) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
@@ -273,7 +333,24 @@ protected:
         glm::mat4 ViewProj;
         glm::mat4 World;
 
-        handleCommands(ViewProj, World);
+        // main state machine implementation
+        switch (gameState) {
+            case 0: // initial state - show splash screen
+                if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                    gameState = 1; // jump to the wait key state
+                    RebuildPipeline();
+                }
+                break;
+            case 1: // run
+                handleCommands(ViewProj, World);
+                if (num % 100 == 0) {
+                    currText = (num / 100) % 100 + 1;
+                    RebuildPipeline();
+                }
+                num++;
+                break;
+        }
+
 
         int shift = pos.z / 120;
 
@@ -333,7 +410,12 @@ protected:
         uboRail.mvpMat = ViewProj * uboRail.mMat;
         uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
         DSRailRight.map(currentImage, &uboRail, sizeof(uboRail), 0);
+
+        uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
+        DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
+
+    void splashModel();
 
     void roadModel();
 
