@@ -6,7 +6,8 @@
 #define MIN_PITCH glm::radians(10.0f)
 #define MAX_PITCH glm::radians(80.0f)
 #define ROT_SPEED glm::radians(120.0f)
-#define MOV_SPEED 3.0f
+#define Z_SPEED 3.0f
+#define X_SPEED 21.0f
 #define MIN_MOTO_ROLL (float) (-M_PI / 4.0f)
 #define MAX_MOTO_ROLL (-MIN_MOTO_ROLL)
 #define MIN_MOTO_PITCH 0.0f
@@ -21,6 +22,10 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 
     getSixAxis(deltaT, m, r, fire, time);
+
+    bool handleFire = (!(wasFire) && fire);
+    if (handleFire)
+        holdFire = !holdFire && gameState;
     wasFire = fire;
 
 
@@ -33,13 +38,11 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
         return;
     }
 
-    if(splashVisibility != 0.0f){
+
+    if (splashVisibility != 0.0f) {
         splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
     }
 
-    bool handleFire = (wasFire && (!fire));
-    if (handleFire)
-        holdFire = !holdFire;
 
     glm::vec3 ux = glm::vec3(1, 0, 0);
     glm::vec3 uy = glm::vec3(0, 1, 0);
@@ -63,17 +66,6 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
             motoRoll = 0.0f;
     }
     motoRoll = glm::clamp(motoRoll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
-
-    pos += ux * MOV_SPEED * deltaT * -(4 * motoRoll * motoRoll * (motoRoll >= 0 ? 1 : -1));
-    speed = (log(time * .1f + 1) + 1) * .1f;
-    pos += uz * MOV_SPEED * speed;
-
-    int curr = (abs(pos.z) / 100) + 1;
-    if (currText != curr) {
-        currText = curr;
-        createCommandBuffers();
-    }
-
     motoPitch = motoPitch - m.z * deltaT * 2.0f;
     if (m.z * deltaT == 0.0f) {
         motoPitch = motoPitch * (1 - glm::exp(-200 * deltaT)); // Yaw damping
@@ -81,6 +73,17 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
             motoPitch = 0.0f;
     }
     motoPitch = glm::clamp(motoPitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
+
+    speed = Z_SPEED * (log(time * .1f + 1) + 1) * .1f;
+
+    pos += ux * X_SPEED * deltaT * sin(-motoRoll);
+    pos += uz * speed;
+
+    int curr = (abs(pos.z) / 100) + 1;
+    if (currText != curr) {
+        currText = curr;
+        createCommandBuffers();
+    }
 
     World = glm::translate(glm::mat4(1), pos);
 

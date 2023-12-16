@@ -354,7 +354,7 @@ protected:
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .3f, .5f)) *
+        uboMoto.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), .5f)) *
                        glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
                        glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
