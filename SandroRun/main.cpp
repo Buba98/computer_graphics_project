@@ -105,11 +105,9 @@ protected:
     MeshUniformBlock uboRail;
 
     // Other stuff
-    std::vector<SingleText> demoText = {
-            {1, {"Sandro Run", "", "", ""}, 0, 0},
-    };
-    int gameState = 0;
-    int currText = 0;
+    std::vector<SingleText> texts;
+    int gameState;
+    int currText;
     glm::vec3 pos;
     float yaw, pitch, roll;
     float yawNew, pitchNew, rollNew;
@@ -119,12 +117,13 @@ protected:
     float motoPitch;
     bool wasFire;
     bool holdFire;
+    float splashVisibility;
 
     void setWindowParameters() override {
         windowWidth = 1280;
         windowHeight = 720;
         windowTitle = "Sandro Run";
-        windowResizable = GLFW_TRUE;
+        windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 50;
@@ -139,16 +138,6 @@ protected:
     }
 
     void localInit() {
-        for (int i = 0; i < 100; ++i) {
-            auto str = std::to_string(i);
-            char *cstr = new char[str.length() + 1];
-            strcpy(cstr, str.c_str());
-            demoText.insert(
-                    demoText.end(),
-                    {2, {"score", cstr, "", ""}, 0, 0}
-            );
-        }
-
         // Init Descriptor Sets Layouts
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -194,7 +183,19 @@ protected:
         TRail.init(this, "textures/guardrail.jpg");
 
         // Text
-        score.init(this, &demoText);
+        texts.push_back(
+                {1, {"Sandro Run", "", "", ""}, 0, 0}
+        );
+        for (int i = 0; i < 1000; ++i) {
+            std::string str = std::to_string(i);
+            char *c_str = new char[str.length() + 1];
+            strcpy(c_str, str.c_str());
+            texts.push_back(
+                    {2, {"Score: ", c_str, "", ""}, 0, 0}
+            );
+        }
+
+        score.init(this, &texts);
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -206,6 +207,9 @@ protected:
         motoPitch = 0;
         wasFire = false;
         holdFire = false;
+        currText = 0;
+        gameState = 0;
+        splashVisibility = 1.0f;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -323,8 +327,6 @@ protected:
         score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
 
-    int num = 0;
-
     void updateUniformBuffer(uint32_t currentImage) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
             glfwSetWindowShouldClose(window, GL_TRUE);
@@ -333,24 +335,8 @@ protected:
         glm::mat4 ViewProj;
         glm::mat4 World;
 
-        // main state machine implementation
-        switch (gameState) {
-            case 0: // initial state - show splash screen
-                if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
-                    gameState = 1; // jump to the wait key state
-                    RebuildPipeline();
-                }
-                break;
-            case 1: // run
-                handleCommands(ViewProj, World);
-                if (num % 100 == 0) {
-                    currText = (num / 100) % 100 + 1;
-                    RebuildPipeline();
-                }
-                num++;
-                break;
-        }
 
+        handleCommands(ViewProj, World);
 
         int shift = pos.z / 120;
 
@@ -411,7 +397,7 @@ protected:
         uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
         DSRailRight.map(currentImage, &uboRail, sizeof(uboRail), 0);
 
-        uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
+        uboSplash.visible = splashVisibility;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 

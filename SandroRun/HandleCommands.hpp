@@ -1,38 +1,45 @@
+#define FOV_Y glm::radians(45.0f)
+#define NEAR_PLANE 0.1f
+#define FAR_PLANE 100.0f
+#define CAM_HEIGHT 1.0f
+#define CAM_DIST 5.0f
+#define MIN_PITCH glm::radians(10.0f)
+#define MAX_PITCH glm::radians(80.0f)
+#define ROT_SPEED glm::radians(120.0f)
+#define MOV_SPEED 3.0f
+#define MIN_MOTO_ROLL (float) (-M_PI / 4.0f)
+#define MAX_MOTO_ROLL (-MIN_MOTO_ROLL)
+#define MIN_MOTO_PITCH 0.0f
+#define MAX_MOTO_PITCH (float) (M_PI / 4.0f)
+#define LAMBDA 10.0f
+
 void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
-
-    const float ROAD_WIDTH = 8.68f;
-    const float FOV_Y = glm::radians(45.0f);
-    const float NEAR_PLANE = 0.1f;
-    const float FAR_PLANE = 100.0f;
-
-    const float CAM_HEIGHT = 1.0f;
-    const float CAM_DIST = 5.0f;
-
-    const float MIN_PITCH = glm::radians(10.0f);
-    const float MAX_PITCH = glm::radians(80.0f);
-
-    const float ROT_SPEED = glm::radians(120.0f);
-    const float MOV_SPEED = 3.0f;
-
-    const float MIN_MOTO_ROLL = (float) (-M_PI / 4.0f);
-    const float MAX_MOTO_ROLL = (float) (M_PI / 4.0f);
-
-    const float MIN_MOTO_PITCH = 0;
-    const float MAX_MOTO_PITCH = (float) (M_PI / 4.0f);
 
     float deltaT;
     float time;
-    auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-
     bool fire = false;
+    glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+
     getSixAxis(deltaT, m, r, fire, time);
+    wasFire = fire;
+
+
+    if (gameState == 0) {
+        if (fire) {
+            gameState = 1;
+            currText = 1;
+            createCommandBuffers();
+        }
+        return;
+    }
+
+    if(splashVisibility != 0.0f){
+        splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
+    }
 
     bool handleFire = (wasFire && (!fire));
-    wasFire = fire;
     if (handleFire)
         holdFire = !holdFire;
-
-    const float LAMBDA = 10.0f;
 
     glm::vec3 ux = glm::vec3(1, 0, 0);
     glm::vec3 uy = glm::vec3(0, 1, 0);
@@ -60,6 +67,12 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     pos += ux * MOV_SPEED * deltaT * -(4 * motoRoll * motoRoll * (motoRoll >= 0 ? 1 : -1));
     speed = (log(time * .1f + 1) + 1) * .1f;
     pos += uz * MOV_SPEED * speed;
+
+    int curr = (abs(pos.z) / 100) + 1;
+    if (currText != curr) {
+        currText = curr;
+        createCommandBuffers();
+    }
 
     motoPitch = motoPitch - m.z * deltaT * 2.0f;
     if (m.z * deltaT == 0.0f) {
