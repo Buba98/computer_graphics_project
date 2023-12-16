@@ -51,7 +51,7 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
 
     motoRoll = motoRoll - m.x * deltaT * 5.0f;
     if (m.x * deltaT == 0.0f) {
-        motoRoll = motoRoll * (1 - glm::exp(-200 * deltaT)); // Yaw damping
+        motoRoll = motoRoll * (1 - glm::exp(-200 * deltaT)); // motoRoll damping
         if (motoRoll > 0.001 * MIN_MOTO_ROLL && motoRoll < 0.001 * MAX_MOTO_ROLL)
             motoRoll = 0.0f;
     }
@@ -63,8 +63,8 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
 
     motoPitch = motoPitch - m.z * deltaT * 2.0f;
     if (m.z * deltaT == 0.0f) {
-        motoPitch = motoPitch * (1 - glm::exp(-200 * deltaT)); // Yaw damping
-        if (motoPitch < 0.001 * MAX_MOTO_ROLL)
+        motoPitch = motoPitch * (1 - glm::exp(-200 * deltaT)); // motoPitch damping
+        if (motoPitch < 0.001 * MAX_MOTO_PITCH)
             motoPitch = 0.0f;
     }
     motoPitch = glm::clamp(motoPitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);

@@ -1,6 +1,8 @@
 
 #include "Starter.hpp"
 
+#define NUM_CAR1_INSTANCES 2
+
 struct MeshUniformBlock {
     alignas(4) float amb;
     alignas(4) float gamma;
@@ -53,6 +55,7 @@ protected:
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
+    DescriptorSetLayout DSLCars;
 
     // Vertex descriptors
     VertexDescriptor VVColor;
@@ -62,6 +65,7 @@ protected:
     Pipeline PVColor;
     Pipeline PMesh;
     Pipeline PSkybox;
+    Pipeline PCars;
 
     // Models
     Model<VertexVColor> MMoto;
@@ -69,6 +73,7 @@ protected:
     Model<VertexMesh> MTerrain;
     Model<VertexMesh> MSkybox;
     Model<VertexMesh> MRail;
+    Model<VertexVColor> MCar1;
 
     // Descriptor sets
     DescriptorSet DSGubo;
@@ -78,6 +83,7 @@ protected:
     DescriptorSet DSRailLeft;
     DescriptorSet DSRailRight;
     DescriptorSet DSSkybox;
+    DescriptorSet DSCar1[NUM_CAR1_INSTANCES];
 
     // Textures
     Texture TRoad;
@@ -92,6 +98,7 @@ protected:
     MeshUniformBlock uboTerrain;
     SkyboxUniformBlock uboSkybox;
     MeshUniformBlock uboRail;
+    MeshUniformBlock uboCar1[NUM_CAR1_INSTANCES];
 
     // Other stuff
     glm::vec3 pos;
@@ -131,6 +138,7 @@ protected:
         DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
+        DSLCars.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
 
         // Init Vertex Descriptors
         VVColor.init(this, {{0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -148,11 +156,13 @@ protected:
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
+        PCars.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
 
         // Init Models
         skyboxModel();
         MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
+        MCar1.init(this, &VVColor, "models/cars/car1.obj", OBJ);
 
         roadModel();
         terrainModel();
@@ -177,6 +187,7 @@ protected:
         PSkybox.create();
         PVColor.create();
         PMesh.create();
+        PCars.create();
 
         // Init Descriptor Sets
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -191,6 +202,8 @@ protected:
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
+        for(auto & item : DSCar1)
+            item.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});;
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -198,6 +211,7 @@ protected:
         PVColor.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
+        PCars.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
@@ -207,6 +221,8 @@ protected:
         DSRailRight.cleanup();
         DSSkybox.cleanup();
         DSGubo.cleanup();
+        for(auto & item : DSCar1)
+            item.cleanup();
     }
 
     void localCleanup() {
@@ -222,17 +238,20 @@ protected:
         MTerrain.cleanup();
         MRail.cleanup();
         MSkybox.cleanup();
+        MCar1.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLVColor.cleanup();
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
+        DSLCars.cleanup();
 
         // Destroy pipelines
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
+        PCars.destroy();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -263,6 +282,14 @@ protected:
         MSkybox.bind(commandBuffer);
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
+
+        DSGubo.bind(commandBuffer, PCars, 0, currentImage);
+        PCars.bind(commandBuffer);
+        for(auto & item : DSCar1){
+            MCar1.bind(commandBuffer);
+            item.bind(commandBuffer, PCars, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
+        }
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -297,6 +324,22 @@ protected:
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
         uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
+
+        World = glm::mat4(1.0f);
+        const float RIGHT_LANE = 6.5f, CENTER_RIGHT_LANE = 2.2f, CENTER_LEFT_LANE = -CENTER_RIGHT_LANE, LEFT_LANE = -RIGHT_LANE;
+        glm::vec3 car1Positions[NUM_CAR1_INSTANCES] = {glm::vec3(CENTER_LEFT_LANE, 0, pos.z - 15), glm::vec3(RIGHT_LANE, 0, pos.z - 30)};
+        bool car1GoingForward[NUM_CAR1_INSTANCES] = {false, true};
+        for (int index = 0; index < NUM_CAR1_INSTANCES; index++){
+            uboCar1[index].amb = 1.0f;
+            uboCar1[index].gamma = 180.0f;
+            uboCar1[index].sColor = glm::vec3(1.0f);
+            uboCar1[index].mMat = World * glm::translate(glm::mat4(1), car1Positions[index]) *
+                                  glm::rotate(glm::mat4(1), glm::radians(car1GoingForward[index] ? 0.0f : 180.0f), glm::vec3(0,1,0)) *
+                                  glm::scale(glm::mat4(1), glm::vec3(0.375f));
+            uboCar1[index].mvpMat = ViewProj * uboCar1[index].mMat;
+            uboCar1[index].nMat = glm::inverse(glm::transpose(uboCar1[index].mMat));
+            DSCar1[index].map(currentImage, &uboCar1[index], sizeof(uboCar1[index]), 0);
+        }
 
         World = glm::mat4(1.0f);
         uboRoad.amb = 1.0f;
