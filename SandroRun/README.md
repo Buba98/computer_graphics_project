@@ -9,34 +9,33 @@
   - [x] Bound the camera to the moto (the camera should follow the moto)
   - [x] Implement camera damping (the camera should not follow the moto instantly)
   - [x] Implement first person view from the moto
-  - [] Separate wheels models from moto model
-  - [] Animate the rotation of the wheels
-  - [] Implement the wheelie/nose-up (impennata)
+  - [ ] Separate wheels models from moto model
+  - [ ] Animate the rotation of the wheels
+  - [x] Implement the wheelie/nose-up (impennata)
 - [ ] Add road
   - [x] Add a road texture
   - [x] Add a road model
   - [x] Add guardrails on the road
   - [x] Make the road infinite
   [ ] Add cars
-  - [] Export the cars from blender in obj format
-  - [] Add the cars model to the scene
-  - [] Make the cars move on a straight line
-  - [] Make the cars appear and disappear and the beginning and at the end of the scene
-  - [] Handle the random generation of cars in different lanes
+  - [ ] Export the cars from blender in obj format
+  - [ ] Add the cars model to the scene
+  - [ ] Make the cars move on a straight line
+  - [ ] Make the cars appear and disappear and the beginning and at the end of the scene
+  - [ ] Handle the random generation of cars in different lanes
 - [ ] Add scenary
   - [x] Add a skybox
   - [x] Add the terrain around the road
   - [ ] Add trees on the border of the road
 - [ ] Add a splash screen
-  - [ ] Add a splash screen image
+  - [x] Add a splash screen image
   - [ ] Explain the goal of the game
   - [ ] Explain the controls
   - [ ] Explain the rules
-  - [ ] Add a button to start the game
+  - [x] Add a button to start the game
   - [ ] Add the photo of Sandro
 - [ ] Add game logic
-  - [ ] Add score counter
-  - [ ] Add timer counter
+  - [x] Add score counter
   - [ ] Detect collisions
     - [ ] Detect collisions with the guardrails
     - [ ] Detect collisions with cars
