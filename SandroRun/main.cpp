@@ -2,11 +2,6 @@
 #include "Starter.hpp"
 #include "TextMaker.hpp"
 
-std::vector<SingleText> demoText = {
-        {1, {"Welcome to the Computer Graphics course!", "", "", ""}, 0, 0},
-        {1, {"placeholder",                              "", "", ""}, 0, 0}
-};
-
 struct MeshUniformBlock {
     alignas(4) float amb;
     alignas(4) float gamma;
@@ -98,7 +93,7 @@ protected:
     Texture TSkybox;
 
     // Text
-    TextMaker txt;
+    TextMaker score;
 
     // Uniform blocks
     OverlayUniformBlock uboSplash;
@@ -110,6 +105,9 @@ protected:
     MeshUniformBlock uboRail;
 
     // Other stuff
+    std::vector<SingleText> demoText = {
+            {1, {"Sandro Run", "", "", ""}, 0, 0},
+    };
     int gameState = 0;
     int currText = 0;
     glm::vec3 pos;
@@ -137,7 +135,15 @@ protected:
     }
 
     void localInit() {
-        demoText[1] = {1, {"score before", "", "", ""}, 0, 0};
+        for (int i = 0; i < 100; ++i) {
+            auto str = std::to_string(i);
+            char *cstr = new char[str.length() + 1];
+            strcpy(cstr, str.c_str());
+            demoText.insert(
+                    demoText.end(),
+                    {2, {"score", cstr, "", ""}, 0, 0}
+            );
+        }
 
         // Init Descriptor Sets Layouts
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
@@ -183,7 +189,7 @@ protected:
         TRail.init(this, "textures/guardrail.jpg");
 
         // Text
-        txt.init(this, &demoText);
+        score.init(this, &demoText);
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
@@ -216,7 +222,7 @@ protected:
                                          {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
 
-        txt.pipelinesAndDescriptorSetsInit();
+        score.pipelinesAndDescriptorSetsInit();
     }
 
     void pipelinesAndDescriptorSetsCleanup() {
@@ -236,7 +242,7 @@ protected:
         DSSplash.cleanup();
         DSGubo.cleanup();
 
-        txt.pipelinesAndDescriptorSetsCleanup();
+        score.pipelinesAndDescriptorSetsCleanup();
     }
 
     void localCleanup() {
@@ -268,7 +274,7 @@ protected:
         PMesh.destroy();
         PSkybox.destroy();
 
-        txt.localCleanup();
+        score.localCleanup();
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
@@ -305,7 +311,7 @@ protected:
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
 
-        txt.populateCommandBuffer(commandBuffer, currentImage, currText);
+        score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
 
     int num = 0;
@@ -323,18 +329,16 @@ protected:
             case 0: // initial state - show splash screen
                 if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
                     gameState = 1; // jump to the wait key state
-                    currText = 1;
                     RebuildPipeline();
                 }
                 break;
             case 1: // run
-                num++;
-                std::cout << num << std::endl;
                 updateCameraPosition(ViewProj, World);
-                if (num % 10 == 0) {
-                    currText = currText == 1? 0 : 1;
+                if (num % 100 == 0) {
+                    currText = (num / 100) % 100 + 1;
                     RebuildPipeline();
                 }
+                num++;
                 break;
         }
 
@@ -420,8 +424,7 @@ int main() {
 
     try {
         app.run();
-    }
-    catch (const std::exception &e) {
+    } catch (const std::exception &e) {
         std::cerr << e.what() << std::endl;
         return EXIT_FAILURE;
     }
