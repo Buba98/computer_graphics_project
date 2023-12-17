@@ -26,8 +26,9 @@
   - [x] Cleanup and restructuring of car related code
   - [x] Add multiple car models
   - [ ] Handle collisions between cars
-  - [ ] 
-- [ ] Add scenary
+  - [ ] Color all car models
+  - [ ] Rescale all car models to avoid scaling inside code
+- [ ] Add scenery
   - [x] Add a skybox
   - [x] Add the terrain around the road
   - [ ] Add trees on the border of the road

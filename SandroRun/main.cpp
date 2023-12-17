@@ -253,6 +253,14 @@ protected:
         currText = 0;
         gameState = 0;
         splashVisibility = 1.0f;
+        frontWorldLimit = -TERRAIN_LENGTH;
+        backWorldLimit = 0;
+
+        // Cars initialization
+        for (int m = 0; m < NUM_CAR_MODELS; m++)
+            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+                cars[m][i].pos =  glm::vec3(0.0f);
+            }
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             switch (model) {
                 case 0:
@@ -269,7 +277,10 @@ protected:
             }
             for(int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 regenerateCar(model, i);
-                cars[model][i].pos.z = -40;
+            }
+            for(int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+                if(cars[model][i].isGoingForward)
+                    cars[model][i].pos.z += (float) TERRAIN_LENGTH;
             }
         }
     }
