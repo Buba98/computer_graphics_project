@@ -131,6 +131,7 @@ protected:
     bool holdFire;
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
+    float carModelsScalingFactors[NUM_CAR_MODELS];
     float frontWorldLimit, backWorldLimit;
 
     void setWindowParameters() override {
@@ -140,9 +141,9 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 50;
-        texturesInPool = 50;
-        setsInPool = 50;
+        uniformBlocksInPool = 10;
+        texturesInPool = 10;
+        setsInPool = 10 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -190,8 +191,10 @@ protected:
         skyboxModel();
         MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
-        for(Model<VertexVColor> & MCar : MCars) {
-            MCar.init(this, &VVColor, "models/cars/car1.obj", OBJ);
+        for(int model = 0; model < NUM_CAR_MODELS; model++) {
+            std::string modelFile = "models/cars/car" + std::to_string(model + 1) + ".obj";
+//            std::string modelFile = "models/cars/car1.obj";
+            MCars[model].init(this, &VVColor, modelFile, OBJ);
         }
 
         splashModel();
@@ -230,6 +233,19 @@ protected:
         gameState = 0;
         splashVisibility = 1.0f;
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
+            switch (model) {
+                case 0:
+                    carModelsScalingFactors[model] = 0.175f;
+                    break;
+                case 1:
+                    carModelsScalingFactors[model] = 1.25f;
+                    break;
+                case 2:
+                    carModelsScalingFactors[model] = 1.2f;
+                    break;
+                default:
+                    carModelsScalingFactors[model] = 1.0f;
+            }
             for(int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 regenerateCar(model, i);
                 cars[model][i].pos.z = -40;
@@ -421,7 +437,7 @@ protected:
                 uboCars[model][index].mMat = World * glm::translate(glm::mat4(1), cars[model][index].pos) *
                                       glm::rotate(glm::mat4(1), glm::radians(cars[model][index].isGoingForward ? 0.0f : 180.0f),
                                                   glm::vec3(0, 1, 0)) *
-                                      glm::scale(glm::mat4(1), glm::vec3(0.375f));
+                                      glm::scale(glm::mat4(1), glm::vec3(carModelsScalingFactors[model]));
                 uboCars[model][index].mvpMat = ViewProj * uboCars[model][index].mMat;
                 uboCars[model][index].nMat = glm::inverse(glm::transpose(uboCars[model][index].mMat));
                 DSCars[model][index].map(currentImage, &uboCars[model][index], sizeof(uboCars[model][index]), 0);

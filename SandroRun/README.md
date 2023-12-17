@@ -23,9 +23,10 @@
   - [x] Make the cars move on a straight line
   - [x] Make the cars appear and disappear and the beginning and at the end of the scene
   - [x] Handle the random generation of cars in different lanes
-  - [ ] Cleanup and restructuring of car related code
-  - [ ] Add multiple car models
+  - [x] Cleanup and restructuring of car related code
+  - [x] Add multiple car models
   - [ ] Handle collisions between cars
+  - [ ] 
 - [ ] Add scenary
   - [x] Add a skybox
   - [x] Add the terrain around the road

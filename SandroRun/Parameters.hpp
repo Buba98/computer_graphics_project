@@ -23,14 +23,14 @@
 #define LAMBDA 10.0f
 
 // Cars settings
-#define NUM_CAR_MODELS 2
-#define NUM_CAR_MODEL_INSTANCES 3
+#define NUM_CAR_MODELS 3
+#define NUM_CAR_MODEL_INSTANCES 4
 #define RIGHT_LANE 6.5f
 #define CENTER_RIGHT_LANE 2.2f
 #define CENTER_LEFT_LANE -CENTER_RIGHT_LANE
 #define LEFT_LANE -RIGHT_LANE
-#define MAX_CAR_SPEED 16
-#define MIN_CAR_SPEED 8
+#define MAX_CAR_SPEED 30
+#define MIN_CAR_SPEED 15
 
 // World settings
 #define TERRAIN_LENGTH 120
