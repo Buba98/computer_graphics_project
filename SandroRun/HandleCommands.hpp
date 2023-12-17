@@ -65,6 +65,8 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     pos += ux * X_SPEED * deltaT * sin(-motoRoll);
     pos += uz * speed;
 
+    wheelPitch += - (2 << 4) * speed * deltaT ; // Pitch damping
+
     int curr = (abs(pos.z) / 100) + 1;
     if (currText != curr) {
         currText = curr;

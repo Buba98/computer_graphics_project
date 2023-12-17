@@ -2081,13 +2081,15 @@ void Model<Vert>::loadModelOBJ(std::string file) {
                 *o = color;
             }
 
-            glm::vec2 texCoord = {
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1 - attrib.texcoords[2 * index.texcoord_index + 1]
-            };
-            if (VD->UV.hasIt) {
-                glm::vec2 *o = (glm::vec2 *) ((char *) (&vertex) + VD->UV.offset);
-                *o = texCoord;
+            if(index.texcoord_index != -1) {
+                glm::vec2 texCoord = {
+                        attrib.texcoords[2 * index.texcoord_index + 0],
+                        1 - attrib.texcoords[2 * index.texcoord_index + 1]
+                };
+                if (VD->UV.hasIt) {
+                    glm::vec2 *o = (glm::vec2 *) ((char *) (&vertex) + VD->UV.offset);
+                    *o = texCoord;
+                }
             }
 
             glm::vec3 norm = {

@@ -3,6 +3,8 @@
 #include "TextMaker.hpp"
 #include "Parameters.hpp"
 
+#define NUM_TREE_INSTANCES 4
+
 struct MeshUniformBlock {
     alignas(4) float amb;
     alignas(4) float gamma;
@@ -75,26 +77,33 @@ protected:
     Pipeline PMesh;
     Pipeline PSkybox;
     Pipeline PCars;
+    Pipeline PTree;
 
     // Models
     Model<VertexOverlay> MSplash;
     Model<VertexVColor> MMoto;
+    Model<VertexVColor> MFrontWheel;
+    Model<VertexVColor> MRearWheel;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
     Model<VertexMesh> MSkybox;
     Model<VertexMesh> MRail;
     Model<VertexVColor> MCars[NUM_CAR_MODELS];
+    Model<VertexVColor> MTrees[NUM_TREE_INSTANCES];
 
     // Descriptor sets
     DescriptorSet DSSplash;
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
+    DescriptorSet DSFrontWheel;
+    DescriptorSet DSRearWheel;
     DescriptorSet DSRoad;
     DescriptorSet DSTerrain;
     DescriptorSet DSRailLeft;
     DescriptorSet DSRailRight;
     DescriptorSet DSSkybox;
     DescriptorSet DSCars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
+    DescriptorSet DSTrees[NUM_TREE_INSTANCES * 2];
 
     // Textures
     Texture TSplash;
@@ -110,11 +119,14 @@ protected:
     OverlayUniformBlock uboSplash;
     GlobalUniformBlock gubo;
     MeshUniformBlock uboMoto;
+    MeshUniformBlock uboFrontWheel;
+    MeshUniformBlock uboRearWheel;
     MeshUniformBlock uboRoad;
     MeshUniformBlock uboTerrain;
     SkyboxUniformBlock uboSkybox;
     MeshUniformBlock uboRail;
     MeshUniformBlock uboCars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
+    MeshUniformBlock uboTrees[NUM_TREE_INSTANCES * 2];
 
     // Other stuff
     std::vector<SingleText> texts;
@@ -127,6 +139,7 @@ protected:
     float speed;
     float motoRoll;
     float motoPitch;
+    float wheelPitch;
     bool wasFire;
     bool holdFire;
     float splashVisibility;
@@ -141,9 +154,9 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 10;
-        texturesInPool = 10;
-        setsInPool = 10 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
+        uniformBlocksInPool = 50;
+        texturesInPool = 50;
+        setsInPool = 50;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -186,16 +199,23 @@ protected:
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
         PCars.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
+        PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
 
         // Init Models
         skyboxModel();
         MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
+        MFrontWheel.init(this, &VVColor, "models/frontWheel.obj", OBJ);
+        MRearWheel.init(this, &VVColor, "models/rearWheel.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
         for(int model = 0; model < NUM_CAR_MODELS; model++) {
             std::string modelFile = "models/cars/car" + std::to_string(model + 1) + ".obj";
 //            std::string modelFile = "models/cars/car1.obj";
             MCars[model].init(this, &VVColor, modelFile, OBJ);
         }
+        MTrees[0].init(this, &VVColor, "models/trees/tree1.obj", OBJ);
+        MTrees[1].init(this, &VVColor, "models/trees/tree2.obj", OBJ);
+        MTrees[2].init(this, &VVColor, "models/trees/tree3.obj", OBJ);
+        MTrees[3].init(this, &VVColor, "models/trees/tree4.obj", OBJ);
 
         splashModel();
         roadModel();
@@ -227,6 +247,7 @@ protected:
         speed = 0;
         motoRoll = 0;
         motoPitch = 0;
+        wheelPitch = 0;
         wasFire = false;
         holdFire = false;
         currText = 0;
@@ -260,11 +281,14 @@ protected:
         PVColor.create();
         PMesh.create();
         PCars.create();
+        PTree.create();
 
         // Init Descriptor Sets
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
                                           {1, TEXTURE, 0,                           &TSplash}});
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSFrontWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSRearWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad}});
         DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -280,6 +304,8 @@ protected:
             for(DescriptorSet & DSCar : DSCars[model])
                 DSCar.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});;
         }
+        for (DescriptorSet &DSTree: DSTrees)
+            DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
 
         score.pipelinesAndDescriptorSetsInit();
     }
@@ -291,9 +317,12 @@ protected:
         PMesh.cleanup();
         PSkybox.cleanup();
         PCars.cleanup();
+        PTree.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
+        DSFrontWheel.cleanup();
+        DSRearWheel.cleanup();
         DSRoad.cleanup();
         DSTerrain.cleanup();
         DSRailLeft.cleanup();
@@ -305,6 +334,10 @@ protected:
             for (DescriptorSet &DSCar: DSCars[model])
                 DSCar.cleanup();
         }
+        for (DescriptorSet &DSTree: DSTrees)
+            DSTree.cleanup();
+        for (auto &item: DSCar1)
+            item.cleanup();
 
         score.pipelinesAndDescriptorSetsCleanup();
     }
@@ -320,6 +353,8 @@ protected:
         // Cleanup models
         MSplash.cleanup();
         MMoto.cleanup();
+        MFrontWheel.cleanup();
+        MRearWheel.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
         MRail.cleanup();
@@ -327,6 +362,9 @@ protected:
         for(Model<VertexVColor> & MCar : MCars) {
             MCar.cleanup();
         }
+        for (Model<VertexVColor> &MTree: MTrees)
+            MTree.cleanup();
+
         // Cleanup descriptor sets layouts
         DSLOverlay.cleanup();
         DSLVColor.cleanup();
@@ -341,6 +379,7 @@ protected:
         PMesh.destroy();
         PSkybox.destroy();
         PCars.destroy();
+        PTree.destroy();
 
         score.localCleanup();
     }
@@ -356,6 +395,14 @@ protected:
         MMoto.bind(commandBuffer);
         DSMoto.bind(commandBuffer, PVColor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMoto.indices.size()), 1, 0, 0, 0);
+
+        MFrontWheel.bind(commandBuffer);
+        DSFrontWheel.bind(commandBuffer, PVColor, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
+
+        MRearWheel.bind(commandBuffer);
+        DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
 
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
@@ -389,6 +436,20 @@ protected:
             }
         }
 
+        DSGubo.bind(commandBuffer, PTree, 0, currentImage);
+        PTree.bind(commandBuffer);
+        for (int i = 0; i < NUM_TREE_INSTANCES; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i].bind(commandBuffer, PTree, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_INSTANCES; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + NUM_TREE_INSTANCES].bind(commandBuffer, PTree, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
         score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
 
@@ -418,15 +479,44 @@ protected:
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
+        const float OFFSET = .5f;
+
         uboMoto.amb = 1.0f;
         uboMoto.gamma = 180.0f;
         uboMoto.sColor = glm::vec3(1.0f);
-        uboMoto.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), .5f)) *
+        uboMoto.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), OFFSET)) *
                        glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
                        glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
         uboMoto.mvpMat = ViewProj * uboMoto.mMat;
         uboMoto.nMat = glm::inverse(glm::transpose(uboMoto.mMat));
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
+
+        uboFrontWheel.amb = 1.0f;
+        uboFrontWheel.gamma = 180.0f;
+        uboFrontWheel.sColor = glm::vec3(1.0f);
+        uboFrontWheel.mMat = World *
+
+                             glm::translate(glm::mat4(1),
+                                            glm::vec3(1.62 * sin(motoPitch) * sin(-motoRoll), .315f - (.015f * sin(motoRoll)) + 1.62 * sin(motoPitch) * cos(motoRoll), -1.62f * cos(motoPitch) + OFFSET)) *
+                             glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
+                             glm::rotate(glm::mat4(1), wheelPitch, glm::vec3(1, 0, 0)) *
+                             glm::scale(glm::mat4(1), glm::vec3(0.78f));
+        uboFrontWheel.mvpMat = ViewProj * uboFrontWheel.mMat;
+        uboFrontWheel.nMat = glm::inverse(glm::transpose(uboFrontWheel.mMat));
+        DSFrontWheel.map(currentImage, &uboFrontWheel, sizeof(uboFrontWheel), 0);
+
+        uboRearWheel.amb = 1.0f;
+        uboRearWheel.gamma = 180.0f;
+        uboRearWheel.sColor = glm::vec3(1.0f);
+        uboRearWheel.mMat = World *
+                            glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), OFFSET)) *
+                            glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
+                            glm::rotate(glm::mat4(1), wheelPitch, glm::vec3(1, 0, 0)) *
+                            glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
+        uboRearWheel.mvpMat = ViewProj * uboRearWheel.mMat;
+        uboRearWheel.nMat = glm::inverse(glm::transpose(uboRearWheel.mMat));
+        DSRearWheel.map(currentImage, &uboRearWheel, sizeof(uboRearWheel), 0);
+
 
         World = glm::mat4(1.0f);
         for(int model = 0; model < NUM_CAR_MODELS; model++) {
@@ -442,6 +532,34 @@ protected:
                 uboCars[model][index].nMat = glm::inverse(glm::transpose(uboCars[model][index].mMat));
                 DSCars[model][index].map(currentImage, &uboCars[model][index], sizeof(uboCars[model][index]), 0);
             }
+        }
+
+        World = glm::mat4(1.0f);
+        const float POS = 25.0f;
+        for (int i = 0; i < NUM_TREE_INSTANCES; i++) {
+            uboTrees[i].amb = 1.0f;
+            uboTrees[i].gamma = 180.0f;
+            uboTrees[i].sColor = glm::vec3(1.0f);
+            uboTrees[i].mMat =
+                    World * glm::translate(glm::mat4(1), glm::vec3(POS, 0, shift * 120.0f - 20 - i * 60));
+            uboTrees[i].mvpMat = ViewProj * uboTrees[i].mMat;
+            uboTrees[i].nMat = glm::inverse(glm::transpose(uboTrees[i].mMat));
+            DSTrees[i].map(currentImage, &uboTrees[i], sizeof(uboTrees[i]), 0);
+        }
+
+        World = glm::mat4(1.0f);
+        for (int i = 0; i < NUM_TREE_INSTANCES; i++) {
+
+            int j = i + NUM_TREE_INSTANCES;
+
+            uboTrees[j].amb = 1.0f;
+            uboTrees[j].gamma = 180.0f;
+            uboTrees[j].sColor = glm::vec3(1.0f);
+            uboTrees[j].mMat =
+                    World * glm::translate(glm::mat4(1), glm::vec3(-POS, 0, shift * 120.0f + 10 - i * 60));
+            uboTrees[j].mvpMat = ViewProj * uboTrees[j].mMat;
+            uboTrees[j].nMat = glm::inverse(glm::transpose(uboTrees[j].mMat));
+            DSTrees[j].map(currentImage, &uboTrees[j], sizeof(uboTrees[j]), 0);
         }
 
         World = glm::mat4(1.0f);
