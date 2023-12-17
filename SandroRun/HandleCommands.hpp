@@ -74,10 +74,12 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     World = glm::translate(glm::mat4(1), pos);
 
     // Cars positions update
-    for(int i = 0; i < NUM_CAR1_INSTANCES; i++){
-        car1Positions[i].z -= car1Velocities[i] * deltaT;
-        if(car1Positions[i].z > backWorldLimit){
-            regenerateCar(i);
+    for (int model = 0; model < NUM_CAR_MODELS; model++) {
+        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+            cars[model][i].pos.z -= cars[model][i].velocity * deltaT;
+            if (cars[model][i].pos.z > backWorldLimit) {
+                regenerateCar(model, i);
+            }
         }
     }
 
@@ -109,28 +111,28 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     ViewProj = Proj * View;
 }
 
-void SandroRun::regenerateCar(int index) {
-    car1Positions[index].z = frontWorldLimit;
+void SandroRun::regenerateCar(int model, int index) {
+    cars[model][index].pos.z = frontWorldLimit;
     int lane = (int) (random() % 4);
     switch (lane) {
         case 0:
-            car1Positions[index].x = LEFT_LANE;
-            car1GoingForward[index] = false;
+            cars[model][index].pos.x = LEFT_LANE;
+            cars[model][index].isGoingForward = false;
             break;
         case 1:
-            car1Positions[index].x = CENTER_LEFT_LANE;
-            car1GoingForward[index] = false;
+            cars[model][index].pos.x = CENTER_LEFT_LANE;
+            cars[model][index].isGoingForward = false;
             break;
         case 2:
-            car1Positions[index].x = CENTER_RIGHT_LANE;
-            car1GoingForward[index] = true;
+            cars[model][index].pos.x = CENTER_RIGHT_LANE;
+            cars[model][index].isGoingForward = true;
             break;
         case 3:
-            car1Positions[index].x = RIGHT_LANE;
-            car1GoingForward[index] = true;
+            cars[model][index].pos.x = RIGHT_LANE;
+            cars[model][index].isGoingForward = true;
             break;
         default: ;
     }
-    car1Velocities[index] = (float) (random() % (int) (MAX_CAR_SPEED - MIN_CAR_SPEED) + MIN_CAR_SPEED);
-    car1Velocities[index] *= car1GoingForward[index] ? 1 : -1;
+    cars[model][index].velocity = (float) (random() % (int) (MAX_CAR_SPEED - MIN_CAR_SPEED) + MIN_CAR_SPEED);
+    cars[model][index].velocity *= cars[model][index].isGoingForward ? 1 : -1;
 }

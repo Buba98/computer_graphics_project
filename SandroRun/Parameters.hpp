@@ -23,20 +23,14 @@
 #define LAMBDA 10.0f
 
 // Cars settings
-#define NUM_CAR1_INSTANCES 4
+#define NUM_CAR_MODELS 2
+#define NUM_CAR_MODEL_INSTANCES 3
 #define RIGHT_LANE 6.5f
 #define CENTER_RIGHT_LANE 2.2f
 #define CENTER_LEFT_LANE -CENTER_RIGHT_LANE
 #define LEFT_LANE -RIGHT_LANE
-#define MAX_CAR_SPEED 30
-#define MIN_CAR_SPEED 15
-
-const float CAR1_STARTING_POSITIONS[NUM_CAR1_INSTANCES][2] = {{CENTER_LEFT_LANE, -150},
-                                                              {RIGHT_LANE, -10},
-                                                              {CENTER_RIGHT_LANE, -80},
-                                                              {LEFT_LANE, -200}};
-const bool CAR1_STARTING_DIRECTIONS[NUM_CAR1_INSTANCES] = {false, true, true, false};
-const float CAR1_STARTING_VELOCITIES[NUM_CAR1_INSTANCES] = {-10.0f, 13.0f, 17.0f, -15.0f};
+#define MAX_CAR_SPEED 16
+#define MIN_CAR_SPEED 8
 
 // World settings
 #define TERRAIN_LENGTH 120
