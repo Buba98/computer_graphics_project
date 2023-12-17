@@ -1,18 +1,4 @@
-#define FOV_Y glm::radians(45.0f)
-#define NEAR_PLANE 0.1f
-#define FAR_PLANE 100.0f
-#define CAM_HEIGHT 1.0f
-#define CAM_DIST 5.0f
-#define MIN_PITCH glm::radians(10.0f)
-#define MAX_PITCH glm::radians(80.0f)
-#define ROT_SPEED glm::radians(120.0f)
-#define Z_SPEED 3.0f
-#define X_SPEED 21.0f
-#define MIN_MOTO_ROLL (float) (-M_PI / 4.0f)
-#define MAX_MOTO_ROLL (-MIN_MOTO_ROLL)
-#define MIN_MOTO_PITCH 0.0f
-#define MAX_MOTO_PITCH (float) (M_PI / 4.0f)
-#define LAMBDA 10.0f
+#include "Parameters.hpp"
 
 void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
 
@@ -61,14 +47,14 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
 
     motoRoll = motoRoll - m.x * deltaT * 5.0f;
     if (m.x * deltaT == 0.0f) {
-        motoRoll = motoRoll * (1 - glm::exp(-200 * deltaT)); // motoRoll damping
+        motoRoll = motoRoll * (1 - glm::exp(-MOTO_ROLL_SPEED * deltaT)); // motoRoll damping
         if (motoRoll > 0.001 * MIN_MOTO_ROLL && motoRoll < 0.001 * MAX_MOTO_ROLL)
             motoRoll = 0.0f;
     }
     motoRoll = glm::clamp(motoRoll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
     motoPitch = motoPitch - m.z * deltaT * 2.0f;
     if (m.z * deltaT == 0.0f) {
-        motoPitch = motoPitch * (1 - glm::exp(-200 * deltaT)); // motoPitch damping
+        motoPitch = motoPitch * (1 - glm::exp(-MOTO_PITCH_SPEED * deltaT)); // motoPitch damping
         if (motoPitch < 0.001 * MAX_MOTO_PITCH)
             motoPitch = 0.0f;
     }
@@ -86,6 +72,14 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     }
 
     World = glm::translate(glm::mat4(1), pos);
+
+    // Cars positions update
+    for(int i = 0; i < NUM_CAR1_INSTANCES; i++){
+        car1Positions[i].z -= car1Velocities[i] * deltaT;
+        if(car1Positions[i].z > backWorldLimit){
+            regenerateCar(i);
+        }
+    }
 
     glm::mat4 View;
     //implement view in and look at
@@ -113,4 +107,30 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     glm::mat4 Proj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
     Proj[1][1] *= -1;
     ViewProj = Proj * View;
+}
+
+void SandroRun::regenerateCar(int index) {
+    car1Positions[index].z = frontWorldLimit;
+    int lane = (int) (random() % 4);
+    switch (lane) {
+        case 0:
+            car1Positions[index].x = LEFT_LANE;
+            car1GoingForward[index] = false;
+            break;
+        case 1:
+            car1Positions[index].x = CENTER_LEFT_LANE;
+            car1GoingForward[index] = false;
+            break;
+        case 2:
+            car1Positions[index].x = CENTER_RIGHT_LANE;
+            car1GoingForward[index] = true;
+            break;
+        case 3:
+            car1Positions[index].x = RIGHT_LANE;
+            car1GoingForward[index] = true;
+            break;
+        default: ;
+    }
+    car1Velocities[index] = (float) (random() % (int) (MAX_CAR_SPEED - MIN_CAR_SPEED) + MIN_CAR_SPEED);
+    car1Velocities[index] *= car1GoingForward[index] ? 1 : -1;
 }

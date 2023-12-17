@@ -1,8 +1,7 @@
 
 #include "Starter.hpp"
 #include "TextMaker.hpp"
-
-#define NUM_CAR1_INSTANCES 2
+#include "Parameters.hpp"
 
 struct MeshUniformBlock {
     alignas(4) float amb;
@@ -125,6 +124,10 @@ protected:
     bool wasFire;
     bool holdFire;
     float splashVisibility;
+    glm::vec3 car1Positions[NUM_CAR1_INSTANCES];
+    bool car1GoingForward[NUM_CAR1_INSTANCES];
+    float car1Velocities[NUM_CAR1_INSTANCES];
+    float frontWorldLimit, backWorldLimit;
 
     void setWindowParameters() override {
         windowWidth = 1280;
@@ -220,6 +223,13 @@ protected:
         currText = 0;
         gameState = 0;
         splashVisibility = 1.0f;
+        for(int i = 0; i < NUM_CAR1_INSTANCES; i++) {
+            car1Positions[i].x = CAR1_STARTING_POSITIONS[i][0];
+            car1Positions[i].y = 0;
+            car1Positions[i].z = CAR1_STARTING_POSITIONS[i][1];
+            car1Velocities[i] = CAR1_STARTING_VELOCITIES[i];
+            car1GoingForward[i] = CAR1_STARTING_DIRECTIONS[i];
+        }
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -245,8 +255,8 @@ protected:
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
-        for(auto & item : DSCar1)
-            item.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});;
+        for(DescriptorSet & dsCar1 : DSCar1)
+            dsCar1.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});;
 
         score.pipelinesAndDescriptorSetsInit();
     }
@@ -268,8 +278,8 @@ protected:
         DSSkybox.cleanup();
         DSSplash.cleanup();
         DSGubo.cleanup();
-        for(auto & item : DSCar1)
-            item.cleanup();
+        for(DescriptorSet & dsCar1 : DSCar1)
+            dsCar1.cleanup();
 
         score.pipelinesAndDescriptorSetsCleanup();
     }
@@ -345,9 +355,9 @@ protected:
 
         DSGubo.bind(commandBuffer, PCars, 0, currentImage);
         PCars.bind(commandBuffer);
-        for(auto & item : DSCar1){
+        for(DescriptorSet & dsCar1 : DSCar1){
             MCar1.bind(commandBuffer);
-            item.bind(commandBuffer, PCars, 1, currentImage);
+            dsCar1.bind(commandBuffer, PCars, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
         }
 
@@ -364,7 +374,10 @@ protected:
 
         handleCommands(ViewProj, World);
 
-        int shift = pos.z / 120;
+        int shift = pos.z / TERRAIN_LENGTH;
+
+        backWorldLimit = (float) shift * TERRAIN_LENGTH;
+        frontWorldLimit = backWorldLimit - TERRAIN_LENGTH;
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -388,9 +401,6 @@ protected:
         DSMoto.map(currentImage, &uboMoto, sizeof(uboMoto), 0);
 
         World = glm::mat4(1.0f);
-        const float RIGHT_LANE = 6.5f, CENTER_RIGHT_LANE = 2.2f, CENTER_LEFT_LANE = -CENTER_RIGHT_LANE, LEFT_LANE = -RIGHT_LANE;
-        glm::vec3 car1Positions[NUM_CAR1_INSTANCES] = {glm::vec3(CENTER_LEFT_LANE, 0, pos.z - 15), glm::vec3(RIGHT_LANE, 0, pos.z - 30)};
-        bool car1GoingForward[NUM_CAR1_INSTANCES] = {false, true};
         for (int index = 0; index < NUM_CAR1_INSTANCES; index++){
             uboCar1[index].amb = 1.0f;
             uboCar1[index].gamma = 180.0f;
@@ -407,7 +417,7 @@ protected:
         uboRoad.amb = 1.0f;
         uboRoad.gamma = 180.0f;
         uboRoad.sColor = glm::vec3(1.0f);
-        uboRoad.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * 120));
+        uboRoad.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * TERRAIN_LENGTH));
         uboRoad.mvpMat = ViewProj * uboRoad.mMat;
         uboRoad.nMat = glm::inverse(glm::transpose(uboRoad.mMat));
         DSRoad.map(currentImage, &uboRoad, sizeof(uboRoad), 0);
@@ -416,7 +426,7 @@ protected:
         uboTerrain.amb = 1.0f;
         uboTerrain.gamma = 180.0f;
         uboTerrain.sColor = glm::vec3(1.0f);
-        uboTerrain.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * 120));
+        uboTerrain.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * TERRAIN_LENGTH));
         uboTerrain.mvpMat = ViewProj * uboTerrain.mMat;
         uboTerrain.nMat = glm::inverse(glm::transpose(uboTerrain.mMat));
         DSTerrain.map(currentImage, &uboTerrain, sizeof(uboTerrain), 0);
@@ -425,14 +435,14 @@ protected:
         uboRail.amb = 1.0f;
         uboRail.gamma = 180.0f;
         uboRail.sColor = glm::vec3(1.0f);
-        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(-10, 0, shift * 120)) *
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(-10, 0, shift * TERRAIN_LENGTH)) *
                        glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) *
                        glm::scale(glm::mat4(1), glm::vec3(0.21555f));
         uboRail.mvpMat = ViewProj * uboRail.mMat;
         uboRail.nMat = glm::inverse(glm::transpose(uboRail.mMat));
         DSRailLeft.map(currentImage, &uboRail, sizeof(uboRail), 0);
 
-        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(10, 0, -230 + shift * 120)) *
+        uboRail.mMat = World * glm::translate(glm::mat4(1), glm::vec3(10, 0, -230 + shift * TERRAIN_LENGTH)) *
                        glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) *
                        glm::scale(glm::mat4(1), glm::vec3(0.21555f));
         uboRail.mvpMat = ViewProj * uboRail.mMat;
@@ -452,6 +462,8 @@ protected:
     void skyboxModel();
 
     void handleCommands(glm::mat4 &ViewProj, glm::mat4 &World);
+
+    void regenerateCar(int index);
 };
 
 #include "BuildModels.hpp"
