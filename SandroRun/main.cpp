@@ -336,8 +336,6 @@ protected:
         }
         for (DescriptorSet &DSTree: DSTrees)
             DSTree.cleanup();
-        for (auto &item: DSCar1)
-            item.cleanup();
 
         score.pipelinesAndDescriptorSetsCleanup();
     }
