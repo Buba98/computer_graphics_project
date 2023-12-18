@@ -12,6 +12,16 @@ struct MeshUniformBlock {
     alignas(16) glm::mat4 nMat;
 };
 
+struct CarMeshUniformBlock {
+    alignas(4) int palette;
+    alignas(4) float amb;
+    alignas(4) float gamma;
+    alignas(16) glm::vec3 sColor;
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+
 struct SkyboxUniformBlock {
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -62,6 +72,7 @@ protected:
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
+    DescriptorSetLayout DSLCars;
 
     // Vertex descriptors
     VertexDescriptor VOverlay;
@@ -85,7 +96,7 @@ protected:
     Model<VertexMesh> MTerrain;
     Model<VertexMesh> MSkybox;
     Model<VertexMesh> MRail;
-    Model<VertexVColor> MCars[NUM_CAR_MODELS];
+    Model<VertexMesh> MCars[NUM_CAR_MODELS];
     Model<VertexVColor> MTrees[4];
 
     // Descriptor sets
@@ -107,6 +118,7 @@ protected:
     Texture TTerrain;
     Texture TRail;
     Texture TSkybox;
+    Texture TCar[5];
 
     // Text
     TextMaker score;
@@ -116,6 +128,7 @@ protected:
     GlobalUniformBlock gubo;
     SkyboxUniformBlock uboSkybox;
     MeshUniformBlock ubo;
+    CarMeshUniformBlock uboCar;
 
     // Other stuff
     std::vector<SingleText> texts;
@@ -133,7 +146,6 @@ protected:
     bool holdFire;
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
-    float carModelsScalingFactors[NUM_CAR_MODELS];
     float frontWorldLimit, backWorldLimit;
 
     void setWindowParameters() {
@@ -143,8 +155,8 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 50;
-        texturesInPool = 50;
+        uniformBlocksInPool = 100;
+        texturesInPool = 100;
         setsInPool = 100;
 
         Ar = (float) windowWidth / (float) windowHeight;
@@ -164,6 +176,12 @@ protected:
         DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
+        DSLCars.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -186,7 +204,7 @@ protected:
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
-        PCars.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
+        PCars.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCars});
         PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
 
         // Init Models
@@ -195,18 +213,21 @@ protected:
         MRearWheel.init(this, &VVColor, "models/rearWheel.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            std::string modelFile = "models/cars/car" + std::to_string(model + 1) + ".obj";
-//            std::string modelFile = "models/cars/car1.obj";
-            MCars[model].init(this, &VVColor, modelFile, OBJ);
+            std::string modelFile = "models/cars/car_" + std::to_string(model + 1) + ".obj";
+            MCars[model].init(this, &VMesh, modelFile, OBJ);
         }
 
-        MTrees[0].init(this, &VVColor, "models/trees/tree1.obj", OBJ);
-        MTrees[1].init(this, &VVColor, "models/trees/tree2.obj", OBJ);
-        MTrees[2].init(this, &VVColor, "models/trees/tree3.obj", OBJ);
-        MTrees[3].init(this, &VVColor, "models/trees/tree4.obj", OBJ);
+        for (int i = 0; i < 4; ++i) {
+            std::string objFile = "models/trees/tree" + std::to_string(i + 1) + ".obj";
+            MTrees[i].init(this, &VVColor, objFile.c_str(), OBJ);
+        }
 
         // Init textures
         TRail.init(this, "textures/guardrail.jpg");
+        for (int i = 0; i < NUM_PALETTES; i++) {
+            std::string paletteFile = "textures/car_palettes/" + std::to_string(i) + ".png";
+            TCar[i].init(this, paletteFile.c_str());
+        }
 
         // Custom inits
 
@@ -237,7 +258,7 @@ protected:
         currText = 0;
         gameState = 0;
         splashVisibility = 1.0f;
-        frontWorldLimit = -TERRAIN_LENGTH;
+        frontWorldLimit = -PERIODS * TERRAIN_LENGTH;
         backWorldLimit = 0;
 
         // Cars initialization
@@ -247,25 +268,12 @@ protected:
             }
         }
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            switch (model) {
-                case 0:
-                    carModelsScalingFactors[model] = 0.175f;
-                    break;
-                case 1:
-                    carModelsScalingFactors[model] = 1.25f;
-                    break;
-                case 2:
-                    carModelsScalingFactors[model] = 1.2f;
-                    break;
-                default:
-                    carModelsScalingFactors[model] = 1.0f;
-            }
             for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 regenerateCar(model, i);
             }
             for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 if (cars[model][i].isGoingForward)
-                    cars[model][i].pos.z += (float) TERRAIN_LENGTH;
+                    cars[model][i].pos.z += (float) 3 * TERRAIN_LENGTH;
             }
         }
     }
@@ -298,10 +306,16 @@ protected:
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model])
-                DSCar.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});;
+                DSCar.init(this, &DSLCars, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                            {1, TEXTURE, 0, &TCar[0]},
+                                            {2, TEXTURE, 0, &TCar[1]},
+                                            {3, TEXTURE, 0, &TCar[2]},
+                                            {4, TEXTURE, 0, &TCar[3]},
+                                            {5, TEXTURE, 0, &TCar[4]}});;
         }
-        for (DescriptorSet &DSTree: DSTrees)
+        for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        }
 
         score.pipelinesAndDescriptorSetsInit();
     }
@@ -345,6 +359,9 @@ protected:
         TRail.cleanup();
         TSkybox.cleanup();
         TTerrain.cleanup();
+        for (Texture &T: TCar) {
+            T.cleanup();
+        }
 
         // Cleanup models
         MSplash.cleanup();
@@ -355,7 +372,7 @@ protected:
         MTerrain.cleanup();
         MRail.cleanup();
         MSkybox.cleanup();
-        for (Model<VertexVColor> &MCar: MCars) {
+        for (Model<VertexMesh> &MCar: MCars) {
             MCar.cleanup();
         }
         for (Model<VertexVColor> &MTree: MTrees) {
@@ -368,6 +385,7 @@ protected:
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
+        DSLCars.cleanup();
 
         // Destroy pipelines
         POverlay.destroy();
@@ -416,11 +434,6 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
         }
 
-        PSkybox.bind(commandBuffer);
-        MSkybox.bind(commandBuffer);
-        DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
-
         DSGubo.bind(commandBuffer, PCars, 0, currentImage);
         PCars.bind(commandBuffer);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
@@ -430,6 +443,11 @@ protected:
                 vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCars[model].indices.size()), 1, 0, 0, 0);
             }
         }
+
+        PSkybox.bind(commandBuffer);
+        MSkybox.bind(commandBuffer);
+        DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
 
         DSGubo.bind(commandBuffer, PTree, 0, currentImage);
         PTree.bind(commandBuffer);
@@ -517,18 +535,20 @@ protected:
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
-
+        uboCar.amb = 1.0f;
+        uboCar.gamma = 180.0f;
+        uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (int index = 0; index < NUM_CAR_MODEL_INSTANCES; index++) {
-
-                ubo.mMat = glm::translate(glm::mat4(1), cars[model][index].pos) *
+                uboCar.palette = (model + index) % NUM_PALETTES;
+                uboCar.mMat = glm::translate(glm::mat4(1), cars[model][index].pos) *
                            glm::rotate(glm::mat4(1), glm::radians(
                                                cars[model][index].isGoingForward ? 0.0f : 180.0f),
                                        glm::vec3(0, 1, 0)) *
-                           glm::scale(glm::mat4(1), glm::vec3(carModelsScalingFactors[model]));
-                ubo.mvpMat = ViewProj * ubo.mMat;
-                ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-                DSCars[model][index].map(currentImage, &ubo, sizeof(ubo), 0);
+                           glm::scale(glm::mat4(1), glm::vec3(1.0f));
+                uboCar.mvpMat = ViewProj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCars[model][index].map(currentImage, &uboCar, sizeof(uboCar), 0);
             }
         }
 

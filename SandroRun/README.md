@@ -26,8 +26,6 @@
   - [x] Cleanup and restructuring of car related code
   - [x] Add multiple car models
   - [ ] Handle collisions between cars
-  - [ ] Color all car models
-  - [ ] Rescale all car models to avoid scaling inside code
 - [ ] Add scenery
   - [x] Add a skybox
   - [x] Add the terrain around the road
@@ -52,5 +50,5 @@
   - [x] Create a shader for the skybox
   - [ ] Create a shader for the trees
   - [x] Create a shader for the guardrails
-  - [ ] Create a shader for the cars
+  - [x] Create a shader for the cars
   - [ ] Create a shader for the moto
