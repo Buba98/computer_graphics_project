@@ -1,7 +1,7 @@
 
 struct SingleText {
     int usedLines;
-    char *l[4];
+    std::string l[4];
     int start;
     int len;
 };
@@ -94,7 +94,7 @@ struct TextMaker {
         int totLen = 0;
         for (auto &Txt: *Texts) {
             for (int i = 0; i < Txt.usedLines; i++) {
-                totLen += strlen(Txt.l[i]);
+                totLen += Txt.l[i].length();
             }
         }
         std::cout << "Total characters: " << totLen << "\n";
@@ -120,7 +120,7 @@ struct TextMaker {
         for (auto &Txt: *Texts) {
             Txt.start = ib;
             for (int i = 0; i < Txt.usedLines; i++) {
-                for (int j = 0; j < strlen(Txt.l[i]); j++) {
+                for (int j = 0; j < Txt.l[i].length(); j++) {
                     int c = ((int) Txt.l[i][j]) - minChar;
                     if ((c >= 0) && (c <= maxChar)) {
 //std::cout << k << " " << j << " " << i << " " << ib << " " << c << "\n";

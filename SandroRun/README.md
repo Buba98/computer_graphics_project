@@ -1,5 +1,5 @@
 # TO DO LIST:
-- [ ] Add a moto
+- [x] Add a moto
   - [x] Export the moto from blender in obj format
   - [x] Add the moto model to the scene
   - [x] Make the moto move on a straight line
@@ -9,10 +9,10 @@
   - [x] Bound the camera to the moto (the camera should follow the moto)
   - [x] Implement camera damping (the camera should not follow the moto instantly)
   - [x] Implement first person view from the moto
-  - [ ] Separate wheels models from moto model
-  - [ ] Animate the rotation of the wheels
+  - [x] Separate wheels models from moto model
+  - [x] Animate the rotation of the wheels
   - [x] Implement the wheelie/nose-up (impennata)
-- [ ] Add road
+- [x] Add road
   - [x] Add a road texture
   - [x] Add a road model
   - [x] Add guardrails on the road
@@ -31,7 +31,8 @@
 - [ ] Add scenery
   - [x] Add a skybox
   - [x] Add the terrain around the road
-  - [ ] Add trees on the border of the road
+  - [x] Add trees on the border of the road
+  - [ ] Add streetlights
 - [ ] Add a splash screen
   - [x] Add a splash screen image
   - [ ] Explain the goal of the game

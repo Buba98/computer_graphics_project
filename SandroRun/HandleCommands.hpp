@@ -1,6 +1,10 @@
 #include "Parameters.hpp"
 
-void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
+void SandroRun::controller() {
+
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+        glfwSetWindowShouldClose(window, GL_TRUE);
+    }
 
     float deltaT;
     float time;
@@ -37,7 +41,9 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     pitch = glm::clamp(pitch, MIN_PITCH, MAX_PITCH);
 
     yawNew += ROT_SPEED * r.y * deltaT;
+    yawNew = glm::clamp(yawNew, MIN_YAW, MAX_YAW);
     yaw = yaw * glm::exp(-LAMBDA * deltaT) + yawNew * (1 - glm::exp(-LAMBDA * deltaT)); // Yaw damping
+    yaw = glm::clamp(yaw, MIN_YAW, MAX_YAW);
 
     rollNew += ROT_SPEED * r.z * deltaT;
     roll = roll * glm::exp(-LAMBDA * deltaT) + rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Roll damping
@@ -62,15 +68,13 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
     pos += ux * X_SPEED * deltaT * sin(-motoRoll);
     pos += uz * speed;
 
-    wheelPitch += - (2 << 4) * speed * deltaT ; // Pitch damping
+    wheelPitch += -(2 << 4) * speed * deltaT; // Pitch damping
 
     int curr = (abs(pos.z) / 100) + 1;
     if (currText != curr) {
         currText = curr;
         createCommandBuffers();
     }
-
-    World = glm::translate(glm::mat4(1), pos);
 
     // Cars positions update
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
@@ -81,18 +85,23 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
             }
         }
     }
+}
 
-    glm::mat4 View;
-    //implement view in and look at
+void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
+
+    World = glm::translate(glm::mat4(1), pos);
+    ViewProj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
+    ViewProj[1][1] *= -1;
+
     if (holdFire) {
 
-        View = glm::rotate(glm::mat4(1.0), (float) (pitch - M_PI / 2.5f), glm::vec3(1, 0, 0)) *
-               glm::rotate(glm::mat4(1.0), yaw, glm::vec3(0, 1, 0)) *
-               glm::rotate(glm::mat4(1.0), -motoRoll / 2.0f, glm::vec3(0, 0, 1)) *
-               glm::translate(glm::mat4(1.0), -pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-motoRoll),
-                                                               (-CAM_HEIGHT - .25f) * cos(motoRoll) -
-                                                               (CAM_HEIGHT / 2) * sin(motoPitch),
-                                                               -sin(motoPitch)));
+        ViewProj *= glm::rotate(glm::mat4(1.0), (float) (pitch - M_PI / 2.5f), glm::vec3(1, 0, 0)) *
+                    glm::rotate(glm::mat4(1.0), yaw, glm::vec3(0, 1, 0)) *
+                    glm::rotate(glm::mat4(1.0), -motoRoll / 2.0f, glm::vec3(0, 0, 1)) *
+                    glm::translate(glm::mat4(1.0), -pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-motoRoll),
+                                                                    (-CAM_HEIGHT - .25f) * cos(motoRoll) -
+                                                                    (CAM_HEIGHT / 2) * sin(motoPitch),
+                                                                    -sin(motoPitch)));
 
         cameraPosition = World * glm::vec4(0, CAM_HEIGHT, 0, 1);
     } else {
@@ -102,12 +111,9 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
         cameraPosition = World * rot * glm::vec4(0, CAM_DIST, 0, 1);
         glm::vec3 a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, CAM_HEIGHT, 0, 0);
 
-        View = glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) * glm::lookAt(cameraPosition, a, uy);
+        ViewProj *= glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) *
+                    glm::lookAt(cameraPosition, a, glm::vec3(0, 1, 0));
     }
-
-    glm::mat4 Proj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
-    Proj[1][1] *= -1;
-    ViewProj = Proj * View;
 }
 
 void SandroRun::regenerateCar(int model, int index) {
@@ -130,7 +136,7 @@ void SandroRun::regenerateCar(int model, int index) {
             cars[model][index].pos.x = RIGHT_LANE;
             cars[model][index].isGoingForward = true;
             break;
-        default: ;
+        default:;
     }
 
     // Generating random position and velocity
@@ -175,7 +181,8 @@ void SandroRun::regenerateCar(int model, int index) {
     if (currentVelocity < mostAdvancedVelocity) {
         float idealCollisionZCoord = currentZCoord;
         idealCollisionZCoord -= currentlyGoingForward ? FRONT_COLLISION_Z_COORD_OFFSET : BACK_COLLISION_Z_COORD_OFFSET;
-        float minIdealVelocity = mostAdvancedVelocity * (idealCollisionZCoord - currentZCoord) / (idealCollisionZCoord - mostAdvancedZCoord);
+        float minIdealVelocity = mostAdvancedVelocity * (idealCollisionZCoord - currentZCoord) /
+                                 (idealCollisionZCoord - mostAdvancedZCoord);
         if (currentVelocity < minIdealVelocity)
             currentVelocity = minIdealVelocity;
     }
