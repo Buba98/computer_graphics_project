@@ -1,10 +1,14 @@
 #ifndef PARAMETERS
 #define PARAMETERS
 
+// World settings
+#define TERRAIN_LENGTH 120
+#define PERIODS 4
+
 // Camera settings
 #define FOV_Y glm::radians(45.0f)
 #define NEAR_PLANE 0.1f
-#define FAR_PLANE 100.0f
+#define FAR_PLANE 200.0f
 #define CAM_HEIGHT 1.0f
 #define CAM_DIST 5.0f
 #define MIN_PITCH glm::radians(10.0f)
@@ -35,7 +39,7 @@
 #define BACK_COLLISION_Z_COORD_OFFSET (2 * TERRAIN_LENGTH)
 #define AVOID_INITIAL_OVERLAP_OFFSET 30
 
-// World settings
-#define TERRAIN_LENGTH 120
+#define NUM_TREE_PER_LINE (2 * PERIODS)
+#define NUM_RAIL_PER_LINE (PERIODS)
 
 #endif

@@ -14,7 +14,6 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
         holdFire = !holdFire && gameState;
     wasFire = fire;
 
-
     if (gameState == 0) {
         if (fire) {
             gameState = 1;
@@ -24,11 +23,9 @@ void SandroRun::handleCommands(glm::mat4 &ViewProj, glm::mat4 &World) {
         return;
     }
 
-
     if (splashVisibility != 0.0f) {
         splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
     }
-
 
     glm::vec3 ux = glm::vec3(1, 0, 0);
     glm::vec3 uy = glm::vec3(0, 1, 0);
