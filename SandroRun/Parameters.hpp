@@ -47,4 +47,10 @@
 #define NUM_TREE_PER_LINE (2 * PERIODS)
 #define NUM_RAIL_PER_LINE (PERIODS)
 
+enum TimeOfDay {
+    DAY = 0,
+    SUNSET = 1,
+    NIGHT = 2
+};
+
 #endif

@@ -2,6 +2,7 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(set = 0, binding = 0) uniform SkyboxUniformBlock {
+    int time_of_day;
     mat4 mvpMat;
     mat4 mMat;
     mat4 nMat;

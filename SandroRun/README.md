@@ -11,7 +11,7 @@
   - [x] Implement first person view from the moto
   - [x] Separate wheels models from moto model
   - [x] Animate the rotation of the wheels
-  - [x] Implement the wheelie/nose-up (impennata)
+  - [x] Implement the wheelie
 - [x] Add road
   - [x] Add a road texture
   - [x] Add a road model

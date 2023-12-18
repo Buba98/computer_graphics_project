@@ -135,15 +135,36 @@ void SandroRun::terrainModel() {
 
 void SandroRun::skyboxModel() {
     MSkybox.init(this, &VMesh, "models/skyboxCube.obj", OBJ);
-    const char *T2fn[] = {
-            "textures/skybox/left.png",
-            "textures/skybox/right.png",
-            "textures/skybox/top.png",
-            "textures/skybox/bottom.png",
-            "textures/skybox/back.png",
-            "textures/skybox/front.png"
+
+    const char *T2fn_day[] = {
+            "textures/skybox/day/left.png",
+            "textures/skybox/day/right.png",
+            "textures/skybox/day/top.png",
+            "textures/skybox/day/bottom.png",
+            "textures/skybox/day/back.png",
+            "textures/skybox/day/front.png"
     };
-    TSkybox.initCubic(this, T2fn);
+    TSkybox[0].initCubic(this, T2fn_day);
+
+    const char *T2fn_sunset[] = {
+            "textures/skybox/sunset/left.png",
+            "textures/skybox/sunset/right.png",
+            "textures/skybox/sunset/top.png",
+            "textures/skybox/sunset/bottom.png",
+            "textures/skybox/sunset/back.png",
+            "textures/skybox/sunset/front.png"
+    };
+    TSkybox[1].initCubic(this, T2fn_sunset);
+
+    const char *T2fn_night[] = {
+            "textures/skybox/night/left.png",
+            "textures/skybox/night/right.png",
+            "textures/skybox/night/top.png",
+            "textures/skybox/night/bottom.png",
+            "textures/skybox/night/back.png",
+            "textures/skybox/night/front.png"
+    };
+    TSkybox[2].initCubic(this, T2fn_night);
 }
 
 void SandroRun::splashModel() {

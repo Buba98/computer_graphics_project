@@ -23,6 +23,7 @@ struct CarMeshUniformBlock {
 };
 
 struct SkyboxUniformBlock {
+    alignas(4) int time_of_day;
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
     alignas(16) glm::mat4 nMat;
@@ -117,7 +118,7 @@ protected:
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
-    Texture TSkybox;
+    Texture TSkybox[3];
     Texture TCar[5];
 
     // Text
@@ -147,6 +148,7 @@ protected:
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     float frontWorldLimit, backWorldLimit;
+    int time_of_day;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -174,7 +176,9 @@ protected:
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
-                              {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                              {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                              {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                              {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLCars.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -203,7 +207,7 @@ protected:
         PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
-        PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, false);
+        PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PCars.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCars});
         PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
 
@@ -260,6 +264,7 @@ protected:
         splashVisibility = 1.0f;
         frontWorldLimit = -PERIODS * TERRAIN_LENGTH;
         backWorldLimit = 0;
+        time_of_day = 0;
 
         // Cars initialization
         for (int m = 0; m < NUM_CAR_MODELS; m++) {
@@ -280,8 +285,8 @@ protected:
 
     void pipelinesAndDescriptorSetsInit() {
         // Init pipelines
-        POverlay.create();
         PSkybox.create();
+        POverlay.create();
         PVColor.create();
         PMesh.create();
         PCars.create();
@@ -302,16 +307,18 @@ protected:
                                          {1, TEXTURE, 0,                        &TRail}});
         }
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
-                                         {1, TEXTURE, 0,                          &TSkybox}});
+                                         {1, TEXTURE, 0,                          &TSkybox[0]},
+                                         {2, TEXTURE, 0,                          &TSkybox[1]},
+                                         {3, TEXTURE, 0,                          &TSkybox[2]}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model])
                 DSCar.init(this, &DSLCars, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                            {1, TEXTURE, 0, &TCar[0]},
-                                            {2, TEXTURE, 0, &TCar[1]},
-                                            {3, TEXTURE, 0, &TCar[2]},
-                                            {4, TEXTURE, 0, &TCar[3]},
-                                            {5, TEXTURE, 0, &TCar[4]}});;
+                                            {1, TEXTURE, 0,                           &TCar[0]},
+                                            {2, TEXTURE, 0,                           &TCar[1]},
+                                            {3, TEXTURE, 0,                           &TCar[2]},
+                                            {4, TEXTURE, 0,                           &TCar[3]},
+                                            {5, TEXTURE, 0,                           &TCar[4]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -357,7 +364,9 @@ protected:
         TSplash.cleanup();
         TRoad.cleanup();
         TRail.cleanup();
-        TSkybox.cleanup();
+        for (Texture &T: TSkybox) {
+            T.cleanup();
+        }
         TTerrain.cleanup();
         for (Texture &T: TCar) {
             T.cleanup();
@@ -497,6 +506,7 @@ protected:
         gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
+        uboSkybox.time_of_day = time_of_day;
         uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
@@ -542,10 +552,10 @@ protected:
             for (int index = 0; index < NUM_CAR_MODEL_INSTANCES; index++) {
                 uboCar.palette = (model + index) % NUM_PALETTES;
                 uboCar.mMat = glm::translate(glm::mat4(1), cars[model][index].pos) *
-                           glm::rotate(glm::mat4(1), glm::radians(
-                                               cars[model][index].isGoingForward ? 0.0f : 180.0f),
-                                       glm::vec3(0, 1, 0)) *
-                           glm::scale(glm::mat4(1), glm::vec3(1.0f));
+                              glm::rotate(glm::mat4(1), glm::radians(
+                                                  cars[model][index].isGoingForward ? 0.0f : 180.0f),
+                                          glm::vec3(0, 1, 0)) *
+                              glm::scale(glm::mat4(1), glm::vec3(1.0f));
                 uboCar.mvpMat = ViewProj * uboCar.mMat;
                 uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
                 DSCars[model][index].map(currentImage, &uboCar, sizeof(uboCar), 0);
