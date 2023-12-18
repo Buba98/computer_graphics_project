@@ -123,74 +123,56 @@ void SandroRun::regenerateCar(int model, int index) {
         case 0:
             cars[model][index].pos.x = LEFT_LANE;
             cars[model][index].isGoingForward = false;
+            cars[model][index].velocity = LEFT_LANE_CAR_SPEED;
             break;
         case 1:
             cars[model][index].pos.x = CENTER_LEFT_LANE;
             cars[model][index].isGoingForward = false;
+            cars[model][index].velocity = CENTER_LEFT_LANE_CAR_SPEED;
             break;
         case 2:
             cars[model][index].pos.x = CENTER_RIGHT_LANE;
             cars[model][index].isGoingForward = true;
+            cars[model][index].velocity = CENTER_RIGHT_LANE_CAR_SPEED;
             break;
         case 3:
             cars[model][index].pos.x = RIGHT_LANE;
             cars[model][index].isGoingForward = true;
+            cars[model][index].velocity = RIGHT_LANE_CAR_SPEED;
             break;
         default:;
     }
 
-    // Generating random position and velocity
     cars[model][index].pos.z = frontWorldLimit;
-    cars[model][index].pos.z -= (float) (random() % 11) / 10 * TERRAIN_LENGTH;
-    cars[model][index].velocity = (float) (random() % (int) (MAX_CAR_SPEED - MIN_CAR_SPEED) + MIN_CAR_SPEED);
-    cars[model][index].velocity *= cars[model][index].isGoingForward ? 1 : -1;
 
-    // Preparing data for collision-free corrections
+    // Preparing data for collision-free placement
     float currentLane = cars[model][index].pos.x;
     float currentZCoord = cars[model][index].pos.z;
-    float currentVelocity = cars[model][index].velocity;
-    bool currentlyGoingForward = cars[model][index].isGoingForward;
     float mostAdvancedZCoord = 0;
-    float mostAdvancedVelocity = 0;
     bool otherCarInLaneFound = false;
 
     // Searching most advanced car in same lane
     for (int m = 0; m < NUM_CAR_MODELS; m++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            if (cars[m][i].pos.x == currentLane && cars[m][i].pos.z < mostAdvancedZCoord && m != model && i != index) {
+            if (cars[m][i].pos.x == currentLane && cars[m][i].pos.z <= mostAdvancedZCoord && (m != model || i != index)) {
                 mostAdvancedZCoord = cars[m][i].pos.z;
-                mostAdvancedVelocity = cars[m][i].velocity;
                 otherCarInLaneFound = true;
             }
         }
     }
 
     if (!otherCarInLaneFound) {
-//        std::cout << "Regenerated >> Car[" << model << "][" << index << "]: (x = " << cars[model][index].pos.x << ", y = " << cars[model][index].pos.y << ", z = " << cars[model][index].pos.z << ") "
-//                  << ", velocity = " << cars[model][index].velocity << std::endl;
         return;
     }
 
     // Adjusting position if most advanced car is too close (avoiding initial overlap)
-    if (currentZCoord > mostAdvancedZCoord)
+    if (currentZCoord >= mostAdvancedZCoord) {
         currentZCoord = mostAdvancedZCoord - AVOID_INITIAL_OVERLAP_OFFSET;
-    if (mostAdvancedZCoord - currentZCoord < AVOID_INITIAL_OVERLAP_OFFSET)
+    }
+    if (mostAdvancedZCoord - currentZCoord < AVOID_INITIAL_OVERLAP_OFFSET) {
         currentZCoord -= AVOID_INITIAL_OVERLAP_OFFSET;
-
-    // Correcting velocity if current car is going forward too slowly or going backward too fast
-    if (currentVelocity < mostAdvancedVelocity) {
-        float idealCollisionZCoord = currentZCoord;
-        idealCollisionZCoord -= currentlyGoingForward ? FRONT_COLLISION_Z_COORD_OFFSET : BACK_COLLISION_Z_COORD_OFFSET;
-        float minIdealVelocity = mostAdvancedVelocity * (idealCollisionZCoord - currentZCoord) /
-                                 (idealCollisionZCoord - mostAdvancedZCoord);
-        if (currentVelocity < minIdealVelocity)
-            currentVelocity = minIdealVelocity;
     }
 
     // Collision-free corrections
     cars[model][index].pos.z = currentZCoord;
-    cars[model][index].velocity = currentVelocity;
-
-//    std::cout << "Regenerated >> Car[" << model << "][" << index << "]: (x = " << cars[model][index].pos.x << ", y = " << cars[model][index].pos.y << ", z = " << cars[model][index].pos.z << ") "
-//              << ", velocity = " << cars[model][index].velocity << std::endl;
 }

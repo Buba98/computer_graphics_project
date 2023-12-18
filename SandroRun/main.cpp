@@ -159,7 +159,7 @@ protected:
 
         uniformBlocksInPool = 100;
         texturesInPool = 100;
-        setsInPool = 100;
+        setsInPool = 50 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -228,7 +228,7 @@ protected:
 
         // Init textures
         TRail.init(this, "textures/guardrail.jpg");
-        for (int i = 0; i < NUM_PALETTES; i++) {
+        for (int i = 0; i < NUM_CAR_PALETTES; i++) {
             std::string paletteFile = "textures/car_palettes/" + std::to_string(i) + ".png";
             TCar[i].init(this, paletteFile.c_str());
         }
@@ -262,7 +262,7 @@ protected:
         currText = 0;
         gameState = 0;
         splashVisibility = 1.0f;
-        frontWorldLimit = -PERIODS * TERRAIN_LENGTH;
+        frontWorldLimit = -WORLD_LENGTH;
         backWorldLimit = 0;
         time_of_day = 0;
 
@@ -276,9 +276,11 @@ protected:
             for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 regenerateCar(model, i);
             }
+        }
+        for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
                 if (cars[model][i].isGoingForward)
-                    cars[model][i].pos.z += (float) 3 * TERRAIN_LENGTH;
+                    cars[model][i].pos.z += (float) WORLD_LENGTH * 0.75f;
             }
         }
     }
@@ -498,7 +500,7 @@ protected:
         const int shift = pos.z / TERRAIN_LENGTH;
 
         backWorldLimit = (float) shift * TERRAIN_LENGTH;
-        frontWorldLimit = backWorldLimit - TERRAIN_LENGTH;
+        frontWorldLimit = backWorldLimit - WORLD_LENGTH;
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -550,7 +552,7 @@ protected:
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (int index = 0; index < NUM_CAR_MODEL_INSTANCES; index++) {
-                uboCar.palette = (model + index) % NUM_PALETTES;
+                uboCar.palette = (model + index) % NUM_CAR_PALETTES;
                 uboCar.mMat = glm::translate(glm::mat4(1), cars[model][index].pos) *
                               glm::rotate(glm::mat4(1), glm::radians(
                                                   cars[model][index].isGoingForward ? 0.0f : 180.0f),

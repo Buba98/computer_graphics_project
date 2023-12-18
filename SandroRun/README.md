@@ -17,7 +17,7 @@
   - [x] Add a road model
   - [x] Add guardrails on the road
   - [x] Make the road infinite
-- [ ] Add cars
+- [x] Add cars
   - [x] Export the cars from blender in obj format
   - [x] Add the cars model to the scene
   - [x] Make the cars move on a straight line
@@ -25,7 +25,7 @@
   - [x] Handle the random generation of cars in different lanes
   - [x] Cleanup and restructuring of car related code
   - [x] Add multiple car models
-  - [ ] Handle collisions between cars
+  - [x] Handle collisions between cars
 - [ ] Add scenery
   - [x] Add a skybox
   - [x] Add the terrain around the road

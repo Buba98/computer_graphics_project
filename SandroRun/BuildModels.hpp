@@ -2,7 +2,7 @@ void SandroRun::roadModel() {
 
     const int period = 12;
 
-    for (int i = 0; i < PERIODS * period; i++) {
+    for (int i = 0; i < NUM_TERRAIN_REPETITIONS * period; i++) {
         glm::vec3 surface = glm::vec3({10.0f, 0.0f, (-i * 10.0f) + 5.0f});
         glm::vec3 normal = glm::vec3({0.0f, 1.0f, 0.0f});
         glm::vec2 UV = glm::vec2({0.0f, 0.0f});
@@ -23,7 +23,7 @@ void SandroRun::roadModel() {
         UV = glm::vec2({1.0f, 0.0f});
         MRoad.vertices.push_back({surface, normal, UV});
     }
-    for (int i = 0; i < PERIODS * period; ++i) {
+    for (int i = 0; i < NUM_TERRAIN_REPETITIONS * period; ++i) {
         MRoad.indices.push_back(i * 4);
         MRoad.indices.push_back(i * 4 + 2);
         MRoad.indices.push_back(i * 4 + 1);
@@ -44,7 +44,7 @@ void SandroRun::terrainModel() {
     int inv = -1;
     const int period = 120;
 
-    for (int i = 0; i <= PERIODS * period; i++) {
+    for (int i = 0; i <= NUM_TERRAIN_REPETITIONS * period; i++) {
         for (int j = 0; j <= 60; j++) {
 
             float x = (float) j + 10.0f;
@@ -71,7 +71,7 @@ void SandroRun::terrainModel() {
         }
         uPos += inv * 1.0f / 60.0f;
     }
-    for (int i = 0; i < PERIODS * period; ++i) {
+    for (int i = 0; i < NUM_TERRAIN_REPETITIONS * period; ++i) {
         for (int j = 0; j < 60; ++j) {
             MTerrain.indices.push_back(i * 61 + j);
             MTerrain.indices.push_back(i * 61 + j + 1);
@@ -87,7 +87,7 @@ void SandroRun::terrainModel() {
     inv = -1;
 
     // Left side
-    for (int i = 0; i <= PERIODS * period; i++) {
+    for (int i = 0; i <= NUM_TERRAIN_REPETITIONS * period; i++) {
         for (int j = 0; j <= 60; j++) {
 
             float x = (float) -j - 10.0f;
@@ -114,9 +114,9 @@ void SandroRun::terrainModel() {
         uPos += inv * 1.0f / 60.0f;
     }
 
-    int offset = (PERIODS * period + 1) * 61;
+    int offset = (NUM_TERRAIN_REPETITIONS * period + 1) * 61;
 
-    for (int i = 0; i < PERIODS * period; ++i) {
+    for (int i = 0; i < NUM_TERRAIN_REPETITIONS * period; ++i) {
         for (int j = 0; j < 60; ++j) {
             MTerrain.indices.push_back(offset + i * 61 + j);
             MTerrain.indices.push_back(offset + (i + 1) * 61 + j);
