@@ -148,7 +148,7 @@ protected:
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     float frontWorldLimit, backWorldLimit;
-    int time_of_day;
+    int dayTime;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -175,7 +175,7 @@ protected:
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
-        DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_VERTEX_BIT},
+        DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -264,7 +264,7 @@ protected:
         splashVisibility = 1.0f;
         frontWorldLimit = -WORLD_LENGTH;
         backWorldLimit = 0;
-        time_of_day = 0;
+        dayTime = 0;
 
         // Cars initialization
         for (int m = 0; m < NUM_CAR_MODELS; m++) {
@@ -508,7 +508,8 @@ protected:
         gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        uboSkybox.time_of_day = time_of_day;
+        dayTime = -shift % 3;
+        uboSkybox.time_of_day = dayTime;
         uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
