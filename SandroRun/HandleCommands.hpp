@@ -143,14 +143,14 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
     }
 }
 
-
-
 void SandroRun::resetGame() {
-    // Moto position and orientation
+    // Camera position and orientation
     pos = glm::vec3(0.0f, 0.0f, 0.0f);
     yaw = 0.0f, pitch = M_PI / 2.5f;
     yawNew = 0.0f, pitchNew = M_PI / 2.5f;
     cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+
+    // Moto orientation
     speed = 0;
     motoRoll = 0;
     motoPitch = 0;
@@ -164,6 +164,7 @@ void SandroRun::resetGame() {
     backWorldLimit = 0;
     dayTime = 0;
     gameOver = false;
+    wasN = false;
 
     // Cars positions
     initCars();
