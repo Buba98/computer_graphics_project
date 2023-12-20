@@ -489,7 +489,7 @@ protected:
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
 
-        score.populateCommandBuffer(commandBuffer, currentImage, currText);
+        score.populateCommandBuffer(commandBuffer, currentImage, scene.currText);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
