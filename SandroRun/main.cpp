@@ -265,24 +265,6 @@ protected:
         backWorldLimit = 0;
         dayTime = 0;
         wasN = false;
-
-        // Cars initialization
-        for (int m = 0; m < NUM_CAR_MODELS; m++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                cars[m][i].pos = glm::vec3(0.0f);
-            }
-        }
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                regenerateCar(model, i);
-            }
-        }
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                if (cars[model][i].isGoingForward)
-                    cars[model][i].pos.z += (float) WORLD_LENGTH * 0.75f;
-            }
-        }
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -644,10 +626,15 @@ protected:
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
 
     void regenerateCar(int model, int index);
+
+    void initCars();
+
+    void updateCars(double deltaT);
 };
 
 #include "BuildModels.hpp"
 #include "HandleCommands.hpp"
+#include "Car.hpp"
 
 
 int main() {
