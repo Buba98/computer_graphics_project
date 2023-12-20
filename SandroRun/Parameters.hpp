@@ -34,7 +34,7 @@
 #define MOTO_PITCH_SPEED 150
 #define LAMBDA 10.0f
 #define MOTO_LENGTH 2.2f
-#define MOTO_WIDTH 0.8f
+#define MOTO_WIDTH 0.6f
 #define MOTO_MODEL_OFFSET 0.3f
 
 // Cars settings
@@ -53,7 +53,7 @@
 #define INITIAL_RIGHT_LANES_SHIFTING_FACTOR 0.6f
 
 const float carsLength[10] = {4.9f, 4.2f, 5.3f, 4.6f, 4.75f, 5.1f, 4.6f, 8.325f, 8.5f, 10.35f};
-const float carsWidth[10] = {1.8f, 1.9f, 1.9f, 2.0f, 1.9f, 2.0f, 2.5f, 2.4f, 2.2f};
+const float carsWidth[10] = {1.8f, 1.9f, 1.9f, 2.0f, 2.0f, 1.9f, 2.0f, 2.5f, 2.4f, 2.2f};
 
 enum TimeOfDay {
     DAY = 0,
