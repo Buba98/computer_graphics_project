@@ -1,5 +1,4 @@
-void SandroRun::roadModel() {
-
+void SandroRun::initRoadModel() {
     const int period = 12;
 
     for (int i = 0; i < NUM_TERRAIN_REPETITIONS * period; i++) {
@@ -37,8 +36,7 @@ void SandroRun::roadModel() {
     TRoad.init(this, "textures/road.png");
 }
 
-void SandroRun::terrainModel() {
-
+void SandroRun::initTerrainModel() {
     // Right side
     float uPos = 0.0f;
     int inv = -1;
@@ -46,7 +44,6 @@ void SandroRun::terrainModel() {
 
     for (int i = 0; i <= NUM_TERRAIN_REPETITIONS * period; i++) {
         for (int j = 0; j <= 60; j++) {
-
             float x = (float) j + 10.0f;
             float z = (float) -i + 5.0f;
             float y = sin((x - 10.0f) * M_PI / 30.0f) * sin((z + 5.0f) * M_PI / 30.0f) * 5;
@@ -64,7 +61,6 @@ void SandroRun::terrainModel() {
             normal = glm::normalize(normal);
 
             MTerrain.vertices.push_back({surface, normal, {uPos, j / 60.0f}});
-
         }
         if (i % 60 == 0) {
             inv *= -1;
@@ -133,7 +129,7 @@ void SandroRun::terrainModel() {
     TTerrain.init(this, "textures/grass.jpg");
 }
 
-void SandroRun::skyboxModel() {
+void SandroRun::initSkyboxModel() {
     MSkybox.init(this, &VMesh, "models/skyboxCube.obj", OBJ);
 
     const char *T2fn_day[] = {
@@ -167,7 +163,7 @@ void SandroRun::skyboxModel() {
     TSkybox[2].initCubic(this, T2fn_night);
 }
 
-void SandroRun::splashModel() {
+void SandroRun::initSplashModel() {
     MSplash.vertices = {{{-1.0f, -1.0f}, {0.0f, 0.0f}},
                         {{-1.0f, 1.0f},  {0.0f, 1.0f}},
                         {{1.0f,  -1.0f}, {1.0f, 0.0f}},

@@ -233,15 +233,15 @@ protected:
         // Init textures
         TRail.init(this, "textures/guardrail.jpg");
         for (int i = 0; i < NUM_CAR_PALETTES; i++) {
-            std::string paletteFile = "textures/car_palettes/" + std::to_string(i) + ".png";
+            std::string paletteFile = "textures/car_palettes/palette_" + std::to_string(i) + ".png";
             TCar[i].init(this, paletteFile.c_str());
         }
 
         // Custom inits
-        splashModel();
-        roadModel();
-        terrainModel();
-        skyboxModel();
+        initSplashModel();
+        initRoadModel();
+        initTerrainModel();
+        initSkyboxModel();
 
         // Text
         texts.push_back({1, {"Sandro Run", "", "", ""}, 0, 0});
@@ -607,13 +607,13 @@ protected:
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 
-    void splashModel();
+    void initSplashModel();
 
-    void roadModel();
+    void initRoadModel();
 
-    void terrainModel();
+    void initTerrainModel();
 
-    void skyboxModel();
+    void initSkyboxModel();
 
     void controller();
 
