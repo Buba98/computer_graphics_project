@@ -101,7 +101,7 @@ protected:
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
-    DescriptorSetLayout DSLCars;
+    DescriptorSetLayout DSLCar;
 
     // Vertex descriptors
     VertexDescriptor VOverlay;
@@ -113,8 +113,7 @@ protected:
     Pipeline PVColor;
     Pipeline PMesh;
     Pipeline PSkybox;
-    Pipeline PCars;
-    Pipeline PTree;
+    Pipeline PCar;
 
     // Models
     Model<VertexOverlay> MSplash;
@@ -127,6 +126,7 @@ protected:
     Model<VertexMesh> MRail;
     Model<VertexMesh> MCars[NUM_CAR_MODELS];
     Model<VertexVColor> MTrees[4];
+    Model<VertexMesh> MStreetlight;
 
     // Descriptor sets
     DescriptorSet DSSplash;
@@ -140,6 +140,7 @@ protected:
     DescriptorSet DSSkybox;
     DescriptorSet DSCars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     DescriptorSet DSTrees[2 * 2 * NUM_TREE_PER_LINE];
+    DescriptorSet DSStreetlights[2 * NUM_LIGHTS_PER_LINE];
 
     // Textures
     Texture TSplashStart;
@@ -149,6 +150,7 @@ protected:
     Texture TRail;
     Texture TSkybox[3];
     Texture TCar[5];
+    Texture TStreetlight;
 
     // Text
     TextMaker score;
@@ -178,7 +180,7 @@ protected:
 
         uniformBlocksInPool = 100;
         texturesInPool = 100;
-        setsInPool = 50 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
+        setsInPool = 100 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -200,12 +202,12 @@ protected:
                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
-        DSLCars.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
-                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+        DSLCar.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                           {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -228,8 +230,7 @@ protected:
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-        PCars.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCars});
-        PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
+        PCar.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCar});
 
         // Init Models
         MMoto.init(this, &VVColor, "models/moto/moto.obj", OBJ);
@@ -240,6 +241,7 @@ protected:
             std::string modelFile = "models/cars/car_" + std::to_string(model + 1) + ".obj";
             MCars[model].init(this, &VMesh, modelFile, OBJ);
         }
+        MStreetlight.init(this, &VMesh, "models/streetlight.obj", OBJ);
 
         for (int i = 0; i < 4; ++i) {
             std::string objFile = "models/trees/tree" + std::to_string(i + 1) + ".obj";
@@ -252,6 +254,7 @@ protected:
             std::string paletteFile = "textures/car_palettes/palette_" + std::to_string(i) + ".png";
             TCar[i].init(this, paletteFile.c_str());
         }
+        TStreetlight.init(this, "textures/streetlight/streetlight.png");
 
         // Custom inits
         initSplashModel();
@@ -279,8 +282,7 @@ protected:
         POverlay.create();
         PVColor.create();
         PMesh.create();
-        PCars.create();
-        PTree.create();
+        PCar.create();
 
         // Init Descriptor Sets
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
@@ -304,15 +306,19 @@ protected:
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model])
-                DSCar.init(this, &DSLCars, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                            {1, TEXTURE, 0,                           &TCar[0]},
-                                            {2, TEXTURE, 0,                           &TCar[1]},
-                                            {3, TEXTURE, 0,                           &TCar[2]},
-                                            {4, TEXTURE, 0,                           &TCar[3]},
-                                            {5, TEXTURE, 0,                           &TCar[4]}});;
+                DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                           {1, TEXTURE, 0,                           &TCar[0]},
+                                           {2, TEXTURE, 0,                           &TCar[1]},
+                                           {3, TEXTURE, 0,                           &TCar[2]},
+                                           {4, TEXTURE, 0,                           &TCar[3]},
+                                           {5, TEXTURE, 0,                           &TCar[4]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        }
+        for (DescriptorSet &DSStreetlight: DSStreetlights) {
+            DSStreetlight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                                {1, TEXTURE, 0,                        &TStreetlight}});
         }
 
         score.pipelinesAndDescriptorSetsInit();
@@ -324,8 +330,7 @@ protected:
         PVColor.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
-        PCars.cleanup();
-        PTree.cleanup();
+        PCar.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
@@ -346,6 +351,9 @@ protected:
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.cleanup();
         }
+        for (DescriptorSet &DSStreetlight: DSStreetlights) {
+            DSStreetlight.cleanup();
+        }
 
         score.pipelinesAndDescriptorSetsCleanup();
     }
@@ -363,6 +371,7 @@ protected:
         for (Texture &T: TCar) {
             T.cleanup();
         }
+        TStreetlight.cleanup();
 
         // Cleanup models
         MSplash.cleanup();
@@ -379,6 +388,7 @@ protected:
         for (Model<VertexVColor> &MTree: MTrees) {
             MTree.cleanup();
         }
+        MStreetlight.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLOverlay.cleanup();
@@ -386,15 +396,14 @@ protected:
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
-        DSLCars.cleanup();
+        DSLCar.cleanup();
 
         // Destroy pipelines
         POverlay.destroy();
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
-        PCars.destroy();
-        PTree.destroy();
+        PCar.destroy();
 
         score.localCleanup();
     }
@@ -419,11 +428,41 @@ protected:
         DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
 
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
         MRoad.bind(commandBuffer);
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
+
+        MStreetlight.bind(commandBuffer);
+        for (DescriptorSet DSStreetlight: DSStreetlights) {
+            DSStreetlight.bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MStreetlight.indices.size()), 1, 0, 0, 0);
+        }
 
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
@@ -435,12 +474,12 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
         }
 
-        DSGubo.bind(commandBuffer, PCars, 0, currentImage);
-        PCars.bind(commandBuffer);
+        DSGubo.bind(commandBuffer, PCar, 0, currentImage);
+        PCar.bind(commandBuffer);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model]) {
                 MCars[model].bind(commandBuffer);
-                DSCar.bind(commandBuffer, PCars, 1, currentImage);
+                DSCar.bind(commandBuffer, PCar, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCars[model].indices.size()), 1, 0, 0, 0);
             }
         }
@@ -450,33 +489,7 @@ protected:
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
 
-        DSGubo.bind(commandBuffer, PTree, 0, currentImage);
-        PTree.bind(commandBuffer);
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        score.populateCommandBuffer(commandBuffer, currentImage, scene.currText);
+        score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -615,6 +628,30 @@ protected:
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSRails[i + NUM_RAIL_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
+        }
+
+        for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
+            ubo.mMat = glm::translate(glm::mat4(1),
+                                      glm::vec3(-ROAD_WIDTH / 2 - 3.0, 0, 10 - i * TERRAIN_LENGTH / 2 +
+                                                                          shift * TERRAIN_LENGTH)) *
+                       glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
+                                                                                                        glm::vec3(
+                                                                                                                3.0f));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSStreetlights[i].map(currentImage, &ubo, sizeof(ubo), 0);
+        }
+
+        for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
+            ubo.mMat = glm::translate(glm::mat4(1),
+                                      glm::vec3(ROAD_WIDTH / 2 + 3.0, 0,
+                                                10 - TERRAIN_LENGTH / 4 - i * TERRAIN_LENGTH / 2 +
+                                                shift * TERRAIN_LENGTH)) *
+                       glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
+                                                                                                       glm::vec3(3.0f));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSStreetlights[i + NUM_LIGHTS_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
         }
 
         uboSplash.visible = scene.splashVisibility;
