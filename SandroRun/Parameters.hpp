@@ -32,6 +32,8 @@
 #define MOTO_ROLL_SPEED 100
 #define MOTO_PITCH_SPEED 150
 #define LAMBDA 10.0f
+#define MOTO_LENGTH 5.0f
+#define MOTO_WIDTH 1.0f
 
 // Cars settings
 #define NUM_CAR_MODELS 10
@@ -47,6 +49,8 @@
 #define LEFT_LANE_CAR_SPEED -12
 #define AVOID_INITIAL_OVERLAP_OFFSET 15
 #define INITIAL_RIGHT_LANES_SHIFTING_FACTOR 0.6f
+#define CAR_LENGTH 5.0f
+#define CAR_WIDTH 2.0f
 
 enum TimeOfDay {
     DAY = 0,

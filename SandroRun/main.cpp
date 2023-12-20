@@ -61,7 +61,34 @@ struct VertexVColor {
 struct Car {
     glm::vec3 pos;
     bool isGoingForward;
-    float velocity;
+    float speed;
+    float length, width;
+};
+
+struct Moto {
+    glm::vec3 pos;
+    float roll;
+    float pitch;
+    float wheelPitch;
+    float speed;
+    float length, width;
+};
+
+struct Camera {
+    glm::vec3 pos;
+    float yaw;
+    float pitch;
+    float yawNew;
+    float pitchNew;
+};
+
+struct Scene {
+    int gameState;
+    bool gameOver;
+    float frontWorldLimit, backWorldLimit;
+    int currText;
+    float splashVisibility;
+    int dayTime;
 };
 
 class SandroRun : public BaseProject {
@@ -135,23 +162,12 @@ protected:
 
     // Other stuff
     std::vector<SingleText> texts;
-    int gameState;
-    int currText;
-    glm::vec3 pos;
-    float yaw, pitch;
-    float yawNew, pitchNew;
-    glm::vec3 cameraPosition;
-    float speed;
-    float motoRoll;
-    float motoPitch;
-    float wheelPitch;
     bool wasFire, holdFire;
     bool wasN;
-    float splashVisibility;
+    Scene scene;
+    Camera camera;
+    Moto moto;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
-    float frontWorldLimit, backWorldLimit;
-    int dayTime;
-    bool gameOver;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -460,7 +476,7 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
         }
 
-        score.populateCommandBuffer(commandBuffer, currentImage, currText);
+        score.populateCommandBuffer(commandBuffer, currentImage, scene.currText);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
@@ -471,19 +487,19 @@ protected:
 
         viewHandler(ViewProj, World);
 
-        const int shift = pos.z / TERRAIN_LENGTH;
+        const int shift = moto.pos.z / TERRAIN_LENGTH;
 
-        backWorldLimit = (float) shift * TERRAIN_LENGTH;
-        frontWorldLimit = backWorldLimit - WORLD_LENGTH;
+        scene.backWorldLimit = (float) shift * TERRAIN_LENGTH;
+        scene.frontWorldLimit = scene.backWorldLimit - WORLD_LENGTH;
 
         gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
         gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
         gubo.AmbLightColor = glm::vec3(0.1f);
-        gubo.eyePos = cameraPosition;
+        gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        uboSkybox.time_of_day = dayTime;
-        uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
+        uboSkybox.time_of_day = scene.dayTime;
+        uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), camera.pos);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
@@ -493,30 +509,30 @@ protected:
         ubo.amb = 1.0f;
         ubo.gamma = 180.0f;
         ubo.sColor = glm::vec3(1.0f);
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), OFFSET)) *
-                   glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
+        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
+                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                   glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSMoto.map(currentImage, &ubo, sizeof(ubo), 0);
 
         const float DIST_WHEELS = 1.62f;
 
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(motoPitch) * sin(-motoRoll),
-                                                                  .315f - (.015f * sin(motoRoll)) +
-                                                                  DIST_WHEELS * sin(motoPitch) * cos(motoRoll),
-                                                                  -DIST_WHEELS * cos(motoPitch) + OFFSET)) *
-                   glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), wheelPitch, glm::vec3(1, 0, 0)) *
+        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
+                                                                  .315f - (.015f * sin(moto.roll)) +
+                                                                  DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
+                                                                  -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
+                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
                    glm::scale(glm::mat4(1), glm::vec3(0.78f));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(motoRoll)), OFFSET)) *
-                   glm::rotate(glm::mat4(1), motoRoll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), wheelPitch, glm::vec3(1, 0, 0)) *
-                   glm::rotate(glm::mat4(1), motoPitch, glm::vec3(1, 0, 0));
+        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
+                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
+                   glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
@@ -601,8 +617,8 @@ protected:
             DSRails[i + NUM_RAIL_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
         }
 
-        uboSplash.visible = splashVisibility;
-        uboSplash.splashSelector = gameState == 2 ? 1 : 0;
+        uboSplash.visible = scene.splashVisibility;
+        uboSplash.splashSelector = scene.gameState == 2 ? 1 : 0;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 
