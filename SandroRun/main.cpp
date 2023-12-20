@@ -143,8 +143,8 @@ protected:
     float motoRoll;
     float motoPitch;
     float wheelPitch;
-    bool wasFire;
-    bool holdFire;
+    bool wasFire, holdFire;
+    bool wasN;
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     float frontWorldLimit, backWorldLimit;
@@ -257,14 +257,14 @@ protected:
         motoRoll = 0;
         motoPitch = 0;
         wheelPitch = 0;
-        wasFire = false;
-        holdFire = false;
+        wasFire = false, holdFire = false;
         currText = 0;
         gameState = 0;
         splashVisibility = 1.0f;
         frontWorldLimit = -WORLD_LENGTH;
         backWorldLimit = 0;
         dayTime = 0;
+        wasN = false;
 
         // Cars initialization
         for (int m = 0; m < NUM_CAR_MODELS; m++) {
@@ -508,7 +508,6 @@ protected:
         gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        dayTime = -shift % 3;
         uboSkybox.time_of_day = dayTime;
         uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));

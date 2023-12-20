@@ -27,6 +27,16 @@ void SandroRun::controller() {
         return;
     }
 
+    bool n = false;
+    if (glfwGetKey(window, GLFW_KEY_N)) {
+        n = true;
+    }
+
+    if (n && !wasN){
+        dayTime = (dayTime + 1) % 3;
+    }
+    wasN = n;
+
     if (splashVisibility != 0.0f) {
         splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
     }
