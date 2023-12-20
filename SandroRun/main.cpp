@@ -98,6 +98,7 @@ protected:
     Model<VertexMesh> MRail;
     Model<VertexMesh> MCars[NUM_CAR_MODELS];
     Model<VertexVColor> MTrees[4];
+    Model<VertexMesh> MStreetlight;
 
     // Descriptor sets
     DescriptorSet DSSplash;
@@ -111,6 +112,7 @@ protected:
     DescriptorSet DSSkybox;
     DescriptorSet DSCars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     DescriptorSet DSTrees[2 * 2 * NUM_TREE_PER_LINE];
+    DescriptorSet DSStreetlights[2 * NUM_LIGHTS_PER_LINE];
 
     // Textures
     Texture TSplash;
@@ -119,6 +121,7 @@ protected:
     Texture TRail;
     Texture TSkybox[3];
     Texture TCar[5];
+    Texture TStreetlight;
 
     // Text
     TextMaker score;
@@ -158,7 +161,7 @@ protected:
 
         uniformBlocksInPool = 100;
         texturesInPool = 100;
-        setsInPool = 50 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
+        setsInPool = 100 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -218,6 +221,7 @@ protected:
             std::string modelFile = "models/cars/car_" + std::to_string(model + 1) + ".obj";
             MCars[model].init(this, &VMesh, modelFile, OBJ);
         }
+        MStreetlight.init(this, &VMesh, "models/streetlight.obj", OBJ);
 
         for (int i = 0; i < 4; ++i) {
             std::string objFile = "models/trees/tree" + std::to_string(i + 1) + ".obj";
@@ -230,6 +234,7 @@ protected:
             std::string paletteFile = "textures/car_palettes/" + std::to_string(i) + ".png";
             TCar[i].init(this, paletteFile.c_str());
         }
+        TStreetlight.init(this, "textures/streetlight/streetlight.png");
 
         // Custom inits
 
@@ -304,6 +309,10 @@ protected:
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         }
+        for (DescriptorSet &DSStreetlight: DSStreetlights) {
+            DSStreetlight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                                {1, TEXTURE, 0,                        &TStreetlight}});
+        }
 
         score.pipelinesAndDescriptorSetsInit();
     }
@@ -335,6 +344,9 @@ protected:
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.cleanup();
         }
+        for (DescriptorSet &DSStreetlight: DSStreetlights) {
+            DSStreetlight.cleanup();
+        }
 
         score.pipelinesAndDescriptorSetsCleanup();
     }
@@ -351,6 +363,7 @@ protected:
         for (Texture &T: TCar) {
             T.cleanup();
         }
+        TStreetlight.cleanup();
 
         // Cleanup models
         MSplash.cleanup();
@@ -367,6 +380,7 @@ protected:
         for (Model<VertexVColor> &MTree: MTrees) {
             MTree.cleanup();
         }
+        MStreetlight.cleanup();
 
         // Cleanup descriptor sets layouts
         DSLOverlay.cleanup();
@@ -435,6 +449,12 @@ protected:
         MRoad.bind(commandBuffer);
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
+
+        MStreetlight.bind(commandBuffer);
+        for (DescriptorSet DSStreetlight: DSStreetlights) {
+            DSStreetlight.bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MStreetlight.indices.size()), 1, 0, 0, 0);
+        }
 
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
@@ -600,6 +620,30 @@ protected:
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSRails[i + NUM_RAIL_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
+        }
+
+        for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
+            ubo.mMat = glm::translate(glm::mat4(1),
+                                      glm::vec3(-ROAD_WIDTH / 2 - 3.0, 0, 10 - i * TERRAIN_LENGTH / 2 +
+                                                                          shift * TERRAIN_LENGTH)) *
+                       glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
+                                                                                                        glm::vec3(
+                                                                                                                3.0f));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSStreetlights[i].map(currentImage, &ubo, sizeof(ubo), 0);
+        }
+
+        for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
+            ubo.mMat = glm::translate(glm::mat4(1),
+                                      glm::vec3(ROAD_WIDTH / 2 + 3.0, 0,
+                                                10 - TERRAIN_LENGTH / 4 - i * TERRAIN_LENGTH / 2 +
+                                                shift * TERRAIN_LENGTH)) *
+                       glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
+                                                                                                       glm::vec3(3.0f));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSStreetlights[i + NUM_LIGHTS_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
         }
 
         uboSplash.visible = splashVisibility;
