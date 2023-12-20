@@ -73,7 +73,7 @@ protected:
     DescriptorSetLayout DSLVColor;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
-    DescriptorSetLayout DSLCars;
+    DescriptorSetLayout DSLCar;
 
     // Vertex descriptors
     VertexDescriptor VOverlay;
@@ -85,8 +85,7 @@ protected:
     Pipeline PVColor;
     Pipeline PMesh;
     Pipeline PSkybox;
-    Pipeline PCars;
-    Pipeline PTree;
+    Pipeline PCar;
 
     // Models
     Model<VertexOverlay> MSplash;
@@ -180,12 +179,12 @@ protected:
                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
-        DSLCars.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
-                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                            {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+        DSLCar.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                           {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -208,8 +207,7 @@ protected:
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-        PCars.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCars});
-        PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
+        PCar.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCar});
 
         // Init Models
         MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
@@ -273,8 +271,7 @@ protected:
         POverlay.create();
         PVColor.create();
         PMesh.create();
-        PCars.create();
-        PTree.create();
+        PCar.create();
 
         // Init Descriptor Sets
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
@@ -297,12 +294,12 @@ protected:
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model])
-                DSCar.init(this, &DSLCars, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                            {1, TEXTURE, 0,                           &TCar[0]},
-                                            {2, TEXTURE, 0,                           &TCar[1]},
-                                            {3, TEXTURE, 0,                           &TCar[2]},
-                                            {4, TEXTURE, 0,                           &TCar[3]},
-                                            {5, TEXTURE, 0,                           &TCar[4]}});;
+                DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                           {1, TEXTURE, 0,                           &TCar[0]},
+                                           {2, TEXTURE, 0,                           &TCar[1]},
+                                           {3, TEXTURE, 0,                           &TCar[2]},
+                                           {4, TEXTURE, 0,                           &TCar[3]},
+                                           {5, TEXTURE, 0,                           &TCar[4]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -317,8 +314,7 @@ protected:
         PVColor.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
-        PCars.cleanup();
-        PTree.cleanup();
+        PCar.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
@@ -378,15 +374,14 @@ protected:
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
-        DSLCars.cleanup();
+        DSLCar.cleanup();
 
         // Destroy pipelines
         POverlay.destroy();
         PVColor.destroy();
         PMesh.destroy();
         PSkybox.destroy();
-        PCars.destroy();
-        PTree.destroy();
+        PCar.destroy();
 
         score.localCleanup();
     }
@@ -411,6 +406,30 @@ protected:
         DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
 
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
         MRoad.bind(commandBuffer);
@@ -427,12 +446,12 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
         }
 
-        DSGubo.bind(commandBuffer, PCars, 0, currentImage);
-        PCars.bind(commandBuffer);
+        DSGubo.bind(commandBuffer, PCar, 0, currentImage);
+        PCar.bind(commandBuffer);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (DescriptorSet &DSCar: DSCars[model]) {
                 MCars[model].bind(commandBuffer);
-                DSCar.bind(commandBuffer, PCars, 1, currentImage);
+                DSCar.bind(commandBuffer, PCar, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCars[model].indices.size()), 1, 0, 0, 0);
             }
         }
@@ -441,32 +460,6 @@ protected:
         MSkybox.bind(commandBuffer);
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
-
-        DSGubo.bind(commandBuffer, PTree, 0, currentImage);
-        PTree.bind(commandBuffer);
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PTree, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
 
         score.populateCommandBuffer(commandBuffer, currentImage, currText);
     }
