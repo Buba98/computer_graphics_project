@@ -31,6 +31,7 @@ struct SkyboxUniformBlock {
 
 struct OverlayUniformBlock {
     alignas(4) float visible;
+    alignas(4) int splashSelector;
 };
 
 struct GlobalUniformBlock {
@@ -114,7 +115,8 @@ protected:
     DescriptorSet DSTrees[2 * 2 * NUM_TREE_PER_LINE];
 
     // Textures
-    Texture TSplash;
+    Texture TSplashStart;
+    Texture TSplashEnd;
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
@@ -149,6 +151,7 @@ protected:
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     float frontWorldLimit, backWorldLimit;
     int dayTime;
+    bool gameOver;
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -171,7 +174,8 @@ protected:
     void localInit() {
         // Init Descriptor Sets Layouts
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
-                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -212,9 +216,9 @@ protected:
         PTree.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
 
         // Init Models
-        MMoto.init(this, &VVColor, "models/moto.obj", OBJ);
-        MFrontWheel.init(this, &VVColor, "models/frontWheel.obj", OBJ);
-        MRearWheel.init(this, &VVColor, "models/rearWheel.obj", OBJ);
+        MMoto.init(this, &VVColor, "models/moto/moto.obj", OBJ);
+        MFrontWheel.init(this, &VVColor, "models/moto/frontWheel.obj", OBJ);
+        MRearWheel.init(this, &VVColor, "models/moto/rearWheel.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             std::string modelFile = "models/cars/car_" + std::to_string(model + 1) + ".obj";
@@ -234,7 +238,6 @@ protected:
         }
 
         // Custom inits
-
         splashModel();
         roadModel();
         terrainModel();
@@ -243,46 +246,15 @@ protected:
         // Text
         texts.push_back({1, {"Sandro Run", "", "", ""}, 0, 0});
         for (int i = 0; i < 1000; ++i) {
-            texts.push_back({2, {"Score: ", std::to_string(i), "", ""}, 0, 0});
+            std::string text = "Score: " + std::to_string(i);
+            texts.push_back({1, {text, "", "", ""}, 0, 0});
         }
-
         score.init(this, &texts);
 
         // Init other stuff
-        pos = glm::vec3(0.0f, 0.0f, 0.0f);
-        yaw = 0.0f, pitch = M_PI / 2.5f, roll = 0.0f;
-        yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
-        cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
-        speed = 0;
-        motoRoll = 0;
-        motoPitch = 0;
-        wheelPitch = 0;
+        resetGame();
         wasFire = false;
         holdFire = false;
-        currText = 0;
-        gameState = 0;
-        splashVisibility = 1.0f;
-        frontWorldLimit = -WORLD_LENGTH;
-        backWorldLimit = 0;
-        dayTime = 0;
-
-        // Cars initialization
-        for (int m = 0; m < NUM_CAR_MODELS; m++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                cars[m][i].pos = glm::vec3(0.0f);
-            }
-        }
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                regenerateCar(model, i);
-            }
-        }
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-                if (cars[model][i].isGoingForward)
-                    cars[model][i].pos.z += (float) WORLD_LENGTH * 0.75f;
-            }
-        }
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -296,7 +268,8 @@ protected:
 
         // Init Descriptor Sets
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-                                          {1, TEXTURE, 0,                           &TSplash}});
+                                          {1, TEXTURE, 0,                           &TSplashStart},
+                                          {2, TEXTURE, 0,                           &TSplashEnd}});
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSFrontWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRearWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -363,7 +336,8 @@ protected:
 
     void localCleanup() {
         // Cleanup textures
-        TSplash.cleanup();
+        TSplashStart.cleanup();
+        TSplashEnd.cleanup();
         TRoad.cleanup();
         TRail.cleanup();
         for (Texture &T: TSkybox) {
@@ -629,6 +603,7 @@ protected:
         }
 
         uboSplash.visible = splashVisibility;
+        uboSplash.splashSelector = gameState == 2 ? 1 : 0;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 
@@ -645,6 +620,8 @@ protected:
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
 
     void regenerateCar(int model, int index);
+
+    void resetGame();
 };
 
 #include "BuildModels.hpp"

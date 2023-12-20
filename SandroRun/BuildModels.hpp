@@ -175,5 +175,6 @@ void SandroRun::splashModel() {
     MSplash.indices = {0, 1, 2, 1, 2, 3};
     MSplash.initMesh(this, &VOverlay);
 
-    TSplash.init(this, "textures/splashScreen.png");
+    TSplashStart.init(this, "textures/splash_screens/splashScreenStart.png");
+    TSplashEnd.init(this, "textures/splash_screens/splashScreenEnd.png");
 }

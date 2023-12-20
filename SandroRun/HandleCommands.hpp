@@ -1,40 +1,63 @@
 #include "Parameters.hpp"
 
 void SandroRun::controller() {
-
     if (glfwGetKey(window, GLFW_KEY_ESCAPE)) {
         glfwSetWindowShouldClose(window, GL_TRUE);
     }
 
+    // Variables
     float deltaT;
     float time;
     bool fire = false;
     glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+    glm::vec3 ux = glm::vec3(1, 0, 0);
+    glm::vec3 uy = glm::vec3(0, 1, 0);
+    glm::vec3 uz = glm::vec3(0, 0, -1);
 
+    // Input acquisition
     getSixAxis(deltaT, m, r, fire, time);
 
+    // Fire handling
     bool handleFire = (!(wasFire) && fire);
     if (handleFire)
         holdFire = !holdFire && gameState;
     wasFire = fire;
 
+    // Games states
     if (gameState == 0) {
-        if (fire) {
+        if (handleFire) {
+            std::cout << "Game started" << std::endl;
             gameState = 1;
             currText = 1;
             createCommandBuffers();
         }
         return;
+    } else if (gameState == 2) {
+        if (handleFire) {
+            resetGame();
+            std::cout << "Game restarted" << std::endl;
+            createCommandBuffers();
+        }
+        return;
     }
 
+    // Game over
+    if (glfwGetKey(window, GLFW_KEY_5))
+        gameOver = true;
+
+    if (gameOver) {
+        std::cout << "Game over" << std::endl;
+        gameState = 2;
+        splashVisibility = 1.0f;
+        return;
+    }
+
+    // Splash screen fading
     if (splashVisibility != 0.0f) {
         splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
     }
 
-    glm::vec3 ux = glm::vec3(1, 0, 0);
-    glm::vec3 uy = glm::vec3(0, 1, 0);
-    glm::vec3 uz = glm::vec3(0, 0, -1);
-
+    // Camera rotation
     pitchNew += ROT_SPEED * r.x * deltaT;
     pitchNew = glm::clamp(pitchNew, MIN_PITCH, MAX_PITCH);
     pitch = pitch * glm::exp(-LAMBDA * deltaT) + pitchNew * (1 - glm::exp(-LAMBDA * deltaT)); // Pitch damping
@@ -48,6 +71,7 @@ void SandroRun::controller() {
     rollNew += ROT_SPEED * r.z * deltaT;
     roll = roll * glm::exp(-LAMBDA * deltaT) + rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Roll damping
 
+    // Moto rotation
     motoRoll = motoRoll - m.x * deltaT * 5.0f;
     if (m.x * deltaT == 0.0f) {
         motoRoll = motoRoll * (1 - glm::exp(-MOTO_ROLL_SPEED * deltaT)); // motoRoll damping
@@ -55,6 +79,7 @@ void SandroRun::controller() {
             motoRoll = 0.0f;
     }
     motoRoll = glm::clamp(motoRoll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
+
     motoPitch = motoPitch - m.z * deltaT * 2.0f;
     if (m.z * deltaT == 0.0f) {
         motoPitch = motoPitch * (1 - glm::exp(-MOTO_PITCH_SPEED * deltaT)); // motoPitch damping
@@ -63,20 +88,22 @@ void SandroRun::controller() {
     }
     motoPitch = glm::clamp(motoPitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
 
+    // Moto position
     speed = Z_SPEED * (log(time * .1f + 1) + 1) * .1f;
-
     pos += ux * X_SPEED * deltaT * sin(-motoRoll);
     pos += uz * speed;
 
-    wheelPitch += -(2 << 4) * speed * deltaT; // Pitch damping
+    // Wheel rotation
+    wheelPitch += -(2 << 4) * speed * deltaT;
 
-    int curr = (abs(pos.z) / 100) + 1;
+    // Current text
+    int curr = (int) (abs(pos.z) / 100) + 1;
     if (currText != curr) {
         currText = curr;
         createCommandBuffers();
     }
 
-    // Cars positions update
+    // Cars movement
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
             cars[model][i].pos.z -= cars[model][i].velocity * deltaT;
@@ -88,13 +115,12 @@ void SandroRun::controller() {
 }
 
 void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
-
     World = glm::translate(glm::mat4(1), pos);
     ViewProj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
     ViewProj[1][1] *= -1;
 
     if (holdFire) {
-
+        // First person view
         ViewProj *= glm::rotate(glm::mat4(1.0), (float) (pitch - M_PI / 2.5f), glm::vec3(1, 0, 0)) *
                     glm::rotate(glm::mat4(1.0), yaw, glm::vec3(0, 1, 0)) *
                     glm::rotate(glm::mat4(1.0), -motoRoll / 2.0f, glm::vec3(0, 0, 1)) *
@@ -105,6 +131,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
 
         cameraPosition = World * glm::vec4(0, CAM_HEIGHT, 0, 1);
     } else {
+        // Third person view
         glm::mat4 rot =
                 glm::rotate(glm::mat4(1), -yaw, glm::vec3(0, 1, 0)) *
                 glm::rotate(glm::mat4(1), pitch, glm::vec3(1, 0, 0));
@@ -154,7 +181,8 @@ void SandroRun::regenerateCar(int model, int index) {
     // Searching most advanced car in same lane
     for (int m = 0; m < NUM_CAR_MODELS; m++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            if (cars[m][i].pos.x == currentLane && cars[m][i].pos.z <= mostAdvancedZCoord && (m != model || i != index)) {
+            if (cars[m][i].pos.x == currentLane && cars[m][i].pos.z <= mostAdvancedZCoord &&
+                (m != model || i != index)) {
                 mostAdvancedZCoord = cars[m][i].pos.z;
                 otherCarInLaneFound = true;
             }
@@ -175,4 +203,43 @@ void SandroRun::regenerateCar(int model, int index) {
 
     // Collision-free corrections
     cars[model][index].pos.z = currentZCoord;
+}
+
+void SandroRun::resetGame() {
+    // Moto position and orientation
+    pos = glm::vec3(0.0f, 0.0f, 0.0f);
+    yaw = 0.0f, pitch = M_PI / 2.5f, roll = 0.0f;
+    yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
+    cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
+    speed = 0;
+    motoRoll = 0;
+    motoPitch = 0;
+    wheelPitch = 0;
+
+    // Game state
+    currText = 0;
+    gameState = 0;
+    splashVisibility = 1.0f;
+    frontWorldLimit = -WORLD_LENGTH;
+    backWorldLimit = 0;
+    dayTime = 0;
+    gameOver = false;
+
+    // Cars positions
+    for (int m = 0; m < NUM_CAR_MODELS; m++) {
+        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+            cars[m][i].pos = glm::vec3(0.0f);
+        }
+    }
+    for (int model = 0; model < NUM_CAR_MODELS; model++) {
+        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+            regenerateCar(model, i);
+        }
+    }
+    for (int model = 0; model < NUM_CAR_MODELS; model++) {
+        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+            if (cars[model][i].isGoingForward)
+                cars[model][i].pos.z += (float) WORLD_LENGTH * INITIAL_RIGHT_LANES_SHIFTING_FACTOR;
+        }
+    }
 }

@@ -3,6 +3,7 @@
 
 layout(binding = 0) uniform UniformBufferObject {
 	float visible;
+	int splashSelector;
 } ubo;
 
 layout(location = 0) in vec2 inPosition;
