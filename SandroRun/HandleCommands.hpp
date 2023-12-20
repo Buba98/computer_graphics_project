@@ -45,9 +45,6 @@ void SandroRun::controller() {
     yaw = yaw * glm::exp(-LAMBDA * deltaT) + yawNew * (1 - glm::exp(-LAMBDA * deltaT)); // Yaw damping
     yaw = glm::clamp(yaw, MIN_YAW, MAX_YAW);
 
-    rollNew += ROT_SPEED * r.z * deltaT;
-    roll = roll * glm::exp(-LAMBDA * deltaT) + rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Roll damping
-
     motoRoll = motoRoll - m.x * deltaT * 5.0f;
     if (m.x * deltaT == 0.0f) {
         motoRoll = motoRoll * (1 - glm::exp(-MOTO_ROLL_SPEED * deltaT)); // motoRoll damping
@@ -111,8 +108,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
         cameraPosition = World * rot * glm::vec4(0, CAM_DIST, 0, 1);
         glm::vec3 a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, CAM_HEIGHT, 0, 0);
 
-        ViewProj *= glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) *
-                    glm::lookAt(cameraPosition, a, glm::vec3(0, 1, 0));
+        ViewProj *= glm::lookAt(cameraPosition, a, glm::vec3(0, 1, 0));
     }
 }
 

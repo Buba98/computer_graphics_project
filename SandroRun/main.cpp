@@ -136,8 +136,8 @@ protected:
     int gameState;
     int currText;
     glm::vec3 pos;
-    float yaw, pitch, roll;
-    float yawNew, pitchNew, rollNew;
+    float yaw, pitch;
+    float yawNew, pitchNew;
     glm::vec3 cameraPosition;
     float speed;
     float motoRoll;
@@ -250,8 +250,8 @@ protected:
 
         // Init other stuff
         pos = glm::vec3(0.0f, 0.0f, 0.0f);
-        yaw = 0.0f, pitch = M_PI / 2.5f, roll = 0.0f;
-        yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
+        yaw = 0.0f, pitch = M_PI / 2.5f;
+        yawNew = 0.0f, pitchNew = M_PI / 2.5f;
         cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
         speed = 0;
         motoRoll = 0;
