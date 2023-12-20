@@ -52,6 +52,17 @@ void SandroRun::controller() {
         return;
     }
 
+    // Daytime update
+    bool n = false;
+    if (glfwGetKey(window, GLFW_KEY_N)) {
+        n = true;
+    }
+
+    if (n && !wasN) {
+        dayTime = (dayTime + 1) % 3;
+    }
+    wasN = n;
+
     // Splash screen fading
     if (splashVisibility != 0.0f) {
         splashVisibility = glm::clamp(splashVisibility - deltaT, 0.0f, 1.0f);
@@ -67,9 +78,6 @@ void SandroRun::controller() {
     yawNew = glm::clamp(yawNew, MIN_YAW, MAX_YAW);
     yaw = yaw * glm::exp(-LAMBDA * deltaT) + yawNew * (1 - glm::exp(-LAMBDA * deltaT)); // Yaw damping
     yaw = glm::clamp(yaw, MIN_YAW, MAX_YAW);
-
-    rollNew += ROT_SPEED * r.z * deltaT;
-    roll = roll * glm::exp(-LAMBDA * deltaT) + rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Roll damping
 
     // Moto rotation
     motoRoll = motoRoll - m.x * deltaT * 5.0f;
@@ -104,14 +112,7 @@ void SandroRun::controller() {
     }
 
     // Cars movement
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            cars[model][i].pos.z -= cars[model][i].velocity * deltaT;
-            if (cars[model][i].pos.z > backWorldLimit) {
-                regenerateCar(model, i);
-            }
-        }
-    }
+    updateCars(deltaT);
 }
 
 void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
@@ -138,78 +139,17 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
         cameraPosition = World * rot * glm::vec4(0, CAM_DIST, 0, 1);
         glm::vec3 a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, CAM_HEIGHT, 0, 0);
 
-        ViewProj *= glm::rotate(glm::mat4(1), -roll, glm::vec3(0, 0, 1)) *
-                    glm::lookAt(cameraPosition, a, glm::vec3(0, 1, 0));
+        ViewProj *= glm::lookAt(cameraPosition, a, glm::vec3(0, 1, 0));
     }
 }
 
-void SandroRun::regenerateCar(int model, int index) {
-    // Selecting random lane
-    int lane = (int) (random() % 4);
-    switch (lane) {
-        case 0:
-            cars[model][index].pos.x = LEFT_LANE;
-            cars[model][index].isGoingForward = false;
-            cars[model][index].velocity = LEFT_LANE_CAR_SPEED;
-            break;
-        case 1:
-            cars[model][index].pos.x = CENTER_LEFT_LANE;
-            cars[model][index].isGoingForward = false;
-            cars[model][index].velocity = CENTER_LEFT_LANE_CAR_SPEED;
-            break;
-        case 2:
-            cars[model][index].pos.x = CENTER_RIGHT_LANE;
-            cars[model][index].isGoingForward = true;
-            cars[model][index].velocity = CENTER_RIGHT_LANE_CAR_SPEED;
-            break;
-        case 3:
-            cars[model][index].pos.x = RIGHT_LANE;
-            cars[model][index].isGoingForward = true;
-            cars[model][index].velocity = RIGHT_LANE_CAR_SPEED;
-            break;
-        default:;
-    }
 
-    cars[model][index].pos.z = frontWorldLimit;
-
-    // Preparing data for collision-free placement
-    float currentLane = cars[model][index].pos.x;
-    float currentZCoord = cars[model][index].pos.z;
-    float mostAdvancedZCoord = 0;
-    bool otherCarInLaneFound = false;
-
-    // Searching most advanced car in same lane
-    for (int m = 0; m < NUM_CAR_MODELS; m++) {
-        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            if (cars[m][i].pos.x == currentLane && cars[m][i].pos.z <= mostAdvancedZCoord &&
-                (m != model || i != index)) {
-                mostAdvancedZCoord = cars[m][i].pos.z;
-                otherCarInLaneFound = true;
-            }
-        }
-    }
-
-    if (!otherCarInLaneFound) {
-        return;
-    }
-
-    // Adjusting position if most advanced car is too close (avoiding initial overlap)
-    if (currentZCoord >= mostAdvancedZCoord) {
-        currentZCoord = mostAdvancedZCoord - AVOID_INITIAL_OVERLAP_OFFSET;
-    }
-    if (mostAdvancedZCoord - currentZCoord < AVOID_INITIAL_OVERLAP_OFFSET) {
-        currentZCoord -= AVOID_INITIAL_OVERLAP_OFFSET;
-    }
-
-    // Collision-free corrections
-    cars[model][index].pos.z = currentZCoord;
-}
 
 void SandroRun::resetGame() {
     // Moto position and orientation
     pos = glm::vec3(0.0f, 0.0f, 0.0f);
-    yaw = 0.0f, pitch = M_PI / 2.5f, roll = 0.0f;
-    yawNew = 0.0f, pitchNew = M_PI / 2.5f, rollNew = 0.0f;
+    yaw = 0.0f, pitch = M_PI / 2.5f;
+    yawNew = 0.0f, pitchNew = M_PI / 2.5f;
     cameraPosition = glm::vec3(0.0f, 0.0f, 0.0f);
     speed = 0;
     motoRoll = 0;
@@ -226,20 +166,5 @@ void SandroRun::resetGame() {
     gameOver = false;
 
     // Cars positions
-    for (int m = 0; m < NUM_CAR_MODELS; m++) {
-        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            cars[m][i].pos = glm::vec3(0.0f);
-        }
-    }
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            regenerateCar(model, i);
-        }
-    }
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
-            if (cars[model][i].isGoingForward)
-                cars[model][i].pos.z += (float) WORLD_LENGTH * INITIAL_RIGHT_LANES_SHIFTING_FACTOR;
-        }
-    }
+    initCars();
 }

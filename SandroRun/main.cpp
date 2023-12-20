@@ -138,15 +138,15 @@ protected:
     int gameState;
     int currText;
     glm::vec3 pos;
-    float yaw, pitch, roll;
-    float yawNew, pitchNew, rollNew;
+    float yaw, pitch;
+    float yawNew, pitchNew;
     glm::vec3 cameraPosition;
     float speed;
     float motoRoll;
     float motoPitch;
     float wheelPitch;
-    bool wasFire;
-    bool holdFire;
+    bool wasFire, holdFire;
+    bool wasN;
     float splashVisibility;
     Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
     float frontWorldLimit, backWorldLimit;
@@ -482,7 +482,6 @@ protected:
         gubo.eyePos = cameraPosition;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
-        dayTime = -shift % 3;
         uboSkybox.time_of_day = dayTime;
         uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), cameraPosition);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
@@ -621,11 +620,16 @@ protected:
 
     void regenerateCar(int model, int index);
 
+    void initCars();
+
+    void updateCars(double deltaT);
+
     void resetGame();
 };
 
 #include "BuildModels.hpp"
 #include "HandleCommands.hpp"
+#include "Car.hpp"
 
 
 int main() {
