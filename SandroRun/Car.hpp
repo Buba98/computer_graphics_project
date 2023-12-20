@@ -90,3 +90,43 @@ void SandroRun::regenerateCar(int model, int index) {
     // Collision-free corrections
     cars[model][index].pos.z = currentZCoord;
 }
+
+void SandroRun::checkCollisionsWithCars() {
+    for (int model = 0; model < NUM_CAR_MODELS; model++) {
+        for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
+            float motoFront = moto.pos.z - moto.length;
+            float motoBack = moto.pos.z;
+            float carFront = cars[model][i].pos.z - cars[model][i].length;
+            float carBack = cars[model][i].pos.z + cars[model][i].length;
+
+            if (motoFront <= carBack && motoBack >= carFront) {
+                std::cout << "motoFront: " << motoFront << std::endl;
+                std::cout << "motoBack: " << motoBack << std::endl;
+                std::cout << "carFront: " << carFront << std::endl;
+                std::cout << "carBack: " << carBack << std::endl;
+                std::cout << std::endl;
+
+                float motoLeft = moto.pos.x - moto.width / 2;
+                float motoRight = moto.pos.x + moto.width / 2;
+                float carLeft = cars[model][i].pos.x - cars[model][i].width / 2;
+                float carRight = cars[model][i].pos.x + cars[model][i].width / 2;
+
+                if (motoLeft <= carRight && motoRight >= carLeft) {
+                    std::cout << "motoLeft: " << motoLeft << std::endl;
+                    std::cout << "motoRight: " << motoRight << std::endl;
+                    std::cout << "carLeft: " << carLeft << std::endl;
+                    std::cout << "carRight: " << carRight << std::endl;
+                    std::cout << std::endl;
+
+                    // print moto and car pos
+                    std::cout << "moto pos: " << moto.pos.x << ", " << moto.pos.y << ", " << moto.pos.z << std::endl;
+                    std::cout << "car pos: " << cars[model][i].pos.x << ", " << cars[model][i].pos.y << ", " << cars[model][i].pos.z << std::endl;
+                    std::cout << std::endl;
+
+                    scene.gameOver = true;
+                    return;
+                }
+            }
+        }
+    }
+}

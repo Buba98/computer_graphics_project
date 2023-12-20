@@ -113,6 +113,8 @@ void SandroRun::controller() {
 
     // Cars movement
     updateCars(deltaT);
+
+    checkCollisionsWithCars();
 }
 
 void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {

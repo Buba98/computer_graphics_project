@@ -641,6 +641,8 @@ protected:
     void updateCars(double deltaT);
 
     void resetGame();
+
+    void checkCollisionsWithCars();
 };
 
 #include "BuildModels.hpp"

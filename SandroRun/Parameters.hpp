@@ -32,7 +32,7 @@
 #define MOTO_ROLL_SPEED 100
 #define MOTO_PITCH_SPEED 150
 #define LAMBDA 10.0f
-#define MOTO_LENGTH 5.0f
+#define MOTO_LENGTH 4.0f
 #define MOTO_WIDTH 1.0f
 
 // Cars settings
