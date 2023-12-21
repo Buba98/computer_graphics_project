@@ -98,13 +98,14 @@ void SandroRun::checkCollisionsWithCars() {
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
             float motoBack = moto.pos.z + MOTO_MODEL_OFFSET;
-            float motoFront = motoBack - moto.length;
+            float motoFront = motoBack - moto.length * cos(moto.pitch);
             float carBack = cars[model][i].isGoingForward ? cars[model][i].pos.z + cars[model][i].length : cars[model][i].pos.z;
             float carFront = carBack - cars[model][i].length;
 
             if (motoFront <= carBack && motoBack >= carFront) {
-                float motoLeft = moto.pos.x - moto.width / 2;
-                float motoRight = moto.pos.x + moto.width / 2;
+                float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
+                float motoLeft = std::min(moto.pos.x - moto.width / 2, motoLateralInclinationCoord);
+                float motoRight = std::max(moto.pos.x + moto.width / 2, motoLateralInclinationCoord);
                 float carLeft = cars[model][i].pos.x - cars[model][i].width / 2;
                 float carRight = cars[model][i].pos.x + cars[model][i].width / 2;
 
@@ -120,8 +121,9 @@ void SandroRun::checkCollisionsWithCars() {
 }
 
 void SandroRun::checkCollisionsWithGuardRails() {
-    float motoLeft = moto.pos.x - moto.width / 2;
-    float motoRight = moto.pos.x + moto.width / 2;
+    float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
+    float motoLeft = std::min(moto.pos.x - moto.width / 2, motoLateralInclinationCoord);
+    float motoRight = std::max(moto.pos.x + moto.width / 2, motoLateralInclinationCoord);
 
     if (motoLeft <= (- ROAD_WIDTH / 2) || motoRight >= (ROAD_WIDTH / 2)) {
         std::cout << "Collision with guard rail" << std::endl;
