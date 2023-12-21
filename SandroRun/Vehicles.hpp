@@ -22,7 +22,7 @@ void SandroRun::initCars(){
     }
 }
 
-void SandroRun::updateCars(double deltaT) {
+void SandroRun::updateCars(float deltaT) {
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
             cars[model][i].pos.z -= cars[model][i].speed * deltaT;
@@ -98,14 +98,14 @@ void SandroRun::checkCollisionsWithCars() {
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
         for (int i = 0; i < NUM_CAR_MODEL_INSTANCES; i++) {
             float motoBack = moto.pos.z + MOTO_MODEL_OFFSET;
-            float motoFront = motoBack - moto.length * cos(moto.pitch);
+            float motoFront = motoBack - MOTO_LENGTH * cos(moto.pitch);
             float carBack = cars[model][i].isGoingForward ? cars[model][i].pos.z + cars[model][i].length : cars[model][i].pos.z;
             float carFront = carBack - cars[model][i].length;
 
             if (motoFront <= carBack && motoBack >= carFront) {
                 float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
-                float motoLeft = std::min(moto.pos.x - moto.width / 2, motoLateralInclinationCoord);
-                float motoRight = std::max(moto.pos.x + moto.width / 2, motoLateralInclinationCoord);
+                float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
+                float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);
                 float carLeft = cars[model][i].pos.x - cars[model][i].width / 2;
                 float carRight = cars[model][i].pos.x + cars[model][i].width / 2;
 
@@ -122,13 +122,40 @@ void SandroRun::checkCollisionsWithCars() {
 
 void SandroRun::checkCollisionsWithGuardRails() {
     float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
-    float motoLeft = std::min(moto.pos.x - moto.width / 2, motoLateralInclinationCoord);
-    float motoRight = std::max(moto.pos.x + moto.width / 2, motoLateralInclinationCoord);
+    float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
+    float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);
 
-    if (motoLeft <= (- ROAD_WIDTH / 2) || motoRight >= (ROAD_WIDTH / 2)) {
+    if (motoLeft <= (- ROAD_WIDTH / 2 + GUARD_RAIL_WIDTH) || motoRight >= (ROAD_WIDTH / 2 - GUARD_RAIL_WIDTH)) {
         std::cout << "Collision with guard rail" << std::endl;
         scene.gameOver = true;
         std::this_thread::sleep_for(std::chrono::seconds(1));
         return;
     }
+}
+
+void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, glm::vec3 uz) {
+    // Moto rotation
+    moto.roll = moto.roll - m.x * deltaT * 5.0f;
+    if (m.x * deltaT == 0.0f) {
+        moto.roll *= (1 - glm::exp(-MOTO_ROLL_SPEED * deltaT)); // motoRoll damping
+        if (moto.roll > 0.001 * MIN_MOTO_ROLL && moto.roll < 0.001 * MAX_MOTO_ROLL)
+            moto.roll = 0.0f;
+    }
+    moto.roll = glm::clamp(moto.roll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
+
+    moto.pitch = moto.pitch - m.z * deltaT * 2.0f;
+    if (m.z * deltaT == 0.0f) {
+        moto.pitch *= (1 - glm::exp(-MOTO_PITCH_SPEED * deltaT)); // motoPitch damping
+        if (moto.pitch < 0.001 * MAX_MOTO_PITCH)
+            moto.pitch = 0.0f;
+    }
+    moto.pitch = glm::clamp(moto.pitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
+
+    // Moto position
+    moto.speed = Z_SPEED * (log((time - scene.startTime) * .1f + 1) + 1) * .1f;
+    moto.pos += ux * X_SPEED * deltaT * sin(-moto.roll);
+    moto.pos += uz * moto.speed;
+
+    // Wheel rotation
+    moto.wheelPitch += -(2 << 4) * moto.speed * deltaT;
 }

@@ -74,7 +74,6 @@ struct Moto {
     float pitch;
     float wheelPitch;
     float speed;
-    float length, width;
 };
 
 struct Camera {
@@ -413,11 +412,13 @@ protected:
     }
 
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
+        // Splash screen
         POverlay.bind(commandBuffer);
         MSplash.bind(commandBuffer);
         DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
 
+        // Moto
         DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
         PVColor.bind(commandBuffer);
         MMoto.bind(commandBuffer);
@@ -432,6 +433,7 @@ protected:
         DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
 
+        // Trees
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             MTrees[i % 2].bind(commandBuffer);
             DSTrees[i].bind(commandBuffer, PVColor, 1, currentImage);
@@ -456,28 +458,33 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
         }
 
+        // Road
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
         MRoad.bind(commandBuffer);
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
 
+        // Streetlights
         MStreetlight.bind(commandBuffer);
         for (DescriptorSet DSStreetlight: DSStreetlights) {
             DSStreetlight.bind(commandBuffer, PMesh, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MStreetlight.indices.size()), 1, 0, 0, 0);
         }
 
+        // Terrain
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
 
+        // Rails
         MRail.bind(commandBuffer);
         for (DescriptorSet DSRail: DSRails) {
             DSRail.bind(commandBuffer, PMesh, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
         }
 
+        // Cars
         DSGubo.bind(commandBuffer, PCar, 0, currentImage);
         PCar.bind(commandBuffer);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
@@ -488,26 +495,29 @@ protected:
             }
         }
 
+        // Skybox
         PSkybox.bind(commandBuffer);
         MSkybox.bind(commandBuffer);
         DSSkybox.bind(commandBuffer, PSkybox, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSkybox.indices.size()), 1, 0, 0, 0);
 
+        // Text
         score.populateCommandBuffer(commandBuffer, currentImage, scene.currText);
     }
 
     void updateUniformBuffer(uint32_t currentImage) {
-        controller();
-
         glm::mat4 ViewProj, World;
 
+        // Game update
+        controller();
         viewHandler(ViewProj, World);
 
-        const int shift = moto.pos.z / TERRAIN_LENGTH;
-
+        // World limits update
+        const int shift = (int) moto.pos.z / TERRAIN_LENGTH;
         scene.backWorldLimit = (float) shift * TERRAIN_LENGTH;
         scene.frontWorldLimit = scene.backWorldLimit - WORLD_LENGTH;
 
+        // Global uniform buffer
         if(scene.dayTime == DAY) {
             gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -527,12 +537,14 @@ protected:
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
+        // Skybox
         uboSkybox.time_of_day = scene.dayTime;
         uboSkybox.mMat = glm::mat4(1.0f) * glm::translate(glm::mat4(1), camera.pos);
         uboSkybox.nMat = glm::inverse(glm::transpose(uboSkybox.mMat));
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
+        // Ambient light
         float ambientLight;
         switch (scene.dayTime) {
             case DAY:
@@ -703,6 +715,7 @@ protected:
             DSStreetlights[i + NUM_LIGHTS_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
         }
 
+        // Splash screen
         uboSplash.visible = scene.splashVisibility;
         uboSplash.splashSelector = scene.gameState == 2 ? 1 : 0;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
@@ -719,10 +732,11 @@ protected:
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
     void resetGame();
 
-    // Cars
+    // Vehicles
     void regenerateCar(int model, int index);
     void initCars();
-    void updateCars(double deltaT);
+    void updateCars(float deltaT);
+    void updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, glm::vec3 uz);
 
     // Collisions
     void checkCollisionsWithCars();

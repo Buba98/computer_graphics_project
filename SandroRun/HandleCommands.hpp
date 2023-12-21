@@ -6,8 +6,7 @@ void SandroRun::controller() {
     }
 
     // Variables
-    float deltaT;
-    float time;
+    float deltaT, time;
     bool fire = false;
     glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
     glm::vec3 ux = glm::vec3(1, 0, 0);
@@ -23,7 +22,7 @@ void SandroRun::controller() {
         holdFire = !holdFire && scene.gameState;
     wasFire = fire;
 
-    // Games states
+    // Game beginning
     if (scene.gameState == 0) {
         if (handleFire) {
             std::cout << "Game started" << std::endl;
@@ -48,6 +47,7 @@ void SandroRun::controller() {
         checkCollisionsWithGuardRails();
     }
 
+    // Game over
     if (scene.gameOver) {
         std::cout << "Game over" << std::endl;
         scene.gameState = 2;
@@ -60,7 +60,6 @@ void SandroRun::controller() {
     if (glfwGetKey(window, GLFW_KEY_N)) {
         n = true;
     }
-
     if (n && !wasN) {
         scene.dayTime = (scene.dayTime + 1) % 3;
     }
@@ -82,39 +81,15 @@ void SandroRun::controller() {
     camera.yaw = camera.yaw * glm::exp(-LAMBDA * deltaT) + camera.yawNew * (1 - glm::exp(-LAMBDA * deltaT)); // Yaw damping
     camera.yaw = glm::clamp(camera.yaw, MIN_YAW, MAX_YAW);
 
-    // Moto rotation
-    moto.roll = moto.roll - m.x * deltaT * 5.0f;
-    if (m.x * deltaT == 0.0f) {
-        moto.roll *= (1 - glm::exp(-MOTO_ROLL_SPEED * deltaT)); // motoRoll damping
-        if (moto.roll > 0.001 * MIN_MOTO_ROLL && moto.roll < 0.001 * MAX_MOTO_ROLL)
-            moto.roll = 0.0f;
-    }
-    moto.roll = glm::clamp(moto.roll, MIN_MOTO_ROLL, MAX_MOTO_ROLL);
-
-    moto.pitch = moto.pitch - m.z * deltaT * 2.0f;
-    if (m.z * deltaT == 0.0f) {
-        moto.pitch *= (1 - glm::exp(-MOTO_PITCH_SPEED * deltaT)); // motoPitch damping
-        if (moto.pitch < 0.001 * MAX_MOTO_PITCH)
-            moto.pitch = 0.0f;
-    }
-    moto.pitch = glm::clamp(moto.pitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
-
-    // Moto position
-    moto.speed = Z_SPEED * (log((time - scene.startTime) * .1f + 1) + 1) * .1f;
-    moto.pos += ux * X_SPEED * deltaT * sin(-moto.roll);
-    moto.pos += uz * moto.speed;
-
-    // Wheel rotation
-    moto.wheelPitch += -(2 << 4) * moto.speed * deltaT;
-
-    // Current text
-    int curr = (int) (abs(moto.pos.z) / 100) + 1;
+    // Score update
+    int curr = (int) (abs(moto.pos.z) / ONE_POINT_SCORE_DISTANCE) + 1;
     if (scene.currText != curr) {
         scene.currText = curr;
         createCommandBuffers();
     }
 
-    // Cars movement
+    // Vehicles movement
+    updateMoto(deltaT, time, m, ux, uz);
     updateCars(deltaT);
 }
 
@@ -158,8 +133,6 @@ void SandroRun::resetGame() {
     moto.roll = 0;
     moto.pitch = 0;
     moto.wheelPitch = 0;
-    moto.length = MOTO_LENGTH;
-    moto.width = MOTO_WIDTH;
 
     // Game state
     scene.currText = 0;

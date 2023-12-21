@@ -13,6 +13,8 @@
 #define DAY 0
 #define SUNSET 1
 #define NIGHT 2
+#define GUARD_RAIL_WIDTH 0.17f
+#define ONE_POINT_SCORE_DISTANCE 100
 
 // Camera settings
 #define FOV_Y glm::radians(60.0f)
