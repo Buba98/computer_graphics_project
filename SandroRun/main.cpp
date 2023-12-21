@@ -505,9 +505,19 @@ protected:
         scene.backWorldLimit = (float) shift * TERRAIN_LENGTH;
         scene.frontWorldLimit = scene.backWorldLimit - WORLD_LENGTH;
 
-        gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-        gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        gubo.AmbLightColor = glm::vec3(0.1f);
+        if(scene.dayTime == DAY) {
+            gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            gubo.AmbLightColor = glm::vec3(0.1f);
+        } else if(scene.dayTime == SUNSET) {
+            gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
+            gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            gubo.AmbLightColor = glm::vec3(0.1f);
+        } else if(scene.dayTime == NIGHT) {
+            gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            gubo.AmbLightColor = glm::vec3(0.1f);
+        }
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
