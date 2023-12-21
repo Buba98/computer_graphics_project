@@ -67,10 +67,10 @@ void SandroRun::controller() {
 
     // Camera reset
     if (glfwGetKey(window, GLFW_KEY_R)) {
-        camera.yaw = 0.0f;
-        camera.yawNew = camera.yaw;
-        camera.pitch = M_PI / 2.5f;
-        camera.pitchNew = camera.pitch;
+        camera.yaw = STARTING_YAW;
+        camera.yawNew = STARTING_YAW;
+        camera.pitch = STARTING_PITCH;
+        camera.pitchNew = STARTING_PITCH;
     }
 
     // Splash screen fading
@@ -108,7 +108,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
 
     if (holdFire) {
         // First person view
-        ViewProj *= glm::rotate(glm::mat4(1.0), (float) (camera.pitch - M_PI / 2.5f), glm::vec3(1, 0, 0)) *
+        ViewProj *= glm::rotate(glm::mat4(1.0), (float) (camera.pitch - STARTING_PITCH), glm::vec3(1, 0, 0)) *
                     glm::rotate(glm::mat4(1.0), camera.yaw, glm::vec3(0, 1, 0)) *
                     glm::rotate(glm::mat4(1.0), -moto.roll / 2.0f, glm::vec3(0, 0, 1)) *
                     glm::translate(glm::mat4(1.0), -moto.pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-moto.roll),
@@ -131,8 +131,10 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
 
 void SandroRun::resetGame() {
     // Camera position and orientation
-    camera.yaw = 0.0f, camera.pitch = M_PI / 2.5f;
-    camera.yawNew = 0.0f, camera.pitchNew = M_PI / 2.5f;
+    camera.yaw = STARTING_YAW;
+    camera.yawNew = STARTING_YAW;
+    camera.pitch = STARTING_PITCH;
+    camera.pitchNew = STARTING_PITCH;
     camera.pos = glm::vec3(0.0f, 0.0f, 0.0f);
 
     // Moto position and orientation

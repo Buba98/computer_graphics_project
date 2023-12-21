@@ -27,6 +27,8 @@
 #define MAX_YAW ((float) M_PI / 4.0f)
 #define MIN_YAW (-MAX_YAW)
 #define ROT_SPEED glm::radians(120.0f)
+#define STARTING_YAW 0.0f
+#define STARTING_PITCH (M_PI / 2.5f)
 
 // Moto settings
 #define Z_SPEED 3.0f
