@@ -10,6 +10,9 @@
 #define NUM_RAIL_PER_LINE (NUM_TERRAIN_REPETITIONS)
 #define WORLD_LENGTH (2 * TERRAIN_LENGTH)
 #define NUM_LIGHTS_PER_LINE (2 * NUM_TERRAIN_REPETITIONS)
+#define DAY 0
+#define SUNSET 1
+#define NIGHT 2
 
 // Camera settings
 #define FOV_Y glm::radians(60.0f)
@@ -55,10 +58,6 @@
 const float carsLength[10] = {4.9f, 4.2f, 5.3f, 4.6f, 4.75f, 5.1f, 4.6f, 8.325f, 8.5f, 10.35f};
 const float carsWidth[10] = {1.8f, 1.9f, 1.9f, 2.0f, 2.0f, 1.9f, 2.0f, 2.5f, 2.4f, 2.2f};
 
-enum TimeOfDay {
-    DAY = 0,
-    SUNSET = 1,
-    NIGHT = 2
-};
+
 
 #endif
