@@ -659,32 +659,30 @@ protected:
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 
+    // Models
     void initSplashModel();
-
     void initRoadModel();
-
     void initTerrainModel();
-
     void initSkyboxModel();
 
+    // Game
     void controller();
-
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
-
-    void regenerateCar(int model, int index);
-
-    void initCars();
-
-    void updateCars(double deltaT);
-
     void resetGame();
 
+    // Cars
+    void regenerateCar(int model, int index);
+    void initCars();
+    void updateCars(double deltaT);
+
+    // Collisions
     void checkCollisionsWithCars();
+    void checkCollisionsWithGuardRails();
 };
 
 #include "BuildModels.hpp"
 #include "HandleCommands.hpp"
-#include "Car.hpp"
+#include "Vehicles.hpp"
 
 
 int main() {

@@ -118,3 +118,15 @@ void SandroRun::checkCollisionsWithCars() {
         }
     }
 }
+
+void SandroRun::checkCollisionsWithGuardRails() {
+    float motoLeft = moto.pos.x - moto.width / 2;
+    float motoRight = moto.pos.x + moto.width / 2;
+
+    if (motoLeft <= (- ROAD_WIDTH / 2) || motoRight >= (ROAD_WIDTH / 2)) {
+        std::cout << "Collision with guard rail" << std::endl;
+        scene.gameOver = true;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        return;
+    }
+}

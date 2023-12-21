@@ -41,9 +41,11 @@ void SandroRun::controller() {
         return;
     }
 
-    // Game over
-    if (glfwGetKey(window, GLFW_KEY_5))
-        scene.gameOver = true;
+    // Collisions detection
+    if (!scene.gameOver) {
+        checkCollisionsWithCars();
+        checkCollisionsWithGuardRails();
+    }
 
     if (scene.gameOver) {
         std::cout << "Game over" << std::endl;
@@ -113,8 +115,6 @@ void SandroRun::controller() {
 
     // Cars movement
     updateCars(deltaT);
-
-    checkCollisionsWithCars();
 }
 
 void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
