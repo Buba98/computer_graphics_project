@@ -498,8 +498,7 @@ protected:
     void updateUniformBuffer(uint32_t currentImage) {
         controller();
 
-        glm::mat4 ViewProj;
-        glm::mat4 World;
+        glm::mat4 ViewProj, World;
 
         viewHandler(ViewProj, World);
 
