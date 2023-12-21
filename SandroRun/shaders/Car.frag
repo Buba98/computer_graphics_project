@@ -19,6 +19,7 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     int palette;
     float amb;
     float gamma;
+    float reflection;
     vec3 sColor;
     mat4 mvpMat;
     mat4 mMat;
@@ -49,7 +50,7 @@ void main() {
         albedo = texture(tex_0, fragUV).rgb;
     }
     vec3 MD = albedo;
-    vec3 MS = ubo.sColor;
+    vec3 MS = ubo.sColor * ubo.reflection;
     vec3 MA = albedo * ubo.amb;
     vec3 LA = gubo.AmbLightColor;
     float DI = gubo.DlightIntensity;
