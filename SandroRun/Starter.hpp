@@ -1830,7 +1830,8 @@ protected:
         glfwGetCursorPos(window, &xpos, &ypos);
         double m_dx = xpos - old_xpos;
         double m_dy = ypos - old_ypos;
-        old_xpos = xpos; old_ypos = ypos;
+        old_xpos = xpos;
+        old_ypos = ypos;
 
         const float MOUSE_RES = 10.0f;
         glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, GLFW_TRUE);
@@ -2081,7 +2082,7 @@ void Model<Vert>::loadModelOBJ(std::string file) {
                 *o = color;
             }
 
-            if(index.texcoord_index != -1) {
+            if (index.texcoord_index != -1) {
                 glm::vec2 texCoord = {
                         attrib.texcoords[2 * index.texcoord_index + 0],
                         1 - attrib.texcoords[2 * index.texcoord_index + 1]
@@ -2387,8 +2388,7 @@ void Texture::createTextureImage(const char *const files[], VkFormat Fmt = VK_FO
 
     VkDeviceSize imageSize = texWidth * texHeight * 4;
     VkDeviceSize totalImageSize = texWidth * texHeight * 4 * imgs;
-    mipLevels = static_cast<uint32_t>(std::floor(
-            std::log2(std::max(texWidth, texHeight)))) + 1;
+    mipLevels = static_cast<uint32_t>((std::log2(std::max(texWidth, texHeight)) + 1) / 2.7);
 
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMemory;
@@ -2469,7 +2469,6 @@ void Texture::createTextureSampler(
         throw std::runtime_error("failed to create texture sampler!");
     }
 }
-
 
 void Texture::init(BaseProject *bp, const char *file, VkFormat Fmt = VK_FORMAT_R8G8B8A8_SRGB, bool initSampler = true) {
     const char *files[1] = {file};
