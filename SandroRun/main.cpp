@@ -154,7 +154,8 @@ protected:
     Texture TRail;
     Texture TSkybox[3];
     Texture TCar[6];
-    Texture TStreetlight;
+    Texture TStreetlight[2];
+    Texture TNoEmission;
 
     // Text
     TextMaker score;
@@ -183,7 +184,7 @@ protected:
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 100;
-        texturesInPool = 100;
+        texturesInPool = 200;
         setsInPool = 100 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
 
         Ar = (float) windowWidth / (float) windowHeight;
@@ -200,7 +201,8 @@ protected:
                                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
-                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLSkybox.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                               {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -260,7 +262,9 @@ protected:
             TCar[i].init(this, paletteFile.c_str());
         }
         TCar[5].init(this, "textures/car_palettes/palette_emission.png");
-        TStreetlight.init(this, "textures/streetlight/streetlight.png");
+        TStreetlight[0].init(this, "textures/streetlight/streetlight.png");
+        TStreetlight[1].init(this, "textures/streetlight/streetlightEmission.png");
+        TNoEmission.init(this, "textures/no_emission.png");
 
         // Custom inits
         initSplashModel();
@@ -298,12 +302,15 @@ protected:
         DSFrontWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRearWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                                     {1, TEXTURE, 0,                        &TRoad}});
+                                     {1, TEXTURE, 0,                        &TRoad},
+                                     {2, TEXTURE, 0,                        &TNoEmission}});
         DSTerrain.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                                        {1, TEXTURE, 0,                        &TTerrain}});
+                                        {1, TEXTURE, 0,                        &TTerrain},
+                                        {2, TEXTURE, 0,                        &TNoEmission}});
         for (DescriptorSet &DSRail: DSRails) {
             DSRail.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                                         {1, TEXTURE, 0,                        &TRail}});
+                                         {1, TEXTURE, 0,                        &TRail},
+                                         {2, TEXTURE, 0,                        &TNoEmission}});
         }
         DSSkybox.init(this, &DSLSkybox, {{0, UNIFORM, sizeof(SkyboxUniformBlock), nullptr},
                                          {1, TEXTURE, 0,                          &TSkybox[0]},
@@ -325,7 +332,8 @@ protected:
         }
         for (DescriptorSet &DSStreetlight: DSStreetlights) {
             DSStreetlight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                                                {1, TEXTURE, 0,                        &TStreetlight}});
+                                                {1, TEXTURE, 0,                        &TStreetlight[0]},
+                                                {2, TEXTURE, 0,                        &TStreetlight[1]}});
         }
 
         score.pipelinesAndDescriptorSetsInit();
@@ -378,7 +386,10 @@ protected:
         for (Texture &T: TCar) {
             T.cleanup();
         }
-        TStreetlight.cleanup();
+        for (Texture &T: TStreetlight) {
+            T.cleanup();
+        }
+        TNoEmission.cleanup();
 
         // Cleanup models
         MSplash.cleanup();
