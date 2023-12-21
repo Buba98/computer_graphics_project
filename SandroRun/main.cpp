@@ -37,6 +37,7 @@ struct OverlayUniformBlock {
 struct GlobalUniformBlock {
     alignas(16) glm::vec3 DlightDir;
     alignas(16) glm::vec3 DlightColor;
+    alignas(4) float DlightIntensity;
     alignas(16) glm::vec3 AmbLightColor;
     alignas(16) glm::vec3 eyePos;
 };
@@ -508,14 +509,17 @@ protected:
         if(scene.dayTime == DAY) {
             gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            gubo.DlightIntensity = 1.0f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         } else if(scene.dayTime == SUNSET) {
             gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
             gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            gubo.DlightIntensity = 0.4f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         } else if(scene.dayTime == NIGHT) {
             gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+            gubo.DlightIntensity = 0.2f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
         gubo.eyePos = camera.pos;
