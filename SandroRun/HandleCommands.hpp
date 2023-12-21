@@ -65,6 +65,14 @@ void SandroRun::controller() {
     }
     wasN = n;
 
+    // Camera reset
+    if (glfwGetKey(window, GLFW_KEY_R)) {
+        camera.yaw = 0.0f;
+        camera.yawNew = camera.yaw;
+        camera.pitch = M_PI / 2.5f;
+        camera.pitchNew = camera.pitch;
+    }
+
     // Splash screen fading
     if (scene.splashVisibility != 0.0f) {
         scene.splashVisibility = glm::clamp(scene.splashVisibility - deltaT, 0.0f, 1.0f);
