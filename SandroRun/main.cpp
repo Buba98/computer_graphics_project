@@ -92,6 +92,7 @@ struct Scene {
     int currText;
     float splashVisibility;
     int dayTime;
+    float startTime;
 };
 
 class SandroRun : public BaseProject {
@@ -274,7 +275,7 @@ protected:
         score.init(this, &texts);
 
         // Init other stuff
-        resetGame();
+        resetGame(0.0f);
         wasFire = false;
         holdFire = false;
     }
@@ -716,7 +717,7 @@ protected:
     // Game
     void controller();
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
-    void resetGame();
+    void resetGame(float startTime);
 
     // Cars
     void regenerateCar(int model, int index);
