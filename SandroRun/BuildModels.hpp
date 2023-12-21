@@ -48,17 +48,20 @@ void SandroRun::initTerrainModel() {
             float z = (float) -i + 5.0f;
             float y = sin((x - 10.0f) * M_PI / 30.0f) * sin((z + 5.0f) * M_PI / 30.0f) * 5;
 
-            if (y < 0) { y = 0; }
+            glm::vec3 normal;
+            if (y < 0) {
+                y = 0;
+                normal = glm::vec3({0, 1, 0});
+            } else {
+                glm::vec3 d_surface_x = glm::vec3(
+                        {1, (1 / 6.0f) * M_PI * cos(M_PI * (x - 10.0f) / 30) * sin(M_PI * (z + 5.0f) / 30), 0});
+                glm::vec3 d_surface_z = glm::vec3(
+                        {0, (1 / 6.0f) * M_PI * sin(M_PI * (x - 10.0f) / 30) * cos(M_PI * (z + 5.0f) / 30), 1});
 
+                normal = cross(d_surface_z, d_surface_x);
+                normal = glm::normalize(normal);
+            }
             glm::vec3 surface = glm::vec3({x, y, z});
-
-            glm::vec3 d_surface_x = glm::vec3(
-                    {1, (1 / 6.0f) * M_PI * cos(M_PI * (x - 10.0f) / 30) * sin(M_PI * (z + 5.0f) / 30), 0});
-            glm::vec3 d_surface_z = glm::vec3(
-                    {0, (1 / 6.0f) * M_PI * sin(M_PI * (x - 10.0f) / 30) * cos(M_PI * (z + 5.0f) / 30), 1});
-
-            glm::vec3 normal = cross(d_surface_z, d_surface_x);
-            normal = glm::normalize(normal);
 
             MTerrain.vertices.push_back({surface, normal, {uPos, j / 60.0f}});
         }
