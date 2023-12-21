@@ -37,6 +37,7 @@ struct OverlayUniformBlock {
 };
 
 struct GlobalUniformBlock {
+    alignas(4) int dayTime;
     alignas(16) glm::vec3 DlightDir;
     alignas(16) glm::vec3 DlightColor;
     alignas(4) float DlightIntensity;
@@ -152,7 +153,7 @@ protected:
     Texture TTerrain;
     Texture TRail;
     Texture TSkybox[3];
-    Texture TCar[5];
+    Texture TCar[6];
     Texture TStreetlight;
 
     // Text
@@ -210,7 +211,8 @@ protected:
                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                            {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                            {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -257,6 +259,7 @@ protected:
             std::string paletteFile = "textures/car_palettes/palette_" + std::to_string(i) + ".png";
             TCar[i].init(this, paletteFile.c_str());
         }
+        TCar[5].init(this, "textures/car_palettes/palette_emission.png");
         TStreetlight.init(this, "textures/streetlight/streetlight.png");
 
         // Custom inits
@@ -314,7 +317,8 @@ protected:
                                            {2, TEXTURE, 0,                           &TCar[1]},
                                            {3, TEXTURE, 0,                           &TCar[2]},
                                            {4, TEXTURE, 0,                           &TCar[3]},
-                                           {5, TEXTURE, 0,                           &TCar[4]}});;
+                                           {5, TEXTURE, 0,                           &TCar[4]},
+                                           {6, TEXTURE, 0,                           &TCar[5]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -518,17 +522,20 @@ protected:
         scene.frontWorldLimit = scene.backWorldLimit - WORLD_LENGTH;
 
         // Global uniform buffer
-        if(scene.dayTime == DAY) {
+        if (scene.dayTime == DAY) {
+            gubo.dayTime = DAY;
             gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
             gubo.DlightIntensity = 1.0f;
             gubo.AmbLightColor = glm::vec3(0.1f);
-        } else if(scene.dayTime == SUNSET) {
+        } else if (scene.dayTime == SUNSET) {
+            gubo.dayTime = SUNSET;
             gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
             gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
             gubo.DlightIntensity = 0.4f;
             gubo.AmbLightColor = glm::vec3(0.1f);
-        } else if(scene.dayTime == NIGHT) {
+        } else if (scene.dayTime == NIGHT) {
+            gubo.dayTime = NIGHT;
             gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
             gubo.DlightIntensity = 0.2f;
@@ -556,7 +563,7 @@ protected:
             case NIGHT:
                 ambientLight = 0.2f;
                 break;
-            default: ;
+            default:;
         }
 
         const float OFFSET = .5f;
@@ -723,23 +730,32 @@ protected:
 
     // Models
     void initSplashModel();
+
     void initRoadModel();
+
     void initTerrainModel();
+
     void initSkyboxModel();
 
     // Game
     void controller();
+
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
+
     void resetGame();
 
     // Vehicles
     void regenerateCar(int model, int index);
+
     void initCars();
+
     void updateCars(float deltaT);
+
     void updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, glm::vec3 uz);
 
     // Collisions
     void checkCollisionsWithCars();
+
     void checkCollisionsWithGuardRails();
 };
 
