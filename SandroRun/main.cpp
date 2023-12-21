@@ -527,9 +527,23 @@ protected:
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
+        float ambientLight;
+        switch (scene.dayTime) {
+            case DAY:
+                ambientLight = 1.0f;
+                break;
+            case SUNSET:
+                ambientLight = 0.6f;
+                break;
+            case NIGHT:
+                ambientLight = 0.2f;
+                break;
+            default: ;
+        }
+
         const float OFFSET = .5f;
 
-        ubo.amb = 1.0f;
+        ubo.amb = ambientLight;
         ubo.gamma = 180.0f;
         ubo.sColor = glm::vec3(1.0f);
         ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
@@ -560,7 +574,7 @@ protected:
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        uboCar.amb = 1.0f;
+        uboCar.amb = ambientLight;
         uboCar.gamma = 180.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
