@@ -275,7 +275,7 @@ protected:
         score.init(this, &texts);
 
         // Init other stuff
-        resetGame(0.0f);
+        resetGame();
         wasFire = false;
         holdFire = false;
     }
@@ -717,7 +717,7 @@ protected:
     // Game
     void controller();
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
-    void resetGame(float startTime);
+    void resetGame();
 
     // Cars
     void regenerateCar(int model, int index);

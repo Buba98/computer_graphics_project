@@ -29,12 +29,13 @@ void SandroRun::controller() {
             std::cout << "Game started" << std::endl;
             scene.gameState = 1;
             scene.currText = 1;
+            scene.startTime = time;
             createCommandBuffers();
         }
         return;
     } else if (scene.gameState == 2) {
         if (handleFire) {
-            resetGame(time);
+            resetGame();
             std::cout << "Game restarted" << std::endl;
             createCommandBuffers();
         }
@@ -145,7 +146,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
     }
 }
 
-void SandroRun::resetGame(float startTime) {
+void SandroRun::resetGame() {
     // Camera position and orientation
     camera.yaw = 0.0f, camera.pitch = M_PI / 2.5f;
     camera.yawNew = 0.0f, camera.pitchNew = M_PI / 2.5f;
@@ -168,7 +169,7 @@ void SandroRun::resetGame(float startTime) {
     scene.backWorldLimit = 0;
     scene.dayTime = 0;
     scene.gameOver = false;
-    scene.startTime = startTime;
+    scene.startTime = 0;
     wasN = false;
 
     // Cars positions
