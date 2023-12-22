@@ -124,6 +124,7 @@ protected:
     Model<VertexVColor> MMoto;
     Model<VertexVColor> MFrontWheel;
     Model<VertexVColor> MRearWheel;
+    Model<VertexMesh> MMotoLight;
     Model<VertexMesh> MRoad;
     Model<VertexMesh> MTerrain;
     Model<VertexMesh> MSkybox;
@@ -138,6 +139,7 @@ protected:
     DescriptorSet DSMoto;
     DescriptorSet DSFrontWheel;
     DescriptorSet DSRearWheel;
+    DescriptorSet DSMotoLight;
     DescriptorSet DSRoad;
     DescriptorSet DSTerrain;
     DescriptorSet DSRails[2 * NUM_RAIL_PER_LINE];
@@ -149,6 +151,7 @@ protected:
     // Textures
     Texture TSplashStart;
     Texture TSplashEnd;
+    Texture TMotoLight[2];
     Texture TRoad;
     Texture TTerrain;
     Texture TRail;
@@ -171,6 +174,7 @@ protected:
     std::vector<SingleText> texts;
     bool wasFire, holdFire;
     bool wasN;
+    bool wasP, holdP;
     Scene scene;
     Camera camera;
     Moto moto;
@@ -243,6 +247,7 @@ protected:
         MMoto.init(this, &VVColor, "models/moto/moto.obj", OBJ);
         MFrontWheel.init(this, &VVColor, "models/moto/frontWheel.obj", OBJ);
         MRearWheel.init(this, &VVColor, "models/moto/rearWheel.obj", OBJ);
+        MMotoLight.init(this, &VMesh, "models/moto/motoLight.obj", OBJ);
         MRail.init(this, &VMesh, "models/guardrail.obj", OBJ);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             std::string modelFile = "models/cars/car_" + std::to_string(model + 1) + ".obj";
@@ -256,6 +261,8 @@ protected:
         }
 
         // Init textures
+        TMotoLight[0].init(this, "textures/moto/moto_headlight.jpg");
+        TMotoLight[1].init(this, "textures/moto/moto_headlightEmission.png");
         TRail.init(this, "textures/guardrail.jpg");
         for (int i = 0; i < NUM_CAR_PALETTES; i++) {
             std::string paletteFile = "textures/car_palettes/palette_" + std::to_string(i) + ".png";
@@ -282,8 +289,9 @@ protected:
 
         // Init other stuff
         resetGame();
-        wasFire = false;
-        holdFire = false;
+        wasFire = false, holdFire = false;
+        wasN = false;
+        wasP = false, holdP = false;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -301,6 +309,9 @@ protected:
         DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSFrontWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRearWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSMotoLight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                          {1, TEXTURE, 0,                        &TMotoLight[0]},
+                                          {2, TEXTURE, 0,                        &TMotoLight[1]}});
         DSRoad.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                      {1, TEXTURE, 0,                        &TRoad},
                                      {2, TEXTURE, 0,                        &TNoEmission}});
@@ -351,6 +362,7 @@ protected:
         DSMoto.cleanup();
         DSFrontWheel.cleanup();
         DSRearWheel.cleanup();
+        DSMotoLight.cleanup();
         DSRoad.cleanup();
         DSTerrain.cleanup();
         for (DescriptorSet &DSRail: DSRails) {
@@ -377,6 +389,9 @@ protected:
         // Cleanup textures
         TSplashStart.cleanup();
         TSplashEnd.cleanup();
+        for (Texture &T: TMotoLight) {
+            T.cleanup();
+        }
         TRoad.cleanup();
         TRail.cleanup();
         for (Texture &T: TSkybox) {
@@ -396,6 +411,7 @@ protected:
         MMoto.cleanup();
         MFrontWheel.cleanup();
         MRearWheel.cleanup();
+        MMotoLight.cleanup();
         MRoad.cleanup();
         MTerrain.cleanup();
         MRail.cleanup();
@@ -473,9 +489,14 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
         }
 
-        // Road
+        // Moto light
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
+        MMotoLight.bind(commandBuffer);
+        DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
+
+        // Road
         MRoad.bind(commandBuffer);
         DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
@@ -616,6 +637,15 @@ protected:
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
+
+        // Moto light
+        ubo.reflection = 1.0f;
+        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
+                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                   glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
+        ubo.mvpMat = ViewProj * ubo.mMat;
+        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+        DSMotoLight.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Cars
         uboCar.amb = ambientLight;
