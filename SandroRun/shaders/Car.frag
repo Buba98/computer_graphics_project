@@ -57,12 +57,14 @@ void main() {
     vec3 LA = gubo.AmbLightColor;
     float DI = gubo.DlightIntensity;
     vec3 ME;
-    if(gubo.dayTime == 0){
+    if (gubo.dayTime == 0){
         ME = vec3(0.0f);
     } else {
         ME = texture(tex_emissive, fragUV).rgb;
     }
     // Write the shader here
 
-    outColor = vec4(clamp(MD * clamp(dot(L, N), 0.0f, 1.0f) +MS * DI * pow(clamp(dot(N, normalize(L + V)), 0.0f, 1.0f), ubo.gamma) +LA * MA + ME, 0.0f, 1.0f), 1.0f);// output color
+    outColor = vec4(clamp(MD * clamp(dot(L, N), 0.0f, 1.0f) * DI
+                    +MS * DI * pow(clamp(dot(N, normalize(L + V)), 0.0f, 1.0f), ubo.gamma)
+                    +LA * MA + ME, 0.0f, 1.0f), 1.0f);// output color
 }

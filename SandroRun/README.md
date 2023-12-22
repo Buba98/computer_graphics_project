@@ -26,11 +26,11 @@
   - [x] Cleanup and restructuring of car related code
   - [x] Add multiple car models
   - [x] Handle collisions between cars
-- [ ] Add scenery
+- [x] Add scenery
   - [x] Add a skybox
   - [x] Add the terrain around the road
   - [x] Add trees on the border of the road
-  - [ ] Add streetlights
+  - [x] Add streetlights
 - [ ] Add a splash screen
   - [x] Add a splash screen image
   - [ ] Explain the goal of the game
@@ -40,15 +40,15 @@
   - [ ] Add the photo of Sandro
 - [ ] Add game logic
   - [x] Add score counter
-  - [ ] Detect collisions
-    - [ ] Detect collisions with the guardrails
-    - [ ] Detect collisions with cars
+  - [x] Detect collisions
+    - [x] Detect collisions with the guardrails
+    - [x] Detect collisions with cars
 - [ ] Color all the obj
-- [ ] Create shaders
-  - [ ] Create a shader for the road
-  - [ ] Create a shader for the terrain
+- [x] Create shaders
+  - [x] Create a shader for the road
+  - [x] Create a shader for the terrain
   - [x] Create a shader for the skybox
-  - [ ] Create a shader for the trees
+  - [x] Create a shader for the trees
   - [x] Create a shader for the guardrails
   - [x] Create a shader for the cars
-  - [ ] Create a shader for the moto
+  - [x] Create a shader for the moto

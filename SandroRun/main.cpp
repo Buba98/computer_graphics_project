@@ -570,7 +570,7 @@ protected:
             gubo.dayTime = NIGHT;
             gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
             gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            gubo.DlightIntensity = 0.2f;
+            gubo.DlightIntensity = 0.1f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
         gubo.eyePos = camera.pos;
@@ -593,7 +593,7 @@ protected:
                 ambientLight = 0.6f;
                 break;
             case NIGHT:
-                ambientLight = 0.2f;
+                ambientLight = 0.1f;
                 break;
             default:;
         }

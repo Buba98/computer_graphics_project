@@ -13,8 +13,6 @@ void main() {
     vec3 color;
     if (diffColor.r > 0.5f) {
         color = vec3(1.0f, 1.0f, 1.0f);
-    } else if (diffColor.b > 0.5f) {
-        color = vec3(0.5f, 0.5f, 0.5f);
     } else {
         color = vec3(0.0f, 0.0f, 0.0f);
     }

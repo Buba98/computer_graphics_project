@@ -43,7 +43,7 @@ void SandroRun::controller() {
     }
 
     // Collisions detection
-    if (!scene.gameOver) {
+    if (!scene.gameOver && !holdP) {
         checkCollisionsWithCars();
         checkCollisionsWithGuardRails();
     }
