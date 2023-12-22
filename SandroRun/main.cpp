@@ -562,7 +562,7 @@ protected:
         } else if (scene.dayTime == SUNSET) {
             gubo.dayTime = SUNSET;
             gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(0.0f, 0.0f, 0.0f, 1.0f);
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
             gubo.DlightIntensity = 0.4f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         } else if (scene.dayTime == NIGHT) {
