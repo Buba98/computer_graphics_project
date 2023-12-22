@@ -6,7 +6,6 @@
 struct MeshUniformBlock {
     alignas(4) float amb;
     alignas(4) float gamma;
-    alignas(4) float reflection;
     alignas(16) glm::vec3 sColor;
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -17,7 +16,6 @@ struct CarMeshUniformBlock {
     alignas(4) int palette;
     alignas(4) float amb;
     alignas(4) float gamma;
-    alignas(4) float reflection;
     alignas(16) glm::vec3 sColor;
     alignas(16) glm::mat4 mvpMat;
     alignas(16) glm::mat4 mMat;
@@ -38,6 +36,7 @@ struct OverlayUniformBlock {
 
 struct GlobalUniformBlock {
     alignas(4) int dayTime;
+    alignas(4) int shift;
     alignas(16) glm::vec3 DlightDir;
     alignas(16) glm::vec3 DlightColor;
     alignas(4) float DlightIntensity;
@@ -573,6 +572,7 @@ protected:
             gubo.DlightIntensity = 0.1f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
+        gubo.shift = shift;
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
@@ -601,11 +601,10 @@ protected:
         const float OFFSET = .5f;
 
         ubo.amb = ambientLight;
-        ubo.gamma = 180.0f;
         ubo.sColor = glm::vec3(1.0f);
 
         // Moto
-        ubo.reflection = 1.0f;
+        ubo.gamma = 180.0f;
         ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
                    glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
                    glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
@@ -616,7 +615,7 @@ protected:
         const float DIST_WHEELS = 1.62f;
 
         // Front wheel
-        ubo.reflection = 0.8f;
+        ubo.gamma = 180.0f;
         ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
                                                                   .315f - (.015f * sin(moto.roll)) +
                                                                   DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
@@ -629,7 +628,7 @@ protected:
         DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Rear wheel
-        ubo.reflection = 0.8f;
+        ubo.gamma = 180.0f;
         ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
                    glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
                    glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
@@ -639,7 +638,7 @@ protected:
         DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Moto light
-        ubo.reflection = 1.0f;
+        ubo.gamma = 180.0f;
         ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
                    glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
                    glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
@@ -651,7 +650,6 @@ protected:
         uboCar.amb = ambientLight;
         uboCar.gamma = 180.0f;
         uboCar.sColor = glm::vec3(1.0f);
-        uboCar.reflection = 0.9f;
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             for (int index = 0; index < NUM_CAR_MODEL_INSTANCES; index++) {
                 uboCar.palette = (model + index) % NUM_CAR_PALETTES;
@@ -667,7 +665,7 @@ protected:
         }
 
         // Trees
-        ubo.reflection = 0.1f;
+        ubo.gamma = 180.0f;
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(ROAD_WIDTH / 2 + TERRAIN_WIDTH / 2, 0, shift * 120.0f - 20 - i * 60));
@@ -703,21 +701,21 @@ protected:
         }
 
         // Road
-        ubo.reflection = 0.5f;
+        ubo.gamma = 180.0f;
         ubo.mMat = glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * TERRAIN_LENGTH));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSRoad.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Terrain
-        ubo.reflection = 0.1f;
+        ubo.gamma = 180.0f;
         ubo.mMat = glm::translate(glm::mat4(1), glm::vec3(0, 0, shift * TERRAIN_LENGTH));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSTerrain.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Guardrails
-        ubo.reflection = 1.0f;
+        ubo.gamma = 180.0f;
         for (int i = 0; i < NUM_RAIL_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(-ROAD_WIDTH / 2, 0, -i * TERRAIN_LENGTH + shift * TERRAIN_LENGTH)) *
@@ -738,7 +736,7 @@ protected:
         }
 
         // Streetlights
-        ubo.reflection = 0.75f;
+        ubo.gamma = 180.0f;
         for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(-ROAD_WIDTH / 2 - 3.0, 0, 10 - i * TERRAIN_LENGTH / 2 +

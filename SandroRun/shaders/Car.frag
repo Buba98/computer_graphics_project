@@ -9,6 +9,7 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     int dayTime;
+    int shift;
     vec3 DlightDir;// direction of the direct light
     vec3 DlightColor;// color of the direct light
     float DlightIntensity;// intensity of the direct light
@@ -20,7 +21,6 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     int palette;
     float amb;
     float gamma;
-    float reflection;
     vec3 sColor;
     mat4 mvpMat;
     mat4 mMat;
@@ -33,6 +33,39 @@ layout(set = 1, binding = 3) uniform sampler2D tex_2;
 layout(set = 1, binding = 4) uniform sampler2D tex_3;
 layout(set = 1, binding = 5) uniform sampler2D tex_4;
 layout(set = 1, binding = 6) uniform sampler2D tex_emissive;
+
+const float cos_out = 0.85f;
+const float cos_in = 0.95f;
+const float beta = 3.0f;
+const float g = 0.5f;
+
+vec3 streetlights() {
+    vec3 lightColor = vec3(0.0f);
+    vec3 lightPos;
+    vec3 lightDir1;
+    vec3 diff;
+    vec3 lightDir;
+
+    if (gubo.dayTime != 0){
+        lightDir1 = vec3(0.0f, -1.0f, 0.0f);
+        // right-side streetlights
+        for (int i = 0; i < 8; i++){
+            lightPos = vec3(5.0f, 3.0f, 10.0f - 30.0f - i * 60.0f + gubo.shift * 120.0f);
+            diff = lightPos - fragPos;
+            lightDir = diff / length(diff);
+            lightColor = lightColor + pow(g / length(diff), beta) * gubo.DlightColor.rgb * clamp(dot(lightDir, lightDir1), cos_out, cos_in);
+        }
+        // left-side streetlights
+        for (int i = 0; i < 8; i++){
+            lightPos = vec3(-5.0f, 3.0f, 10.0f - i * 60.0f + gubo.shift * 120.0f);
+            diff = lightPos - fragPos;
+            lightDir = diff / length(diff);
+            lightColor = lightColor + pow(g / length(diff), beta) * gubo.DlightColor.rgb * clamp(dot(lightDir, lightDir1), cos_out, cos_in);
+        }
+    }
+
+    return lightColor;
+}
 
 void main() {
     vec3 N = normalize(fragNorm);// surface normal
@@ -52,7 +85,7 @@ void main() {
         albedo = texture(tex_0, fragUV).rgb;
     }
     vec3 MD = albedo;
-    vec3 MS = ubo.sColor * ubo.reflection;
+    vec3 MS = ubo.sColor;
     vec3 MA = albedo * ubo.amb;
     vec3 LA = gubo.AmbLightColor;
     float DI = gubo.DlightIntensity;
@@ -62,9 +95,11 @@ void main() {
     } else {
         ME = texture(tex_emissive, fragUV).rgb;
     }
-    // Write the shader here
 
+    vec3 lightColor = streetlights();
+
+    // output color
     outColor = vec4(clamp(MD * clamp(dot(L, N), 0.0f, 1.0f) * DI
                     +MS * DI * pow(clamp(dot(N, normalize(L + V)), 0.0f, 1.0f), ubo.gamma)
-                    +LA * MA + ME, 0.0f, 1.0f), 1.0f);// output color
+                    +LA * MA + ME + (MD + MS) * lightColor, 0.0f, 1.0f), 1.0f);
 }

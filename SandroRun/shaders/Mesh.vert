@@ -4,7 +4,6 @@
 layout(set = 1, binding = 0) uniform UniformBufferObject {
 	float amb;
 	float gamma;
-	float reflection;
 	vec3 sColor;
 	mat4 mvpMat;
 	mat4 mMat;
