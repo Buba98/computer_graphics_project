@@ -152,7 +152,7 @@ void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, 
     moto.pitch = glm::clamp(moto.pitch, MIN_MOTO_PITCH, MAX_MOTO_PITCH);
 
     // Moto position
-    moto.speed = Z_SPEED * (log((time - scene.startTime) * .1f + 1) + 1) * .1f;
+    moto.speed = Z_SPEED * (((time - scene.startTime) * .1f + 1) + 1) * .1f;
     moto.pos += ux * X_SPEED * deltaT * sin(-moto.roll);
     moto.pos += uz * moto.speed;
 

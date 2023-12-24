@@ -63,6 +63,7 @@ void SandroRun::controller() {
     }
     wasN = n;
 
+    // Presentation mode
     bool p = glfwGetKey(window, GLFW_KEY_P);
     bool handleP = (!(wasP) && p);
     if (handleP) {
@@ -105,8 +106,8 @@ void SandroRun::controller() {
     }
     // Score update
     int curr = (int) (abs(moto.pos.z) / ONE_POINT_SCORE_DISTANCE) + 1;
-    if (scene.currText != curr) {
-        scene.currText = curr;
+    if (scene.currText != curr && scene.currText != 101) {
+        scene.currText = curr > 101 ? 101: curr;
         createCommandBuffers();
     }
 

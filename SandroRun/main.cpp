@@ -280,10 +280,12 @@ protected:
 
         // Text
         texts.push_back({1, {"Sandro Run", "", "", ""}, 0, 0});
-        for (int i = 0; i < 1000; ++i) {
+        for (int i = 0; i < 100; ++i) {
             std::string text = "Score: " + std::to_string(i);
             texts.push_back({1, {text, "", "", ""}, 0, 0});
         }
+        texts.push_back({1, {"You won! Endless run", "", "", ""}, 0, 0});
+
         score.init(this, &texts);
 
         // Init other stuff
