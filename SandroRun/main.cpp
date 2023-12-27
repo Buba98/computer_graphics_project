@@ -42,6 +42,8 @@ struct GlobalUniformBlock {
     alignas(4) float DlightIntensity;
     alignas(16) glm::vec3 AmbLightColor;
     alignas(16) glm::vec3 eyePos;
+    alignas(16) glm::vec3 motoPos;
+    alignas(16) glm::vec3 motoDir;
 };
 
 struct VertexMesh {
@@ -574,6 +576,9 @@ protected:
             gubo.DlightIntensity = 0.1f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
+
+        gubo.motoDir = glm::normalize(glm::vec3({0, -sin(moto.pitch), cos(moto.pitch)}));
+        gubo.motoPos = moto.pos + glm::vec3(0, MOTO_HEIGHT - (.015f * sin(moto.roll)), 0);
         gubo.shift = shift;
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);

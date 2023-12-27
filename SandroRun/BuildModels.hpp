@@ -8,17 +8,14 @@ void SandroRun::initRoadModel() {
         MRoad.vertices.push_back({surface, normal, UV});
 
         surface = glm::vec3({-10.0f, 0.0f, (-i * 10.0f) + 5.0f});
-        normal = glm::vec3({0.0f, 1.0f, 0.0f});
         UV = glm::vec2({0.0f, 1.0f});
         MRoad.vertices.push_back({surface, normal, UV});
 
         surface = glm::vec3({-10.0f, 0.0f, (-i * 10.0f) - 5.0f});
-        normal = glm::vec3({0.0f, 1.0f, 0.0f});
         UV = glm::vec2({1.0f, 1.0f});
         MRoad.vertices.push_back({surface, normal, UV});
 
         surface = glm::vec3({10.0f, 0.0f, (-i * 10.0f) - 5.0f});
-        normal = glm::vec3({0.0f, 1.0f, 0.0f});
         UV = glm::vec2({1.0f, 0.0f});
         MRoad.vertices.push_back({surface, normal, UV});
     }

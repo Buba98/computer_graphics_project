@@ -15,6 +15,8 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     float DlightIntensity;// intensity of the direct light
     vec3 AmbLightColor;// ambient light
     vec3 eyePos;// position of the viewer
+    vec3 motoPos;
+    vec3 motoDir;
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
