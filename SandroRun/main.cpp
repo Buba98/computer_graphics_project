@@ -119,6 +119,8 @@ protected:
     Pipeline PMesh;
     Pipeline PSkybox;
     Pipeline PCar;
+    Pipeline PLandscape;
+    Pipeline PStreet;
 
     // Models
     Model<VertexOverlay> MSplash;
@@ -243,6 +245,8 @@ protected:
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PCar.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCar});
+        PLandscape.init(this, &VMesh, "shaders/LandscapeVert.spv", "shaders/LandscapeFrag.spv", {&DSLGubo, &DSLMesh});
+        PStreet.init(this, &VMesh, "shaders/StreetVert.spv", "shaders/StreetFrag.spv", {&DSLGubo, &DSLMesh});
 
         // Init Models
         MMoto.init(this, &VVColor, "models/moto/moto.obj", OBJ);
@@ -304,6 +308,8 @@ protected:
         PVColor.create();
         PMesh.create();
         PCar.create();
+        PLandscape.create();
+        PStreet.create();
 
         // Init Descriptor Sets
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
@@ -360,6 +366,8 @@ protected:
         PMesh.cleanup();
         PSkybox.cleanup();
         PCar.cleanup();
+        PLandscape.cleanup();
+        PStreet.cleanup();
 
         // Cleanup Descriptor Sets
         DSMoto.cleanup();
@@ -441,6 +449,8 @@ protected:
         PMesh.destroy();
         PSkybox.destroy();
         PCar.destroy();
+        PLandscape.destroy();
+        PStreet.destroy();
 
         score.localCleanup();
     }
@@ -499,11 +509,6 @@ protected:
         DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
 
-        // Road
-        MRoad.bind(commandBuffer);
-        DSRoad.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
-
         // Streetlights
         MStreetlight.bind(commandBuffer);
         for (DescriptorSet DSStreetlight: DSStreetlights) {
@@ -511,17 +516,26 @@ protected:
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MStreetlight.indices.size()), 1, 0, 0, 0);
         }
 
-        // Terrain
-        MTerrain.bind(commandBuffer);
-        DSTerrain.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
-
         // Rails
         MRail.bind(commandBuffer);
         for (DescriptorSet DSRail: DSRails) {
             DSRail.bind(commandBuffer, PMesh, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRail.indices.size()), 1, 0, 0, 0);
         }
+
+        // Road
+        DSGubo.bind(commandBuffer, PStreet, 0, currentImage);
+        PStreet.bind(commandBuffer);
+        MRoad.bind(commandBuffer);
+        DSRoad.bind(commandBuffer, PStreet, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRoad.indices.size()), 1, 0, 0, 0);
+
+        // Terrain
+        DSGubo.bind(commandBuffer, PLandscape, 0, currentImage);
+        PLandscape.bind(commandBuffer);
+        MTerrain.bind(commandBuffer);
+        DSTerrain.bind(commandBuffer, PLandscape, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
 
         // Cars
         DSGubo.bind(commandBuffer, PCar, 0, currentImage);
@@ -597,10 +611,10 @@ protected:
                 ambientLight = 1.0f;
                 break;
             case SUNSET:
-                ambientLight = 0.6f;
+                ambientLight = 0.3f;
                 break;
             case NIGHT:
-                ambientLight = 0.1f;
+                ambientLight = 0.005f;
                 break;
             default:;
         }
