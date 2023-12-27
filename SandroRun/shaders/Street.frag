@@ -1,5 +1,6 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
+#define M_PI 3.14159f
 
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
@@ -20,7 +21,6 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
-    int palette;
     float amb;
     float gamma;
     vec3 sColor;
@@ -29,33 +29,55 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     mat4 nMat;
 } ubo;
 
-layout(set = 1, binding = 1) uniform sampler2D tex_0;
-layout(set = 1, binding = 2) uniform sampler2D tex_1;
-layout(set = 1, binding = 3) uniform sampler2D tex_2;
-layout(set = 1, binding = 4) uniform sampler2D tex_3;
-layout(set = 1, binding = 5) uniform sampler2D tex_4;
-layout(set = 1, binding = 6) uniform sampler2D tex_emissive;
+layout(set = 1, binding = 1) uniform sampler2D tex;
+layout(set = 1, binding = 2) uniform sampler2D tex_emissive;
 
-const float cos_out_street = 0.2f;
+const float cos_out_street = 0.1f;
 const float cos_out_moto = 0.85f;
 const float beta = 3.0f;
 const float cos_in = 0.95f;
-const float g_moto = 30.0f;
-const float g_streetlight = 40.0f;
+const float g_moto = 400.0f;
+const float g_streetlight = 400.0f;
 
-vec3 Phong(vec3 L, vec3 N, vec3 V, vec3 specularColor, float specularPower) {
-    vec3 R = -reflect(L, N);
-    vec3 phongSpecular = specularColor * pow(clamp(dot(R, V), 0, 1), specularPower);
+const float roughness = 0.5f;
+const float metallic = 0.2f;
+const float F0 = 0.4f;
 
-    return phongSpecular;
-}
+vec3 CookTorrance(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
+    //vec3 V  - direction of the viewer
+    //vec3 N  - normal vector to the surface
+    //vec3 L  - light vector (from the light model)
+    //vec3 Md - main color of the surface
+    //float F0 - Base color for the Fresnel term
+    //float metallic - parameter that mixes the diffuse with the specular term.
+    //                 in particular, parmeter K seen in the slides is: float K = 1.0f - metallic;
+    //float roughness - Material roughness (parmeter rho in the slides).
+    //specular color Ms is not passed, and implicitely considered white: vec3 Ms = vec3(1.0f);
+    vec3 Ms = vec3(1.0f);
+    float K = 1.0f - metallic;
 
-vec3 Lambert(vec3 L, vec3 N, vec3 diffuseColor) {
+    vec3 H = normalize(L+V);
 
-    float NdotL = max(0.001, dot(N, L));
+    float NdotH = max(0.00001, dot(N, H));
+    float NdotL = max(0.00001, dot(N, L));
+    float NdotV = max(0.00001, dot(N, V));
+    float LdotH = max(0.00001, dot(L, H));
+    float VdotH = max(0.00001, dot(V, H));
 
-    float diffuseTerm = clamp(NdotL, 0.0f, 1.0f);
-    return diffuseColor * diffuseTerm;
+    vec3 lambertDiffuse = Md * clamp(NdotL, 0, 1);
+
+    float rho2 = roughness * roughness;
+    float D = rho2 / (M_PI * pow(pow(clamp(NdotH, 0, 1), 2) * (rho2 - 1) + 1, 2));
+
+    float F = F0 + (1 - F0) * pow(1 - clamp(VdotH, 0, 1), 5);
+
+    float gV = 2 / (1 + sqrt(1 + rho2 * ((1 - pow(NdotV, 2)) / pow(NdotV, 2))));
+    float gL = 2 / (1 + sqrt(1 + rho2 * ((1 - pow(NdotL, 2)) / pow(NdotL, 2))));
+    float G = gV * gL;
+
+    vec3 cookTorranceSpecular = Ms * (D * F * G) / (4 * clamp(NdotV, 0, 1));
+
+    return K*lambertDiffuse + metallic*cookTorranceSpecular;
 }
 
 vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, vec3 spotlight_light_color, bool is_streetlight) {
@@ -73,18 +95,7 @@ void main() {
     vec3 V = normalize(gubo.eyePos - fragPos);// viewer direction
     vec3 L = normalize(gubo.DlightDir);// light direction
 
-    vec3 albedo;// main color
-    if (ubo.palette == 1){
-        albedo = texture(tex_1, fragUV).rgb;
-    } else if (ubo.palette == 2){
-        albedo = texture(tex_2, fragUV).rgb;
-    } else if (ubo.palette == 3){
-        albedo = texture(tex_3, fragUV).rgb;
-    } else if (ubo.palette == 4){
-        albedo = texture(tex_4, fragUV).rgb;
-    } else {
-        albedo = texture(tex_0, fragUV).rgb;
-    }
+    vec3 albedo = texture(tex, fragUV).rgb;// main color
 
     // Light models
     // Direct light
@@ -118,45 +129,23 @@ void main() {
         }
     }
 
-    // BRDF - Diffuse
+    // BRDF - Cook-Torrance
     // Direct light
-    vec3 direct_diffuse = Lambert(direct_light_dir, N, albedo);
+    vec3 direct_BRDF = CookTorrance(V, N, L, albedo, F0, metallic, roughness);
     // Spot light
-    vec3 spotlight_diffuse_moto;
-    vec3 spotlight_diffuse_streetlight;
-
-    if (gubo.dayTime != 0){
-        spotlight_diffuse_moto = Lambert(spotlight_light_dir_moto, N, albedo);
-        spotlight_diffuse_streetlight = Lambert(spotlight_light_dir_streetlight, N, albedo);
-    }
-    // BRDF - Specular
-    // Direct light
-    vec3 direct_specular = Phong(direct_light_dir, N, V, ubo.sColor, ubo.gamma);
-    // Spot light
-    vec3 spotlight_specular_moto;
-    vec3 spotlight_specular_streetlight;
-    if (gubo.dayTime != 0){
-        spotlight_specular_moto = Phong(spotlight_light_dir_moto, N, V, ubo.sColor, ubo.gamma);
-        spotlight_specular_streetlight = Phong(spotlight_light_dir_streetlight, N, V, ubo.sColor, ubo.gamma);
-    }
+    vec3 spotlight_BRDF_moto = CookTorrance(V, N, spotlight_light_dir_moto, albedo, F0, metallic, roughness);
+    vec3 spotlight_BRDF_streetlight = CookTorrance(V, N, spotlight_light_dir_streetlight, albedo, F0, metallic, roughness);
 
     // Ambient light
     vec3 ambient_tot = albedo * gubo.AmbLightColor;
 
-    // Emissive light
-    vec3 emissive_tot = vec3(0.0f);
-    if (gubo.dayTime != 0){
-        emissive_tot = texture(tex_emissive, fragUV).rgb;
-    }
-
     // Final color
-    vec3 direct_tot = direct_light * (direct_diffuse + direct_specular);
+    vec3 direct_tot = direct_light * direct_BRDF;
     vec3 spotlight_tot = vec3(0.0f);
 
     if (gubo.dayTime != 0){
-        spotlight_tot = spotlight_light_moto * (spotlight_diffuse_moto + spotlight_specular_moto) +
-        spotlight_light_streetlight * (spotlight_diffuse_streetlight + spotlight_specular_streetlight);
+        spotlight_tot = spotlight_light_moto * spotlight_BRDF_moto + spotlight_light_streetlight * spotlight_BRDF_streetlight;
     }
 
-    outColor = vec4(clamp(ambient_tot + direct_tot + spotlight_tot + emissive_tot, 0.0f, 1.0f), 1.0f);
+    outColor = vec4(clamp(ambient_tot + direct_tot + spotlight_tot, 0.0f, 1.0f), 1.0f);
 }

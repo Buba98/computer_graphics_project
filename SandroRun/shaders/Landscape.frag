@@ -20,7 +20,6 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
-    int palette;
     float amb;
     float gamma;
     vec3 sColor;
@@ -29,33 +28,42 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     mat4 nMat;
 } ubo;
 
-layout(set = 1, binding = 1) uniform sampler2D tex_0;
-layout(set = 1, binding = 2) uniform sampler2D tex_1;
-layout(set = 1, binding = 3) uniform sampler2D tex_2;
-layout(set = 1, binding = 4) uniform sampler2D tex_3;
-layout(set = 1, binding = 5) uniform sampler2D tex_4;
-layout(set = 1, binding = 6) uniform sampler2D tex_emissive;
+layout(set = 1, binding = 1) uniform sampler2D tex;
+layout(set = 1, binding = 2) uniform sampler2D tex_emissive;
 
-const float cos_out_street = 0.2f;
+const float cos_out_street = 0.1f;
 const float cos_out_moto = 0.85f;
 const float beta = 3.0f;
 const float cos_in = 0.95f;
-const float g_moto = 30.0f;
-const float g_streetlight = 40.0f;
+const float g_moto = 80.0f;
+const float g_streetlight = 100.0f;
 
-vec3 Phong(vec3 L, vec3 N, vec3 V, vec3 specularColor, float specularPower) {
-    vec3 R = -reflect(L, N);
-    vec3 phongSpecular = specularColor * pow(clamp(dot(R, V), 0, 1), specularPower);
+const float sigma = 0.1f;
 
-    return phongSpecular;
-}
+vec3 OrenNayar(vec3 V, vec3 N, vec3 L, vec3 Md, float sigma) {
+    //vec3 V  - direction of the viewer
+    //vec3 N  - normal vector to the surface
+    //vec3 L  - light vector (from the light model)
+    //vec3 Md - main color of the surface
+    //float sigma - Roughness of the model
 
-vec3 Lambert(vec3 L, vec3 N, vec3 diffuseColor) {
+    vec3 lambertDiffuse = Md * clamp(dot(N, L), 0, 1);
 
-    float NdotL = max(0.001, dot(N, L));
+    float A = 1.0f - 0.5f * ((sigma*sigma) / (sigma*sigma+0.33f));
+    float B = 0.45 * (sigma*sigma) / (sigma*sigma + 0.09);
+    vec3 vi = normalize(L - dot(L, N) * N);
+    vec3 vr = normalize(V - dot(V, N) * N);
+    float G = max(0, dot(vi, vr));
 
-    float diffuseTerm = clamp(NdotL, 0.0f, 1.0f);
-    return diffuseColor * diffuseTerm;
+    float thetai = acos(dot(L, N));
+    float thetar = acos(dot(V, N));
+
+    float alpha = max(thetai, thetar);
+    float beta = min(thetai, thetar);
+
+    vec3 orenNayar = lambertDiffuse * (A + B * G * sin(alpha) * tan(beta));
+
+    return orenNayar;
 }
 
 vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, vec3 spotlight_light_color, bool is_streetlight) {
@@ -73,18 +81,7 @@ void main() {
     vec3 V = normalize(gubo.eyePos - fragPos);// viewer direction
     vec3 L = normalize(gubo.DlightDir);// light direction
 
-    vec3 albedo;// main color
-    if (ubo.palette == 1){
-        albedo = texture(tex_1, fragUV).rgb;
-    } else if (ubo.palette == 2){
-        albedo = texture(tex_2, fragUV).rgb;
-    } else if (ubo.palette == 3){
-        albedo = texture(tex_3, fragUV).rgb;
-    } else if (ubo.palette == 4){
-        albedo = texture(tex_4, fragUV).rgb;
-    } else {
-        albedo = texture(tex_0, fragUV).rgb;
-    }
+    vec3 albedo = texture(tex, fragUV).rgb;// main color
 
     // Light models
     // Direct light
@@ -118,45 +115,27 @@ void main() {
         }
     }
 
-    // BRDF - Diffuse
+    // BRDF - Oren-Nayar
     // Direct light
-    vec3 direct_diffuse = Lambert(direct_light_dir, N, albedo);
-    // Spot light
-    vec3 spotlight_diffuse_moto;
-    vec3 spotlight_diffuse_streetlight;
-
-    if (gubo.dayTime != 0){
-        spotlight_diffuse_moto = Lambert(spotlight_light_dir_moto, N, albedo);
-        spotlight_diffuse_streetlight = Lambert(spotlight_light_dir_streetlight, N, albedo);
-    }
-    // BRDF - Specular
-    // Direct light
-    vec3 direct_specular = Phong(direct_light_dir, N, V, ubo.sColor, ubo.gamma);
-    // Spot light
-    vec3 spotlight_specular_moto;
-    vec3 spotlight_specular_streetlight;
-    if (gubo.dayTime != 0){
-        spotlight_specular_moto = Phong(spotlight_light_dir_moto, N, V, ubo.sColor, ubo.gamma);
-        spotlight_specular_streetlight = Phong(spotlight_light_dir_streetlight, N, V, ubo.sColor, ubo.gamma);
+    vec3 direct_BRDF = OrenNayar(V, N, L, albedo, sigma);
+    //Spot light
+    vec3 spotlight_BRDF_moto;
+    vec3 spotlight_BRDF_streetlight;
+    if(gubo.dayTime != 0) {
+        spotlight_BRDF_moto = OrenNayar(V, N, spotlight_light_dir_moto, albedo, sigma);
+        spotlight_BRDF_streetlight = OrenNayar(V, N, spotlight_light_dir_streetlight, albedo, sigma);
     }
 
     // Ambient light
     vec3 ambient_tot = albedo * gubo.AmbLightColor;
 
-    // Emissive light
-    vec3 emissive_tot = vec3(0.0f);
-    if (gubo.dayTime != 0){
-        emissive_tot = texture(tex_emissive, fragUV).rgb;
-    }
-
     // Final color
-    vec3 direct_tot = direct_light * (direct_diffuse + direct_specular);
+    vec3 direct_tot = direct_light * direct_BRDF;
     vec3 spotlight_tot = vec3(0.0f);
 
     if (gubo.dayTime != 0){
-        spotlight_tot = spotlight_light_moto * (spotlight_diffuse_moto + spotlight_specular_moto) +
-        spotlight_light_streetlight * (spotlight_diffuse_streetlight + spotlight_specular_streetlight);
+        spotlight_tot = spotlight_light_moto * spotlight_BRDF_moto + spotlight_light_streetlight * spotlight_BRDF_streetlight;
     }
 
-    outColor = vec4(clamp(ambient_tot + direct_tot + spotlight_tot + emissive_tot, 0.0f, 1.0f), 1.0f);
+    outColor = vec4(clamp(ambient_tot + direct_tot + spotlight_tot, 0.0f, 1.0f), 1.0f);
 }
