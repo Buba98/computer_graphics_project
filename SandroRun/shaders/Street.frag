@@ -36,8 +36,8 @@ const float cos_out_street = 0.1f;
 const float cos_out_moto = 0.85f;
 const float beta = 3.0f;
 const float cos_in = 0.95f;
-const float g_moto = 400.0f;
-const float g_streetlight = 400.0f;
+const float g_moto = 80.0f;
+const float g_streetlight = 10.0f;
 
 const float roughness = 0.5f;
 const float metallic = 0.2f;
@@ -109,23 +109,21 @@ void main() {
     vec3 spotlight_light_streetlight = vec3(0.0f);
     vec3 spotlight_light_moto = vec3(0.0f);
 
-    vec3 spotlight_light_dir_streetlight = vec3(0.0f, -1.0f, 0.0f);
+    vec3 spotlight_light_dir_streetlight = vec3(0.0f, 1.0f, 0.0f); // direction pointing downwards
     vec3 spotlight_light_dir_moto = gubo.motoDir;
 
     if (gubo.dayTime != 0){
         vec3 spotlight_pos = gubo.motoPos;
         spotlight_light_moto = SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_moto, spotlight_light_color, false);
 
-        vec3 spotlight_dir = vec3(0.0f, 1.0f, 0.0f); // direction pointing downwards
-
         for (int i = 0; i < 8; i++){
             vec3 spotlight_pos = vec3(5.0f, 5.0f, 10.0f - 30.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_dir, spotlight_light_color, true);
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
         }
 
         for (int i = 0; i < 8; i++){
             vec3 spotlight_pos = vec3(-5.0f, 5.0f, 10.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_dir, spotlight_light_color, true);
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
         }
     }
 
