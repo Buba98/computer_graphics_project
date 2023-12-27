@@ -4,7 +4,6 @@
 #include "Parameters.hpp"
 
 struct MeshUniformBlock {
-    alignas(4) float amb;
     alignas(4) float gamma;
     alignas(16) glm::vec3 sColor;
     alignas(16) glm::mat4 mvpMat;
@@ -14,7 +13,6 @@ struct MeshUniformBlock {
 
 struct CarMeshUniformBlock {
     alignas(4) int palette;
-    alignas(4) float amb;
     alignas(4) float gamma;
     alignas(16) glm::vec3 sColor;
     alignas(16) glm::mat4 mvpMat;
@@ -39,7 +37,6 @@ struct GlobalUniformBlock {
     alignas(4) int shift;
     alignas(16) glm::vec3 DlightDir;
     alignas(16) glm::vec3 DlightColor;
-    alignas(4) float DlightIntensity;
     alignas(16) glm::vec3 AmbLightColor;
     alignas(16) glm::vec3 eyePos;
     alignas(16) glm::vec3 motoPos;
@@ -579,20 +576,17 @@ protected:
         if (scene.dayTime == DAY) {
             gubo.dayTime = DAY;
             gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            gubo.DlightIntensity = 1.0f;
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.8f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         } else if (scene.dayTime == SUNSET) {
             gubo.dayTime = SUNSET;
             gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            gubo.DlightIntensity = 0.4f;
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.3f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         } else if (scene.dayTime == NIGHT) {
             gubo.dayTime = NIGHT;
             gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-            gubo.DlightIntensity = 0.1f;
+            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.005f;
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
 
@@ -609,24 +603,8 @@ protected:
         uboSkybox.mvpMat = ViewProj * uboSkybox.mMat;
         DSSkybox.map(currentImage, &uboSkybox, sizeof(uboSkybox), 0);
 
-        // Ambient light
-        float ambientLight;
-        switch (scene.dayTime) {
-            case DAY:
-                ambientLight = 1.0f;
-                break;
-            case SUNSET:
-                ambientLight = 0.3f;
-                break;
-            case NIGHT:
-                ambientLight = 0.005f;
-                break;
-            default:;
-        }
-
         const float OFFSET = .5f;
 
-        ubo.amb = ambientLight;
         ubo.sColor = glm::vec3(1.0f);
 
         // Moto
@@ -673,7 +651,6 @@ protected:
         DSMotoLight.map(currentImage, &ubo, sizeof(ubo), 0);
 
         // Cars
-        uboCar.amb = ambientLight;
         uboCar.gamma = 180.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {

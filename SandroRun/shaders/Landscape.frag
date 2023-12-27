@@ -12,7 +12,6 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     int shift;
     vec3 DlightDir;// direction of the direct light
     vec3 DlightColor;// color of the direct light
-    float DlightIntensity;// intensity of the direct light
     vec3 AmbLightColor;// ambient light
     vec3 eyePos;// position of the viewer
     vec3 motoPos;
@@ -20,7 +19,6 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
-    float amb;
     float gamma;
     vec3 sColor;
     mat4 mvpMat;
@@ -87,7 +85,7 @@ void main() {
     // Direct light
     vec3 direct_light_color = gubo.DlightColor;
     vec3 direct_light_dir = L;
-    vec3 direct_light = direct_light_color * gubo.DlightIntensity;
+    vec3 direct_light = direct_light_color;
 
     // Spot light
     vec3 spotlight_light_color = vec3(1.0f);
