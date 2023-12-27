@@ -581,8 +581,8 @@ protected:
         } else if (scene.dayTime == SUNSET) {
             gubo.dayTime = SUNSET;
             gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.3f;
-            gubo.AmbLightColor = glm::vec3(0.1f);
+            gubo.DlightColor = glm::vec4(0.93f, 0.68f, 0.38f, 1.0f) * 0.3f;
+            gubo.AmbLightColor = glm::vec3(0.93f, 0.68f, 0.38f) * 0.1f;
         } else if (scene.dayTime == NIGHT) {
             gubo.dayTime = NIGHT;
             gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
