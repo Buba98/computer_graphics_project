@@ -131,7 +131,7 @@ protected:
     Model<VertexMesh> MSkybox;
     Model<VertexMesh> MRail;
     Model<VertexMesh> MCars[NUM_CAR_MODELS];
-    Model<VertexVColor> MTrees[4];
+    Model<VertexMesh> MTrees[4];
     Model<VertexMesh> MStreetlight;
 
     // Descriptor sets
@@ -160,6 +160,7 @@ protected:
     Texture TCar[6];
     Texture TStreetlight[2];
     Texture TNoEmission;
+    Texture TTree;
 
     // Text
     TextMaker score;
@@ -258,7 +259,7 @@ protected:
 
         for (int i = 0; i < 4; ++i) {
             std::string objFile = "models/trees/tree" + std::to_string(i + 1) + ".obj";
-            MTrees[i].init(this, &VVColor, objFile.c_str(), OBJ);
+            MTrees[i].init(this, &VMesh, objFile.c_str(), OBJ);
         }
 
         // Init textures
@@ -272,6 +273,7 @@ protected:
         TCar[5].init(this, "textures/car_palettes/palette_emission.png");
         TStreetlight[0].init(this, "textures/streetlight/streetlight.png");
         TStreetlight[1].init(this, "textures/streetlight/streetlightEmission.png");
+        TTree.init(this, "textures/tree.png");
         TNoEmission.init(this, "textures/no_emission.png");
 
         // Custom inits
@@ -342,7 +344,9 @@ protected:
                                            {6, TEXTURE, 0,                           &TCar[5]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
-            DSTree.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+            DSTree.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                         {1, TEXTURE, 0,                        &TTree},
+                                         {2, TEXTURE, 0,                        &TNoEmission}});
         }
         for (DescriptorSet &DSStreetlight: DSStreetlights) {
             DSStreetlight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -407,6 +411,7 @@ protected:
         for (Texture &T: TStreetlight) {
             T.cleanup();
         }
+        TTree.cleanup();
         TNoEmission.cleanup();
 
         // Cleanup models
@@ -422,7 +427,7 @@ protected:
         for (Model<VertexMesh> &MCar: MCars) {
             MCar.cleanup();
         }
-        for (Model<VertexVColor> &MTree: MTrees) {
+        for (Model<VertexMesh> &MTree: MTrees) {
             MTree.cleanup();
         }
         MStreetlight.cleanup();
@@ -467,37 +472,37 @@ protected:
         DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
 
-        // Trees
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i].bind(commandBuffer, PVColor, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PVColor, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
         // Moto light
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
         MMotoLight.bind(commandBuffer);
         DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
+
+        // Trees
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i].bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
 
         // Road
         MRoad.bind(commandBuffer);
