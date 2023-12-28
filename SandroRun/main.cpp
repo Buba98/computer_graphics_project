@@ -77,10 +77,9 @@ struct Moto {
 
 struct Camera {
     glm::vec3 pos;
-    float yaw;
-    float pitch;
-    float yawNew;
-    float pitchNew;
+    float yaw, yawNew;
+    float pitch, pitchNew;
+    float roll, rollNew;
 };
 
 struct Scene {
@@ -470,11 +469,11 @@ protected:
         DSMoto.bind(commandBuffer, PMoto, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotos[holdFire ? 0 : 1].indices.size()), 1, 0, 0, 0);
 
-        if (!holdFire) {
-            MFrontWheel.bind(commandBuffer);
-            DSFrontWheel.bind(commandBuffer, PMoto, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
+        MFrontWheel.bind(commandBuffer);
+        DSFrontWheel.bind(commandBuffer, PMoto, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
 
+        if (!holdFire) {
             MRearWheel.bind(commandBuffer);
             DSRearWheel.bind(commandBuffer, PMoto, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
@@ -589,12 +588,13 @@ protected:
                 gubo.dayTime = NIGHT;
                 gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
                 gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.005f;
-                gubo.AmbLightColor = glm::vec3(0.1f);
+                gubo.AmbLightColor = glm::vec3(0.0f);
                 break;
         }
 
         gubo.motoDir = glm::normalize(glm::vec3({0, -sin(moto.pitch) + M_PI_(8), cos(moto.pitch)}));
-        gubo.motoPos = moto.pos + glm::vec3(-MOTO_HEIGHT * sin(moto.roll) / 2, MOTO_HEIGHT * cos(moto.roll), -MOTO_LENGTH);
+        gubo.motoPos =
+                moto.pos + glm::vec3(-MOTO_HEIGHT * sin(moto.roll) / 2, MOTO_HEIGHT * cos(moto.roll), -MOTO_LENGTH);
         gubo.shift = shift;
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -619,19 +619,20 @@ protected:
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSMoto.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        if (!holdFire) {
-            // Front wheel
-            ubo.gamma = 180.0f;
-            ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
-                                                                      .315f - (.015f * sin(moto.roll)) +
-                                                                      DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
-                                                                      -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
-                       glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
-                       glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0));
-            ubo.mvpMat = ViewProj * ubo.mMat;
-            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-            DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
+        // Front wheel
+        ubo.gamma = 180.0f;
+        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
+                                                                  .315f - (.015f * sin(moto.roll)) +
+                                                                  DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
+                                                                  -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
+                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0));
+        ubo.mvpMat = ViewProj * ubo.mMat;
+        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+        DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
+
+        if (!holdFire) {
             // Rear wheel
             ubo.gamma = 180.0f;
             ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *

@@ -126,6 +126,10 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
     // Vehicles movement
     updateMoto(deltaT, time, m, ux, uz);
     updateCars(deltaT);
+
+    camera.rollNew = moto.roll;
+    camera.roll = camera.roll * glm::exp(-LAMBDA * deltaT) +
+                  camera.rollNew * (1 - glm::exp(-LAMBDA * deltaT)); // Yaw damping
 }
 
 void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
@@ -137,9 +141,9 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
         // First person view
         ViewProj *= glm::rotate(glm::mat4(1.0), (float) (camera.pitch - STARTING_PITCH), glm::vec3(1, 0, 0)) *
                     glm::rotate(glm::mat4(1.0), camera.yaw, glm::vec3(0, 1, 0)) *
-                    glm::rotate(glm::mat4(1.0), -moto.roll / 2.0f, glm::vec3(0, 0, 1)) *
-                    glm::translate(glm::mat4(1.0), -moto.pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-moto.roll),
-                                                                         (-CAM_HEIGHT - .25f) * cos(moto.roll) -
+                    glm::rotate(glm::mat4(1.0), -camera.roll / 2.0f, glm::vec3(0, 0, 1)) *
+                    glm::translate(glm::mat4(1.0), -moto.pos + glm::vec3((-CAM_HEIGHT - .25f) * sin(-camera.roll),
+                                                                         (-CAM_HEIGHT - .25f) * cos(camera.roll) -
                                                                          (CAM_HEIGHT / 2) * sin(moto.pitch),
                                                                          -sin(moto.pitch)));
 
