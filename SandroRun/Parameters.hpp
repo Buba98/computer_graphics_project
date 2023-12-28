@@ -44,10 +44,10 @@
 #define MOTO_WIDTH 0.6f
 #define MOTO_HEIGHT 1.2f
 #define MOTO_MODEL_OFFSET 0.3f
+#define DIST_WHEELS 1.62f
 
 // Cars settings
 #define NUM_CAR_MODELS 10
-#define NUM_CAR_MODEL_INSTANCES 1
 #define NUM_CAR_PALETTES 5
 #define RIGHT_LANE 6.5f
 #define CENTER_RIGHT_LANE 2.2f

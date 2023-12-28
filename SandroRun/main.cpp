@@ -144,7 +144,7 @@ protected:
     DescriptorSet DSTerrain;
     DescriptorSet DSRails[2 * NUM_RAIL_PER_LINE];
     DescriptorSet DSSkybox;
-    DescriptorSet DSCars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
+    DescriptorSet DSCars[NUM_CAR_MODELS];
     DescriptorSet DSTrees[2 * 2 * NUM_TREE_PER_LINE];
     DescriptorSet DSStreetlights[2 * NUM_LIGHTS_PER_LINE];
 
@@ -179,7 +179,7 @@ protected:
     Scene scene;
     Camera camera;
     Moto moto;
-    Car cars[NUM_CAR_MODELS][NUM_CAR_MODEL_INSTANCES];
+    Car cars[NUM_CAR_MODELS];
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -190,7 +190,7 @@ protected:
 
         uniformBlocksInPool = 100;
         texturesInPool = 200;
-        setsInPool = 100 + NUM_CAR_MODELS * NUM_CAR_MODEL_INSTANCES;
+        setsInPool = 100 + NUM_CAR_MODELS;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -336,15 +336,14 @@ protected:
                                          {2, TEXTURE, 0,                          &TSkybox[1]},
                                          {3, TEXTURE, 0,                          &TSkybox[2]}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (DescriptorSet &DSCar: DSCars[model])
-                DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                           {1, TEXTURE, 0,                           &TCar[0]},
-                                           {2, TEXTURE, 0,                           &TCar[1]},
-                                           {3, TEXTURE, 0,                           &TCar[2]},
-                                           {4, TEXTURE, 0,                           &TCar[3]},
-                                           {5, TEXTURE, 0,                           &TCar[4]},
-                                           {6, TEXTURE, 0,                           &TCar[5]}});;
+        for (DescriptorSet &DSCar: DSCars) {
+            DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                       {1, TEXTURE, 0,                           &TCar[0]},
+                                       {2, TEXTURE, 0,                           &TCar[1]},
+                                       {3, TEXTURE, 0,                           &TCar[2]},
+                                       {4, TEXTURE, 0,                           &TCar[3]},
+                                       {5, TEXTURE, 0,                           &TCar[4]},
+                                       {6, TEXTURE, 0,                           &TCar[5]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -383,9 +382,8 @@ protected:
         DSSkybox.cleanup();
         DSSplash.cleanup();
         DSGubo.cleanup();
-        for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (DescriptorSet &DSCar: DSCars[model])
-                DSCar.cleanup();
+        for (DescriptorSet &DSCar: DSCars) {
+            DSCar.cleanup();
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.cleanup();
@@ -543,11 +541,9 @@ protected:
         DSGubo.bind(commandBuffer, PCar, 0, currentImage);
         PCar.bind(commandBuffer);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (DescriptorSet &DSCar: DSCars[model]) {
-                MCars[model].bind(commandBuffer);
-                DSCar.bind(commandBuffer, PCar, 1, currentImage);
-                vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCars[model].indices.size()), 1, 0, 0, 0);
-            }
+            MCars[model].bind(commandBuffer);
+            DSCars[model].bind(commandBuffer, PCar, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MCars[model].indices.size()), 1, 0, 0, 0);
         }
 
         // Skybox
@@ -616,7 +612,6 @@ protected:
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSMoto.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        const float DIST_WHEELS = 1.62f;
 
         // Front wheel
         ubo.gamma = 180.0f;
@@ -625,8 +620,7 @@ protected:
                                                                   DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
                                                                   -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
                    glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
-                   glm::scale(glm::mat4(1), glm::vec3(0.78f));
+                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0));
         ubo.mvpMat = ViewProj * ubo.mMat;
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
@@ -654,17 +648,14 @@ protected:
         uboCar.gamma = 180.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            for (int index = 0; index < NUM_CAR_MODEL_INSTANCES; index++) {
-                uboCar.palette = (model + index) % NUM_CAR_PALETTES;
-                uboCar.mMat = glm::translate(glm::mat4(1), cars[model][index].pos) *
-                              glm::rotate(glm::mat4(1), glm::radians(
-                                                  cars[model][index].isGoingForward ? 0.0f : 180.0f),
-                                          glm::vec3(0, 1, 0)) *
-                              glm::scale(glm::mat4(1), glm::vec3(1.0f));
-                uboCar.mvpMat = ViewProj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCars[model][index].map(currentImage, &uboCar, sizeof(uboCar), 0);
-            }
+            uboCar.palette = model % NUM_CAR_PALETTES;
+            uboCar.mMat = glm::translate(glm::mat4(1), cars[model].pos) *
+                          glm::rotate(glm::mat4(1), glm::radians(
+                                              cars[model].isGoingForward ? 0.0f : 180.0f),
+                                      glm::vec3(0, 1, 0));
+            uboCar.mvpMat = ViewProj * uboCar.mMat;
+            uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+            DSCars[model].map(currentImage, &uboCar, sizeof(uboCar), 0);
         }
 
         // Trees
@@ -743,10 +734,7 @@ protected:
         for (int i = 0; i < NUM_LIGHTS_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(-ROAD_WIDTH / 2 - 3.0, 0, 10 - i * TERRAIN_LENGTH / 2 +
-                                                                          shift * TERRAIN_LENGTH)) *
-                       glm::rotate(glm::mat4(1), glm::radians(-90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
-                                                                                                        glm::vec3(
-                                                                                                                3.0f));
+                                                                          shift * TERRAIN_LENGTH));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSStreetlights[i].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -757,8 +745,7 @@ protected:
                                       glm::vec3(ROAD_WIDTH / 2 + 3.0, 0,
                                                 10 - TERRAIN_LENGTH / 4 - i * TERRAIN_LENGTH / 2 +
                                                 shift * TERRAIN_LENGTH)) *
-                       glm::rotate(glm::mat4(1), glm::radians(90.0f), glm::vec3(0, 1, 0)) * glm::scale(glm::mat4(1),
-                                                                                                       glm::vec3(3.0f));
+                       glm::rotate(glm::mat4(1), glm::radians(180.0f), glm::vec3(0, 1, 0));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSStreetlights[i + NUM_LIGHTS_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -787,7 +774,7 @@ protected:
     void resetGame();
 
     // Vehicles
-    void regenerateCar(int model, int index);
+    void regenerateCar(int model);
 
     void initCars();
 
