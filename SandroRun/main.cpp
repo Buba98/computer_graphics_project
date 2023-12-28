@@ -100,7 +100,7 @@ protected:
     // Descriptor sets layouts
     DescriptorSetLayout DSLOverlay;
     DescriptorSetLayout DSLGubo;
-    DescriptorSetLayout DSLVColor;
+    DescriptorSetLayout DSLMoto;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
     DescriptorSetLayout DSLCar;
@@ -112,7 +112,7 @@ protected:
 
     // Pipelines
     Pipeline POverlay;
-    Pipeline PVColor;
+    Pipeline PMoto;
     Pipeline PMesh;
     Pipeline PSkybox;
     Pipeline PCar;
@@ -204,7 +204,7 @@ protected:
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
-        DSLVColor.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
+        DSLMoto.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                             {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -237,8 +237,7 @@ protected:
         // Init Pipelines
         POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
         POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-        PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", {&DSLGubo, &DSLVColor});
-        PVColor.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+        PMoto.init(this, &VVColor, "shaders/MotoVert.spv", "shaders/MotoFrag.spv", {&DSLGubo, &DSLMoto});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
@@ -305,7 +304,7 @@ protected:
         // Init pipelines
         PSkybox.create();
         POverlay.create();
-        PVColor.create();
+        PMoto.create();
         PMesh.create();
         PCar.create();
         PLandscape.create();
@@ -315,9 +314,9 @@ protected:
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
                                           {1, TEXTURE, 0,                           &TSplashStart},
                                           {2, TEXTURE, 0,                           &TSplashEnd}});
-        DSMoto.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
-        DSFrontWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
-        DSRearWheel.init(this, &DSLVColor, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSMoto.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSFrontWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
+        DSRearWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSMotoLight.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                                           {1, TEXTURE, 0,                        &TMotoLight[0]},
                                           {2, TEXTURE, 0,                        &TMotoLight[1]}});
@@ -363,7 +362,7 @@ protected:
     void pipelinesAndDescriptorSetsCleanup() {
         // Cleanup pipelines
         POverlay.cleanup();
-        PVColor.cleanup();
+        PMoto.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
         PCar.cleanup();
@@ -440,7 +439,7 @@ protected:
 
         // Cleanup descriptor sets layouts
         DSLOverlay.cleanup();
-        DSLVColor.cleanup();
+        DSLMoto.cleanup();
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
@@ -448,7 +447,7 @@ protected:
 
         // Destroy pipelines
         POverlay.destroy();
-        PVColor.destroy();
+        PMoto.destroy();
         PMesh.destroy();
         PSkybox.destroy();
         PCar.destroy();
@@ -466,19 +465,19 @@ protected:
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
 
         // Moto
-        DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
-        PVColor.bind(commandBuffer);
+        DSGubo.bind(commandBuffer, PMoto, 0, currentImage);
+        PMoto.bind(commandBuffer);
         MMotos[holdFire ? 0 : 1].bind(commandBuffer);
-        DSMoto.bind(commandBuffer, PVColor, 1, currentImage);
+        DSMoto.bind(commandBuffer, PMoto, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotos[holdFire ? 0 : 1].indices.size()), 1, 0, 0, 0);
 
         if (!holdFire) {
             MFrontWheel.bind(commandBuffer);
-            DSFrontWheel.bind(commandBuffer, PVColor, 1, currentImage);
+            DSFrontWheel.bind(commandBuffer, PMoto, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
 
             MRearWheel.bind(commandBuffer);
-            DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
+            DSRearWheel.bind(commandBuffer, PMoto, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
         }
         // Moto light
