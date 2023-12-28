@@ -59,24 +59,26 @@ void main() {
     vec3 Blinn = MS * pow(cosAlpha, gamma);// specular reflection
 
     // Spotlight falloff
-    float cosBeta = dot(normalize(gubo.lightDir), -L);// cosine of the angle between the spotlight direction and the light direction
-    float cosGamma = dot(normalize(gubo.lightDir), -V);// cosine of the angle between the spotlight direction and the viewer direction
-    float falloff = pow(cosBeta, beta) * (1.0f - smoothstep(cosout, cosin, cosGamma));// spotlight falloff
-
     float decay = pow(g/(length(gubo.lightPos-fragPos)), beta);
-    vec3 spotlight = gubo.lightColor.xyz * decay * clamp((dot(L, normalize(gubo.lightDir)) - cosout) / (cosin - cosout), 0.0f, 1.0f) * falloff;
+    vec3 spotlight = gubo.lightColor.xyz * decay * clamp((dot(L, normalize(gubo.lightDir)) - cosout) / (cosin - cosout), 0.0f, 1.0f);
 
     // Spherical harmonics ambient light
+    // https://en.wikipedia.org/wiki/Spherical_harmonics
+
+    float x = N.z;
+    float y = N.x;
+    float z = N.z;
+
     vec3 l_ambient =
-    C00 +
-    C1m1 * N.x +
-    C10 * N.z +
-    C11 * N.z +
-    C2m2 * N.x * N.y +
-    C2m1 * N.y * N.z +
-    C21 * N.z * N.x +
-    C22 * (N.x * N.x - N.y * N.y) +
-    C20 * (3.0f * N.z * N.z - 1.0f);
+        C00 +
+        C1m1 * y +
+        C10 * z +
+        C11 * x +
+        C2m2 * x * y +
+        C2m1 * y * z +
+        C20 * (3.0f * z * z - 1.0f) +
+        C21 * z * x +
+        C22 * (x * x - y * y);
 
     // Final color
     outColor = vec4(spotlight*(Lambert + Blinn) + l_ambient * MA + ME, 1.0f);// output color
