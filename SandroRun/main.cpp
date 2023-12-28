@@ -778,7 +778,7 @@ protected:
     void resetGame();
 
     // Vehicles
-    void regenerateCar(int model);
+    void regenerateCar(Car &car);
 
     void initCars();
 
@@ -789,12 +789,11 @@ protected:
     // Collisions
     bool checkCollisionsWithCars();
 
-    bool checkCollisionsWithGuardRails();
+    bool checkCollisionsWithGuardRails() const;
 
     void gameOverAnimation(float deltaT);
 
-    void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uy, glm::vec3 uz,
-                  bool handleFire);
+    void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uz);
 };
 
 #include "BuildModels.hpp"

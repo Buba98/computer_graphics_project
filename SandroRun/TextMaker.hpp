@@ -123,7 +123,6 @@ struct TextMaker {
                 for (int j = 0; j < Txt.l[i].length(); j++) {
                     int c = ((int) Txt.l[i][j]) - minChar;
                     if ((c >= 0) && (c <= maxChar)) {
-//std::cout << k << " " << j << " " << i << " " << ib << " " << c << "\n";
                         CharData d = Fonts[FontId].P[c];
 
                         TextVertex vertex{};

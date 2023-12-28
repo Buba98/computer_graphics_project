@@ -8,7 +8,8 @@ void SandroRun::controller() {
     // Variables
     float deltaT, time;
     bool fire = false;
-    glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+    glm::vec3 m = glm::vec3(0.0f);
+    glm::vec3 r = glm::vec3(0.0f);
     glm::vec3 ux = glm::vec3(1, 0, 0);
     glm::vec3 uy = glm::vec3(0, 1, 0);
     glm::vec3 uz = glm::vec3(0, 0, -1);
@@ -20,7 +21,7 @@ void SandroRun::controller() {
     bool handleFire = (!(wasFire) && fire);
     if (handleFire) {
         holdFire = !holdFire && scene.gameState;
-        if(scene.gameState == GAME_SCREEN) {
+        if (scene.gameState == GAME_SCREEN) {
             createCommandBuffers();
         }
     }
@@ -38,7 +39,7 @@ void SandroRun::controller() {
             }
             break;
         case GAME_SCREEN:
-            mainGame(deltaT, time, m, r, ux, uy, uz, handleFire);
+            mainGame(deltaT, time, m, r, ux, uz);
             break;
         case GAME_OVER_ANIMATION:
             if (deltaT < 1.0f)
@@ -59,8 +60,7 @@ void SandroRun::controller() {
     }
 }
 
-void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uy, glm::vec3 uz,
-                         bool handleFire) {
+void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uz) {
     // Collisions detection
     if (!holdP) {
         if (checkCollisionsWithCars() || checkCollisionsWithGuardRails()) {

@@ -2,82 +2,79 @@
 #include <thread>
 
 void SandroRun::initCars() {
-    for (int m = 0; m < NUM_CAR_MODELS; m++) {
-        cars[m].pos = glm::vec3(0.0f);
+    for (Car &car: cars) {
+        car.pos = glm::vec3(0.0f);
     }
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        regenerateCar(model);
+        regenerateCar(cars[model]);
         cars[model].length = carsLength[model];
         cars[model].width = carsWidth[model];
-
     }
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        if (cars[model].isGoingForward) {
-            cars[model].pos.z += (float) WORLD_LENGTH * INITIAL_RIGHT_LANES_SHIFTING_FACTOR;
+    for (Car &car: cars) {
+        if (car.isGoingForward) {
+            car.pos.z += (float) WORLD_LENGTH * INITIAL_RIGHT_LANES_SHIFTING_FACTOR;
         }
     }
 }
 
 void SandroRun::updateCars(float deltaT) {
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
-        cars[model].pos.z -= cars[model].speed * deltaT;
-        if (cars[model].pos.z > scene.backWorldLimit) {
-            regenerateCar(model);
+    for (Car &car: cars) {
+        car.pos.z -= car.speed * deltaT;
+        if (car.pos.z > scene.backWorldLimit) {
+            regenerateCar(car);
 
         }
     }
 }
 
-void SandroRun::regenerateCar(int model) {
+void SandroRun::regenerateCar(Car &car) {
     // Selecting random lane
     int lane = (int) (random() % 4);
     switch (lane) {
         case 0:
-            cars[model].pos.x = LEFT_LANE;
-            cars[model].isGoingForward = false;
-            cars[model].speed = LEFT_LANE_CAR_SPEED;
+            car.pos.x = LEFT_LANE;
+            car.isGoingForward = false;
+            car.speed = LEFT_LANE_CAR_SPEED;
             break;
         case 1:
-            cars[model].pos.x = CENTER_LEFT_LANE;
-            cars[model].isGoingForward = false;
-            cars[model].speed = CENTER_LEFT_LANE_CAR_SPEED;
+            car.pos.x = CENTER_LEFT_LANE;
+            car.isGoingForward = false;
+            car.speed = CENTER_LEFT_LANE_CAR_SPEED;
             break;
         case 2:
-            cars[model].pos.x = CENTER_RIGHT_LANE;
-            cars[model].isGoingForward = true;
-            cars[model].speed = CENTER_RIGHT_LANE_CAR_SPEED;
+            car.pos.x = CENTER_RIGHT_LANE;
+            car.isGoingForward = true;
+            car.speed = CENTER_RIGHT_LANE_CAR_SPEED;
             break;
         case 3:
-            cars[model].pos.x = RIGHT_LANE;
-            cars[model].isGoingForward = true;
-            cars[model].speed = RIGHT_LANE_CAR_SPEED;
+            car.pos.x = RIGHT_LANE;
+            car.isGoingForward = true;
+            car.speed = RIGHT_LANE_CAR_SPEED;
             break;
         default:;
     }
 
-    cars[model].pos.z = scene.frontWorldLimit;
+    car.pos.z = scene.frontWorldLimit;
 
     // Preparing data for collision-free placement
-    float currentLane = cars[model].pos.x;
-    float currentZCoord = cars[model].pos.z;
+    float currentLane = car.pos.x;
+    float currentZCoord = car.pos.z;
     float mostAdvancedZCoord = 0;
     bool otherCarInLaneFound = false;
 
     // Searching most advanced car in same lane
-    for (int m = 0; m < NUM_CAR_MODELS; m++) {
-        if (cars[m].pos.x == currentLane && cars[m].pos.z <= mostAdvancedZCoord &&
-            (m != model)) {
-            mostAdvancedZCoord = cars[m].pos.z;
+    for (Car &otherCar: cars) {
+        if (otherCar.pos.x == currentLane && otherCar.pos.z <= mostAdvancedZCoord && &car != &otherCar) {
+            mostAdvancedZCoord = otherCar.pos.z;
             otherCarInLaneFound = true;
         }
     }
-
 
     if (!otherCarInLaneFound) {
         return;
     }
 
-// Adjusting position if most advanced car is too close (avoiding initial overlap)
+    // Adjusting position if most advanced car is too close (avoiding initial overlap)
     if (currentZCoord >= mostAdvancedZCoord) {
         currentZCoord = mostAdvancedZCoord - AVOID_INITIAL_OVERLAP_OFFSET;
     }
@@ -85,26 +82,25 @@ void SandroRun::regenerateCar(int model) {
         currentZCoord -= AVOID_INITIAL_OVERLAP_OFFSET;
     }
 
-// Collision-free corrections
-    cars[model].pos.z = currentZCoord;
+    // Collision-free corrections
+    car.pos.z = currentZCoord;
 }
 
 bool SandroRun::checkCollisionsWithCars() {
-    for (int model = 0; model < NUM_CAR_MODELS; model++) {
+    for (Car &car: cars) {
         float motoBack = moto.pos.z + MOTO_MODEL_OFFSET;
         float motoFront = motoBack - MOTO_LENGTH * cos(moto.pitch);
-        float carBack = cars[model].isGoingForward ? cars[model].pos.z + cars[model].length : cars[model].pos.z;
-        float carFront = carBack - cars[model].length;
+        float carBack = car.isGoingForward ? car.pos.z + car.length : car.pos.z;
+        float carFront = carBack - car.length;
 
         if (motoFront <= carBack && motoBack >= carFront) {
             float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
             float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
             float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);
-            float carLeft = cars[model].pos.x - cars[model].width / 2;
-            float carRight = cars[model].pos.x + cars[model].width / 2;
+            float carLeft = car.pos.x - car.width / 2;
+            float carRight = car.pos.x + car.width / 2;
 
             if (motoLeft <= carRight && motoRight >= carLeft) {
-                std::cout << "Collision with car[" << model << "]" << std::endl;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
                 return true;
             }
@@ -113,7 +109,7 @@ bool SandroRun::checkCollisionsWithCars() {
     return false;
 }
 
-bool SandroRun::checkCollisionsWithGuardRails() {
+bool SandroRun::checkCollisionsWithGuardRails() const {
     float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
     float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
     float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);
