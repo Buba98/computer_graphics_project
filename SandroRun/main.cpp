@@ -572,21 +572,25 @@ protected:
         scene.frontWorldLimit = scene.backWorldLimit - WORLD_LENGTH;
 
         // Global uniform buffer
-        if (scene.dayTime == DAY) {
-            gubo.dayTime = DAY;
-            gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.8f;
-            gubo.AmbLightColor = glm::vec3(0.1f);
-        } else if (scene.dayTime == SUNSET) {
-            gubo.dayTime = SUNSET;
-            gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(0.93f, 0.68f, 0.38f, 1.0f) * 0.3f;
-            gubo.AmbLightColor = glm::vec3(0.93f, 0.68f, 0.38f) * 0.1f;
-        } else if (scene.dayTime == NIGHT) {
-            gubo.dayTime = NIGHT;
-            gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
-            gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.005f;
-            gubo.AmbLightColor = glm::vec3(0.1f);
+        switch (scene.dayTime) {
+            case DAY:
+                gubo.dayTime = DAY;
+                gubo.DlightDir = glm::normalize(glm::vec3(2.0f, 3.0f, -3.0f));
+                gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.8f;
+                gubo.AmbLightColor = glm::vec3(0.1f);
+                break;
+            case SUNSET:
+                gubo.dayTime = SUNSET;
+                gubo.DlightDir = glm::normalize(glm::vec3(0.0f, 2.0f, -3.0f));
+                gubo.DlightColor = glm::vec4(0.93f, 0.68f, 0.38f, 1.0f) * 0.3f;
+                gubo.AmbLightColor = glm::vec3(0.93f, 0.68f, 0.38f) * 0.1f;
+                break;
+            case NIGHT:
+                gubo.dayTime = NIGHT;
+                gubo.DlightDir = glm::normalize(glm::vec3(1.0f, 2.0f, -3.0f));
+                gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f) * 0.005f;
+                gubo.AmbLightColor = glm::vec3(0.1f);
+                break;
         }
 
         gubo.motoDir = glm::normalize(glm::vec3({0, -sin(moto.pitch) + M_PI_(8), cos(moto.pitch)}));
