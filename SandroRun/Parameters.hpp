@@ -6,6 +6,7 @@
 #define GAME_SCREEN 1
 #define GAME_OVER_ANIMATION 2
 #define GAME_OVER_SCREEN 3
+#define M_PI_(N) (M_PI / (N))
 
 // World settings
 #define TERRAIN_LENGTH 120
@@ -30,19 +31,19 @@
 #define CAM_DIST 5.0f
 #define MIN_PITCH glm::radians(10.0f)
 #define MAX_PITCH glm::radians(80.0f)
-#define MAX_YAW ((float) M_PI / 4.0f)
+#define MAX_YAW M_PI_4f
 #define MIN_YAW (-MAX_YAW)
 #define ROT_SPEED glm::radians(120.0f)
 #define STARTING_YAW 0.0f
-#define STARTING_PITCH (M_PI / 2.5f)
+#define STARTING_PITCH (M_PI_(2.5f))
 
 // Moto settings
 #define Z_SPEED 3.0f
 #define X_SPEED 21.0f
-#define MIN_MOTO_ROLL (float) (-M_PI / 4.0f)
+#define MIN_MOTO_ROLL (-M_PI_4f)
 #define MAX_MOTO_ROLL (-MIN_MOTO_ROLL)
 #define MIN_MOTO_PITCH 0.0f
-#define MAX_MOTO_PITCH (float) (M_PI / 4.0f)
+#define MAX_MOTO_PITCH M_PI_4f
 #define MOTO_ROLL_SPEED 100
 #define MOTO_PITCH_SPEED 150
 #define LAMBDA 10.0f

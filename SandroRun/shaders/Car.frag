@@ -62,7 +62,7 @@ vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, 
     float cos_out = is_streetlight ? cos_out_street : cos_out_moto;
     float g = is_streetlight ? g_streetlight : g_moto;
 
-    float spotlight_cone = pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f);
+    float spotlight_cone = clamp(pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f), 0.0f, 1.0f);
     return spotlight_light_color * spotlight_cone;
 }
 
@@ -119,8 +119,8 @@ void main() {
     // Direct light
     vec3 direct_diffuse = Lambert(direct_light_dir, N, albedo);
     // Spot light
-    vec3 spotlight_diffuse_moto;
-    vec3 spotlight_diffuse_streetlight;
+    vec3 spotlight_diffuse_moto = vec3(0.0f);
+    vec3 spotlight_diffuse_streetlight = vec3(0.0f);
 
     if (gubo.dayTime != 0){
         spotlight_diffuse_moto = Lambert(spotlight_light_dir_moto, N, albedo);
@@ -130,8 +130,8 @@ void main() {
     // Direct light
     vec3 direct_specular = Phong(direct_light_dir, N, V, ubo.sColor, ubo.gamma);
     // Spot light
-    vec3 spotlight_specular_moto;
-    vec3 spotlight_specular_streetlight;
+    vec3 spotlight_specular_moto = vec3(0.0f);
+    vec3 spotlight_specular_streetlight = vec3(0.0f);
     if (gubo.dayTime != 0){
         spotlight_specular_moto = Phong(spotlight_light_dir_moto, N, V, ubo.sColor, ubo.gamma);
         spotlight_specular_streetlight = Phong(spotlight_light_dir_streetlight, N, V, ubo.sColor, ubo.gamma);

@@ -70,7 +70,7 @@ vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, 
     float cos_out = is_streetlight ? cos_out_street : cos_out_moto;
     float g = is_streetlight ? g_streetlight : g_moto;
 
-    float spotlight_cone = pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f);
+    float spotlight_cone = clamp(pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f), 0.0f, 1.0f);
     return spotlight_light_color * spotlight_cone;
 }
 

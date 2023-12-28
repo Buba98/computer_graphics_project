@@ -589,8 +589,8 @@ protected:
             gubo.AmbLightColor = glm::vec3(0.1f);
         }
 
-        gubo.motoDir = glm::normalize(glm::vec3({0, -sin(moto.pitch), cos(moto.pitch)}));
-        gubo.motoPos = moto.pos + glm::vec3(0, MOTO_HEIGHT - (.015f * sin(moto.roll)), 0);
+        gubo.motoDir = glm::normalize(glm::vec3({0, -sin(moto.pitch) + M_PI_(8), cos(moto.pitch)}));
+        gubo.motoPos = moto.pos + glm::vec3(-MOTO_HEIGHT * sin(moto.roll) / 2, MOTO_HEIGHT * cos(moto.roll), -MOTO_LENGTH);
         gubo.shift = shift;
         gubo.eyePos = camera.pos;
         DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
@@ -649,7 +649,7 @@ protected:
         }
 
         // Cars
-        uboCar.gamma = 180.0f;
+        uboCar.gamma = 60.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
             uboCar.palette = model % NUM_CAR_PALETTES;

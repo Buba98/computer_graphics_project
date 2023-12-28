@@ -101,7 +101,7 @@ bool SandroRun::checkCollisionsWithCars() {
             float carRight = car.pos.x + car.width / 2;
 
             if (motoLeft <= carRight && motoRight >= carLeft) {
-                std::this_thread::sleep_for(std::chrono::seconds(1));
+                std::cout << "Collision with car" << std::endl;
                 return true;
             }
         }
@@ -116,7 +116,6 @@ bool SandroRun::checkCollisionsWithGuardRails() const {
 
     if (motoLeft <= (-ROAD_WIDTH / 2 + GUARD_RAIL_WIDTH) || motoRight >= (ROAD_WIDTH / 2 - GUARD_RAIL_WIDTH)) {
         std::cout << "Collision with guard rail" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
         return true;
     }
     return false;
@@ -151,7 +150,7 @@ void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, 
 
 void SandroRun::gameOverAnimation(float deltaT) {
     if (moto.roll > 0)
-        moto.roll = std::clamp(moto.roll + deltaT, (float) -M_PI / 2.0f, (float) M_PI / 2.0f);
+        moto.roll = std::clamp(moto.roll + deltaT, -M_PI_2f, M_PI_2f);
     else
-        moto.roll = std::clamp(moto.roll - deltaT, (float) -M_PI / 2.0f, (float) M_PI / 2.0f);
+        moto.roll = std::clamp(moto.roll - deltaT, -M_PI_2f, M_PI_2f);
 }

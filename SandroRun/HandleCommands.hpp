@@ -42,9 +42,8 @@ void SandroRun::controller() {
             mainGame(deltaT, time, m, r, ux, uz);
             break;
         case GAME_OVER_ANIMATION:
-            if (deltaT < 1.0f)
-                gameOverAnimation(deltaT);
-            if (abs(moto.roll) >= (float) M_PI / 2.0f) {
+            gameOverAnimation(deltaT);
+            if (abs(moto.roll) >= (float) M_PI_2) {
                 std::cout << "Game over" << std::endl;
                 scene.gameState = GAME_OVER_SCREEN;
                 scene.splashVisibility = 1.0f;

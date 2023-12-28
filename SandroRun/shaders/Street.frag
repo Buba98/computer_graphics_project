@@ -41,7 +41,7 @@ const float roughness = 0.5f;
 const float metallic = 0.2f;
 const float F0 = 0.4f;
 
-vec3 CookTorrance(vec3 V, vec3 N, vec3 L, vec3 Md, float F0, float metallic, float roughness) {
+vec3 CookTorrance(vec3 V, vec3 N, vec3 L, vec3 Md) {
     //vec3 V  - direction of the viewer
     //vec3 N  - normal vector to the surface
     //vec3 L  - light vector (from the light model)
@@ -84,7 +84,7 @@ vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, 
     float cos_out = is_streetlight ? cos_out_street : cos_out_moto;
     float g = is_streetlight ? g_streetlight : g_moto;
 
-    float spotlight_cone = pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f);
+    float spotlight_cone = clamp(pow(g / length(diff), beta) * clamp((dot(normalize(diff), spotlight_light_dir) - cos_out) / (cos_in - cos_out), 0.0f, 1.0f), 0.0f, 1.0f);
     return spotlight_light_color * spotlight_cone;
 }
 
@@ -127,10 +127,10 @@ void main() {
 
     // BRDF - Cook-Torrance
     // Direct light
-    vec3 direct_BRDF = CookTorrance(V, N, L, albedo, F0, metallic, roughness);
+    vec3 direct_BRDF = CookTorrance(V, N, L, albedo);
     // Spot light
-    vec3 spotlight_BRDF_moto = CookTorrance(V, N, spotlight_light_dir_moto, albedo, F0, metallic, roughness);
-    vec3 spotlight_BRDF_streetlight = CookTorrance(V, N, spotlight_light_dir_streetlight, albedo, F0, metallic, roughness);
+    vec3 spotlight_BRDF_moto = CookTorrance(V, N, spotlight_light_dir_moto, albedo);
+    vec3 spotlight_BRDF_streetlight = CookTorrance(V, N, spotlight_light_dir_streetlight, albedo);
 
     // Ambient light
     vec3 ambient_tot = albedo * gubo.AmbLightColor;
