@@ -9,32 +9,35 @@ void SetupProjectionMatrices(Assignment05 *A, float Ar)
 
 	glm::mat4 S;
 	glm::mat4 P;
-	float n = 0.1f;
-	float f = 50.0f;
+	const float near_plane = 0.1f;
+	const float far_plane = 50.0f;
+	float fov_y;
 
 	// Fov-y = 60 deg
-	S = glm::perspective(glm::radians(60.0f), Ar, n, f);
+	fov_y = glm::radians(60.0f);
+	S = glm::perspective(fov_y, Ar, near_plane, far_plane);
 	S[1][1] *= -1;
 	A->Matrix(1, S); // sets the matrix corresponding to piece 1
 
 	// Fov-y = 105 deg
-	S = glm::perspective(glm::radians(105.0f), Ar, n, f);
+	fov_y = glm::radians(105.0f);
+	S = glm::perspective(fov_y, Ar, near_plane, far_plane);
 	S[1][1] *= -1;
 	A->Matrix(2, S); // sets the matrix corresponding to piece 2
 
 	// Fov-y = 25 deg
-	S = glm::perspective(glm::radians(25.0f), Ar, n, f);
+	fov_y = glm::radians(25.0f);
+	S = glm::perspective(fov_y, Ar, near_plane, far_plane);
 	S[1][1] *= -1;
 	A->Matrix(3, S); // sets the matrix corresponding to piece 3
 
 	// Right View, Fov-x = 45 deg
-
 	float teta = glm::radians(45.0f);
-	float t = n  * glm::tan(teta / 2);
-	float b = -t;
-	float r = Ar * t;
-	float l = -r;
+	float top = near_plane  * glm::tan(teta / 2);
+	float bottom = -top;
+	float right = 2.0f * Ar * top;
+	float left = 0.0f;
 
-	S = glm::scale(glm::mat4(1), glm::vec3(1, -1, 1)) * glm::frustum(0.0f, 2.0f * r , b, t, n, f);
+	S = glm::scale(glm::mat4(1), glm::vec3(1, -1, 1)) * glm::frustum(left, right , bottom, top, near_plane, far_plane);
 	A->Matrix(4, S); // sets the matrix corresponding to piece 4
 }
