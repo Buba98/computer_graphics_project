@@ -20,6 +20,10 @@ void SandroRun::controller() {
     bool handleFire = (!(wasFire) && fire);
     if (handleFire) {
         holdFire = !holdFire && scene.gameState;
+        if(scene.gameState == 1){
+            std::cout << "Game paused" << std::endl;
+            createCommandBuffers();
+        }
     }
     wasFire = fire;
 

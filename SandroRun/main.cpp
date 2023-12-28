@@ -121,7 +121,7 @@ protected:
 
     // Models
     Model<VertexOverlay> MSplash;
-    Model<VertexVColor> MMoto;
+    Model<VertexVColor> MMotos[2];
     Model<VertexVColor> MFrontWheel;
     Model<VertexVColor> MRearWheel;
     Model<VertexMesh> MMotoLight;
@@ -247,7 +247,8 @@ protected:
         PStreet.init(this, &VMesh, "shaders/StreetVert.spv", "shaders/StreetFrag.spv", {&DSLGubo, &DSLMesh});
 
         // Init Models
-        MMoto.init(this, &VVColor, "models/moto/moto.obj", OBJ);
+        MMotos[0].init(this, &VVColor, "models/moto/moto_high.obj", OBJ);
+        MMotos[1].init(this, &VVColor, "models/moto/moto_low.obj", OBJ);
         MFrontWheel.init(this, &VVColor, "models/moto/frontWheel.obj", OBJ);
         MRearWheel.init(this, &VVColor, "models/moto/rearWheel.obj", OBJ);
         MMotoLight.init(this, &VMesh, "models/moto/motoLight.obj", OBJ);
@@ -419,7 +420,9 @@ protected:
 
         // Cleanup models
         MSplash.cleanup();
-        MMoto.cleanup();
+        for (Model<VertexVColor> &MMoto: MMotos) {
+            MMoto.cleanup();
+        }
         MFrontWheel.cleanup();
         MRearWheel.cleanup();
         MMotoLight.cleanup();
@@ -465,25 +468,27 @@ protected:
         // Moto
         DSGubo.bind(commandBuffer, PVColor, 0, currentImage);
         PVColor.bind(commandBuffer);
-        MMoto.bind(commandBuffer);
+        MMotos[holdFire ? 0 : 1].bind(commandBuffer);
         DSMoto.bind(commandBuffer, PVColor, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMoto.indices.size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotos[holdFire ? 0 : 1].indices.size()), 1, 0, 0, 0);
 
-        MFrontWheel.bind(commandBuffer);
-        DSFrontWheel.bind(commandBuffer, PVColor, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
+        if (!holdFire) {
+            MFrontWheel.bind(commandBuffer);
+            DSFrontWheel.bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
 
-        MRearWheel.bind(commandBuffer);
-        DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
-
+            MRearWheel.bind(commandBuffer);
+            DSRearWheel.bind(commandBuffer, PVColor, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
+        }
         // Moto light
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
-        MMotoLight.bind(commandBuffer);
-        DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
-
+        if (!holdFire) {
+            MMotoLight.bind(commandBuffer);
+            DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
+        }
         // Trees
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             MTrees[i % 2].bind(commandBuffer);
@@ -612,37 +617,38 @@ protected:
         ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
         DSMoto.map(currentImage, &ubo, sizeof(ubo), 0);
 
+        if (!holdFire) {
+            // Front wheel
+            ubo.gamma = 180.0f;
+            ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
+                                                                      .315f - (.015f * sin(moto.roll)) +
+                                                                      DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
+                                                                      -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
+                       glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                       glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        // Front wheel
-        ubo.gamma = 180.0f;
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(DIST_WHEELS * sin(moto.pitch) * sin(-moto.roll),
-                                                                  .315f - (.015f * sin(moto.roll)) +
-                                                                  DIST_WHEELS * sin(moto.pitch) * cos(moto.roll),
-                                                                  -DIST_WHEELS * cos(moto.pitch) + OFFSET)) *
-                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0));
-        ubo.mvpMat = ViewProj * ubo.mMat;
-        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-        DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
+            // Rear wheel
+            ubo.gamma = 180.0f;
+            ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
+                       glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                       glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
+                       glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
-        // Rear wheel
-        ubo.gamma = 180.0f;
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
-                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), moto.wheelPitch, glm::vec3(1, 0, 0)) *
-                   glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
-        ubo.mvpMat = ViewProj * ubo.mMat;
-        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-        DSRearWheel.map(currentImage, &ubo, sizeof(ubo), 0);
-
-        // Moto light
-        ubo.gamma = 180.0f;
-        ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
-                   glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
-                   glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
-        ubo.mvpMat = ViewProj * ubo.mMat;
-        ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
-        DSMotoLight.map(currentImage, &ubo, sizeof(ubo), 0);
+            // Moto light
+            ubo.gamma = 180.0f;
+            ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
+                       glm::rotate(glm::mat4(1), moto.roll, glm::vec3(0, 0, 1)) *
+                       glm::rotate(glm::mat4(1), moto.pitch, glm::vec3(1, 0, 0));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSMotoLight.map(currentImage, &ubo, sizeof(ubo), 0);
+        }
 
         // Cars
         uboCar.gamma = 180.0f;
