@@ -24,17 +24,12 @@ void Assignment14::createCubeMesh(std::vector <Vertex> &vDef, std::vector <uint3
     };
 
     for (int i = 0; i < 6; i++){
-
         float choice = (i % 2 ? 1 : -1);
         int pos = i/2;
 
-        std::cout << "i " << i << std::endl;
-
         for (int j = 0; j < 8; j++){
             if(positions[j][pos] == choice){
-                std::cout << "j " << j << std::endl;
-
-                vDef.push_back({glm::vec3(positions[j]), glm::vec3(normals[i])});
+                vDef.push_back(positions[j], normals[i]});
             }
         }
 
