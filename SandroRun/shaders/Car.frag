@@ -69,7 +69,7 @@ vec3 SpotLightModel(vec3 fragPos, vec3 spotlight_pos, vec3 spotlight_light_dir, 
 void main() {
     vec3 N = normalize(fragNorm);// surface normal
     vec3 V = normalize(gubo.eyePos - fragPos);// viewer direction
-    vec3 L = normalize(gubo.DlightDir);// light direction
+    vec3 L = gubo.DlightDir;// light direction
 
     vec3 albedo;// main color
     if (ubo.palette == 1){
