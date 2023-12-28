@@ -20,43 +20,53 @@ void SandroRun::controller() {
     bool handleFire = (!(wasFire) && fire);
     if (handleFire) {
         holdFire = !holdFire && scene.gameState;
-        if(scene.gameState == 1){
+        if(scene.gameState == GAME_SCREEN) {
             createCommandBuffers();
         }
     }
     wasFire = fire;
 
     // Game beginning
-    if (scene.gameState == 0) {
-        if (handleFire) {
-            std::cout << "Game started" << std::endl;
-            scene.gameState = 1;
-            scene.currText = 1;
-            scene.startTime = time;
-            createCommandBuffers();
-        }
-        return;
-    } else if (scene.gameState == 2) {
-        if (handleFire) {
-            resetGame();
-            std::cout << "Game restarted" << std::endl;
-            createCommandBuffers();
-        }
-        return;
+    switch (scene.gameState) {
+        case INITIAL_SCREEN:
+            if (handleFire) {
+                std::cout << "Game started" << std::endl;
+                scene.gameState = GAME_SCREEN;
+                scene.currText = 1;
+                scene.startTime = time;
+                createCommandBuffers();
+            }
+            break;
+        case GAME_SCREEN:
+            mainGame(deltaT, time, m, r, ux, uy, uz, handleFire);
+            break;
+        case GAME_OVER_ANIMATION:
+            if (deltaT < 1.0f)
+                gameOverAnimation(deltaT);
+            if (abs(moto.roll) >= (float) M_PI / 2.0f) {
+                std::cout << "Game over" << std::endl;
+                scene.gameState = GAME_OVER_SCREEN;
+                scene.splashVisibility = 1.0f;
+            }
+            break;
+        case GAME_OVER_SCREEN:
+            if (handleFire) {
+                resetGame();
+                std::cout << "Game restarted" << std::endl;
+                createCommandBuffers();
+            }
+            break;
     }
+}
 
+void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uy, glm::vec3 uz,
+                         bool handleFire) {
     // Collisions detection
-    if (!scene.gameOver && !holdP) {
-        checkCollisionsWithCars();
-        checkCollisionsWithGuardRails();
-    }
-
-    // Game over
-    if (scene.gameOver) {
-        std::cout << "Game over" << std::endl;
-        scene.gameState = 2;
-        scene.splashVisibility = 1.0f;
-        return;
+    if (!holdP) {
+        if (checkCollisionsWithCars() || checkCollisionsWithGuardRails()) {
+            scene.gameState = GAME_OVER_ANIMATION;
+            return;
+        }
     }
 
     // Daytime update
@@ -110,7 +120,7 @@ void SandroRun::controller() {
     // Score update
     int curr = (int) (abs(moto.pos.z) / ONE_POINT_SCORE_DISTANCE) + 1;
     if (scene.currText != curr && scene.currText != 101) {
-        scene.currText = curr > 101 ? 101: curr;
+        scene.currText = curr > 101 ? 101 : curr;
         createCommandBuffers();
     }
 
@@ -164,12 +174,11 @@ void SandroRun::resetGame() {
 
     // Game state
     scene.currText = 0;
-    scene.gameState = 0;
+    scene.gameState = INITIAL_SCREEN;
     scene.splashVisibility = 1.0f;
     scene.frontWorldLimit = -WORLD_LENGTH;
     scene.backWorldLimit = 0;
-    scene.dayTime = 0;
-    scene.gameOver = false;
+    scene.dayTime = DAY;
     scene.startTime = 0;
     wasN = false;
 

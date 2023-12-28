@@ -86,16 +86,14 @@ void SandroRun::regenerateCar(int model) {
     }
 
 // Collision-free corrections
-    cars[model].pos.
-            z = currentZCoord;
+    cars[model].pos.z = currentZCoord;
 }
 
-void SandroRun::checkCollisionsWithCars() {
+bool SandroRun::checkCollisionsWithCars() {
     for (int model = 0; model < NUM_CAR_MODELS; model++) {
         float motoBack = moto.pos.z + MOTO_MODEL_OFFSET;
         float motoFront = motoBack - MOTO_LENGTH * cos(moto.pitch);
-        float carBack = cars[model].isGoingForward ? cars[model].pos.z + cars[model].length
-                                                   : cars[model].pos.z;
+        float carBack = cars[model].isGoingForward ? cars[model].pos.z + cars[model].length : cars[model].pos.z;
         float carFront = carBack - cars[model].length;
 
         if (motoFront <= carBack && motoBack >= carFront) {
@@ -107,25 +105,25 @@ void SandroRun::checkCollisionsWithCars() {
 
             if (motoLeft <= carRight && motoRight >= carLeft) {
                 std::cout << "Collision with car[" << model << "]" << std::endl;
-                scene.gameOver = true;
                 std::this_thread::sleep_for(std::chrono::seconds(1));
-                return;
+                return true;
             }
         }
     }
+    return false;
 }
 
-void SandroRun::checkCollisionsWithGuardRails() {
+bool SandroRun::checkCollisionsWithGuardRails() {
     float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
     float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
     float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);
 
     if (motoLeft <= (-ROAD_WIDTH / 2 + GUARD_RAIL_WIDTH) || motoRight >= (ROAD_WIDTH / 2 - GUARD_RAIL_WIDTH)) {
         std::cout << "Collision with guard rail" << std::endl;
-        scene.gameOver = true;
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        return;
+        return true;
     }
+    return false;
 }
 
 void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, glm::vec3 uz) {
@@ -153,4 +151,11 @@ void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, 
 
     // Wheel rotation
     moto.wheelPitch += -(2 << 4) * moto.speed * deltaT;
+}
+
+void SandroRun::gameOverAnimation(float deltaT) {
+    if (moto.roll > 0)
+        moto.roll = std::clamp(moto.roll + deltaT, (float) -M_PI / 2.0f, (float) M_PI / 2.0f);
+    else
+        moto.roll = std::clamp(moto.roll - deltaT, (float) -M_PI / 2.0f, (float) M_PI / 2.0f);
 }

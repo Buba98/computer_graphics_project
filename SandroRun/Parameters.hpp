@@ -1,6 +1,12 @@
 #ifndef PARAMETERS
 #define PARAMETERS
 
+// Controller settings
+#define INITIAL_SCREEN 0
+#define GAME_SCREEN 1
+#define GAME_OVER_ANIMATION 2
+#define GAME_OVER_SCREEN 3
+
 // World settings
 #define TERRAIN_LENGTH 120
 #define ROAD_WIDTH 20.0f

@@ -85,7 +85,6 @@ struct Camera {
 
 struct Scene {
     int gameState;
-    bool gameOver;
     float frontWorldLimit, backWorldLimit;
     int currText;
     float splashVisibility;
@@ -758,7 +757,7 @@ protected:
 
         // Splash screen
         uboSplash.visible = scene.splashVisibility;
-        uboSplash.splashSelector = scene.gameState == 2 ? 1 : 0;
+        uboSplash.splashSelector = scene.gameState == GAME_OVER_SCREEN ? 1 : 0;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
     }
 
@@ -788,9 +787,14 @@ protected:
     void updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, glm::vec3 uz);
 
     // Collisions
-    void checkCollisionsWithCars();
+    bool checkCollisionsWithCars();
 
-    void checkCollisionsWithGuardRails();
+    bool checkCollisionsWithGuardRails();
+
+    void gameOverAnimation(float deltaT);
+
+    void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uy, glm::vec3 uz,
+                  bool handleFire);
 };
 
 #include "BuildModels.hpp"
