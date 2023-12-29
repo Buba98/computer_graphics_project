@@ -199,9 +199,9 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 9 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS; // min = 75
-        texturesInPool = 12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS); // min = 184
-        setsInPool = 10 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS; // min = 76
+        uniformBlocksInPool = 9 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 76
+        texturesInPool = 12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS) + 2; // min = 186
+        setsInPool = 10 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 77
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
