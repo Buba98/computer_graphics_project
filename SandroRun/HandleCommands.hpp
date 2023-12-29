@@ -21,9 +21,6 @@ void SandroRun::controller() {
     bool handleFire = (!(wasFire) && fire);
     if (handleFire) {
         holdFire = !holdFire && scene.gameState;
-        if (scene.gameState == GAME_SCREEN) {
-            createCommandBuffers();
-        }
     }
     wasFire = fire;
 
@@ -82,6 +79,17 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
     }
     wasP = p;
 
+    // Change camera mode
+    bool c = glfwGetKey(window, GLFW_KEY_C);
+    bool handleC = (!(wasC) && c);
+    if (handleC) {
+        holdC = !holdC;
+        if (scene.gameState == GAME_SCREEN) {
+            createCommandBuffers();
+        }
+    }
+    wasC = c;
+
     // Camera reset
     if (glfwGetKey(window, GLFW_KEY_R)) {
         camera.yaw = STARTING_YAW;
@@ -136,7 +144,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
     ViewProj = glm::perspective(FOV_Y, Ar, NEAR_PLANE, FAR_PLANE);
     ViewProj[1][1] *= -1;
 
-    if (holdFire) {
+    if (holdC) {
         // First person view
         ViewProj *= glm::rotate(glm::mat4(1.0), (float) (camera.pitch - STARTING_PITCH), glm::vec3(1, 0, 0)) *
                     glm::rotate(glm::mat4(1.0), camera.yaw, glm::vec3(0, 1, 0)) *
@@ -183,6 +191,7 @@ void SandroRun::resetGame() {
     scene.dayTime = DAY;
     scene.startTime = 0;
     wasN = false;
+    wasC = false;
 
     // Cars positions
     initCars();
