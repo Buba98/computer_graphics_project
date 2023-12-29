@@ -2607,7 +2607,7 @@ void Pipeline::create() {
     multisampling.rasterizationSamples = BP->msaaSamples;
     multisampling.minSampleShading = 1.0f; // Optional
     multisampling.pSampleMask = nullptr; // Optional
-    multisampling.alphaToCoverageEnable = VK_FALSE; // Optional
+    multisampling.alphaToCoverageEnable = VK_TRUE; // Optional
     multisampling.alphaToOneEnable = VK_FALSE; // Optional
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};

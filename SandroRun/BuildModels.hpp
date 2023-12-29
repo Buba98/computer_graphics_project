@@ -174,3 +174,15 @@ void SandroRun::initSplashModel() {
     TSplashStart.init(this, "textures/splash_screens/splashScreenStart.png");
     TSplashEnd.init(this, "textures/splash_screens/splashScreenEnd.jpeg");
 }
+
+void SandroRun::initHUD() {
+    MSpeedometer.vertices = {{{-1.0f, -1.0f}, {0.0f, 0.0f}},
+                             {{-1.0f, 1.0f},  {0.0f, 1.0f}},
+                             {{1.0f,  -1.0f}, {1.0f, 0.0f}},
+                             {{1.0f,  1.0f},  {1.0f, 1.0f}}};
+    MSpeedometer.indices = {0, 1, 2, 1, 2, 3};
+    MSpeedometer.initMesh(this, &VOverlay);
+
+    TSpeedometer.init(this, "textures/hud/speedometer.png");
+    TSpeedometerHand.init(this, "textures/hud/speedometer_hand.png");
+}

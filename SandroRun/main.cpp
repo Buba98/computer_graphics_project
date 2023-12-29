@@ -32,6 +32,12 @@ struct OverlayUniformBlock {
     alignas(4) int splashSelector;
 };
 
+struct HUDUniformBlock {
+    alignas(4) float visible;
+    alignas(4) float speed;
+    alignas(4) float ar;
+};
+
 struct GlobalUniformBlock {
     alignas(4) int dayTime;
     alignas(4) int shift;
@@ -97,6 +103,7 @@ protected:
 
     // Descriptor sets layouts
     DescriptorSetLayout DSLOverlay;
+    DescriptorSetLayout DSLHUD;
     DescriptorSetLayout DSLGubo;
     DescriptorSetLayout DSLMoto;
     DescriptorSetLayout DSLMesh;
@@ -110,6 +117,7 @@ protected:
 
     // Pipelines
     Pipeline POverlay;
+    Pipeline PHUD;
     Pipeline PMoto;
     Pipeline PMesh;
     Pipeline PSkybox;
@@ -119,6 +127,7 @@ protected:
 
     // Models
     Model<VertexOverlay> MSplash;
+    Model<VertexOverlay> MSpeedometer;
     Model<VertexVColor> MMotos[2];
     Model<VertexVColor> MFrontWheel;
     Model<VertexVColor> MRearWheel;
@@ -133,6 +142,7 @@ protected:
 
     // Descriptor sets
     DescriptorSet DSSplash;
+    DescriptorSet DSSpeedometer;
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
     DescriptorSet DSFrontWheel;
@@ -149,6 +159,8 @@ protected:
     // Textures
     Texture TSplashStart;
     Texture TSplashEnd;
+    Texture TSpeedometer;
+    Texture TSpeedometerHand;
     Texture TMotoLight[2];
     Texture TRoad;
     Texture TTerrain;
@@ -164,6 +176,7 @@ protected:
 
     // Uniform blocks
     OverlayUniformBlock uboSplash;
+    HUDUniformBlock uboHUD;
     GlobalUniformBlock gubo;
     SkyboxUniformBlock uboSkybox;
     MeshUniformBlock ubo;
@@ -202,6 +215,9 @@ protected:
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+        DSLHUD.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
+                           {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLMoto.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLMesh.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                             {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -235,6 +251,8 @@ protected:
         // Init Pipelines
         POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
         POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+        PHUD.init(this, &VOverlay, "shaders/HUDVert.spv", "shaders/HUDFrag.spv", {&DSLHUD});
+        PHUD.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
         PMoto.init(this, &VVColor, "shaders/MotoVert.spv", "shaders/MotoFrag.spv", {&DSLGubo, &DSLMoto});
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
@@ -277,6 +295,7 @@ protected:
 
         // Custom inits
         initSplashModel();
+        initHUD();
         initRoadModel();
         initTerrainModel();
         initSkyboxModel();
@@ -302,6 +321,7 @@ protected:
         // Init pipelines
         PSkybox.create();
         POverlay.create();
+        PHUD.create();
         PMoto.create();
         PMesh.create();
         PCar.create();
@@ -312,6 +332,9 @@ protected:
         DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
                                           {1, TEXTURE, 0,                           &TSplashStart},
                                           {2, TEXTURE, 0,                           &TSplashEnd}});
+        DSSpeedometer.init(this, &DSLHUD, {{0, UNIFORM, sizeof(HUDUniformBlock), nullptr},
+                                           {1, TEXTURE, 0,                           &TSpeedometer},
+                                           {2, TEXTURE, 0,                           &TSpeedometerHand}});
         DSMoto.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSFrontWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRearWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -360,6 +383,7 @@ protected:
     void pipelinesAndDescriptorSetsCleanup() {
         // Cleanup pipelines
         POverlay.cleanup();
+        PHUD.cleanup();
         PMoto.cleanup();
         PMesh.cleanup();
         PSkybox.cleanup();
@@ -379,6 +403,7 @@ protected:
         }
         DSSkybox.cleanup();
         DSSplash.cleanup();
+        DSSpeedometer.cleanup();
         DSGubo.cleanup();
         for (DescriptorSet &DSCar: DSCars) {
             DSCar.cleanup();
@@ -397,6 +422,8 @@ protected:
         // Cleanup textures
         TSplashStart.cleanup();
         TSplashEnd.cleanup();
+        TSpeedometer.cleanup();
+        TSpeedometerHand.cleanup();
         for (Texture &T: TMotoLight) {
             T.cleanup();
         }
@@ -417,6 +444,7 @@ protected:
 
         // Cleanup models
         MSplash.cleanup();
+        MSpeedometer.cleanup();
         for (Model<VertexVColor> &MMoto: MMotos) {
             MMoto.cleanup();
         }
@@ -437,6 +465,7 @@ protected:
 
         // Cleanup descriptor sets layouts
         DSLOverlay.cleanup();
+        DSLHUD.cleanup();
         DSLMoto.cleanup();
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
@@ -445,6 +474,7 @@ protected:
 
         // Destroy pipelines
         POverlay.destroy();
+        PHUD.destroy();
         PMoto.destroy();
         PMesh.destroy();
         PSkybox.destroy();
@@ -461,6 +491,12 @@ protected:
         MSplash.bind(commandBuffer);
         DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+
+        // HUD
+        PHUD.bind(commandBuffer);
+        MSpeedometer.bind(commandBuffer);
+        DSSpeedometer.bind(commandBuffer, PHUD, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSpeedometer.indices.size()), 1, 0, 0, 0);
 
         // Moto
         DSGubo.bind(commandBuffer, PMoto, 0, currentImage);
@@ -764,6 +800,12 @@ protected:
         uboSplash.visible = scene.splashVisibility;
         uboSplash.splashSelector = scene.gameState == GAME_OVER_SCREEN ? 1 : 0;
         DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+
+        // HUD
+        uboHUD.visible = scene.gameState == GAME_SCREEN;
+        uboHUD.speed = moto.speed;
+        uboHUD.ar = Ar;
+        DSSpeedometer.map(currentImage, &uboHUD, sizeof(uboHUD), 0);
     }
 
     // Models
@@ -799,6 +841,8 @@ protected:
     void gameOverAnimation(float deltaT);
 
     void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uz);
+
+    void initHUD();
 };
 
 #include "BuildModels.hpp"
