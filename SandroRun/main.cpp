@@ -140,11 +140,11 @@ protected:
     DescriptorSet DSMotoLight;
     DescriptorSet DSRoad;
     DescriptorSet DSTerrain;
-    DescriptorSet DSRails[2 * NUM_RAIL_PER_LINE];
+    DescriptorSet DSRails[NUM_TOT_RAILS];
     DescriptorSet DSSkybox;
     DescriptorSet DSCars[NUM_CAR_MODELS];
-    DescriptorSet DSTrees[2 * 2 * NUM_TREE_PER_LINE];
-    DescriptorSet DSStreetlights[2 * NUM_LIGHTS_PER_LINE];
+    DescriptorSet DSTrees[NUM_TOT_TREES];
+    DescriptorSet DSStreetlights[NUM_TOT_STREETLIGHTS];
 
     // Textures
     Texture TSplashStart;
@@ -186,9 +186,9 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 100;
-        texturesInPool = 200;
-        setsInPool = 100 + NUM_CAR_MODELS;
+        uniformBlocksInPool = 9 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS; // min = 75
+        texturesInPool = 12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS); // min = 184
+        setsInPool = 10 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS; // min = 76
 
         Ar = (float) windowWidth / (float) windowHeight;
     }

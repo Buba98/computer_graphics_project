@@ -54,20 +54,17 @@ vec3 CookTorrance(vec3 V, vec3 N, vec3 L, vec3 Md) {
     vec3 Ms = vec3(1.0f);
     float K = 1.0f - metallic;
 
-    vec3 H = normalize(L+V);
+    vec3 H = normalize(L + V);
 
-    float NdotH = max(0.00001, dot(N, H));
-    float NdotL = max(0.00001, dot(N, L));
-    float NdotV = max(0.00001, dot(N, V));
-    float LdotH = max(0.00001, dot(L, H));
-    float VdotH = max(0.00001, dot(V, H));
+    float NdotL = max(0.001, dot(N, L));
+    float NdotV = max(0.001, dot(N, V));
 
     vec3 lambertDiffuse = Md * clamp(NdotL, 0, 1);
 
     float rho2 = roughness * roughness;
-    float D = rho2 / (M_PI * pow(pow(clamp(NdotH, 0, 1), 2) * (rho2 - 1) + 1, 2));
+    float D = rho2 / (M_PI * pow(pow(clamp(max(0.001, dot(N, H)), 0, 1), 2) * (rho2 - 1) + 1, 2));
 
-    float F = F0 + (1 - F0) * pow(1 - clamp(VdotH, 0, 1), 5);
+    float F = F0 + (1 - F0) * pow(1 - clamp(max(0.001, dot(V, H)), 0, 1), 5);
 
     float gV = 2 / (1 + sqrt(1 + rho2 * ((1 - pow(NdotV, 2)) / pow(NdotV, 2))));
     float gL = 2 / (1 + sqrt(1 + rho2 * ((1 - pow(NdotL, 2)) / pow(NdotL, 2))));
