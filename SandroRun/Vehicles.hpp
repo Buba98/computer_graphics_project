@@ -149,8 +149,14 @@ void SandroRun::updateMoto(float deltaT, float time, glm::vec3 m, glm::vec3 ux, 
 }
 
 void SandroRun::gameOverAnimation(float deltaT) {
-    if (moto.roll > 0)
+    if (moto.roll > 0) {
         moto.roll = std::clamp(moto.roll + deltaT, -M_PI_2f, M_PI_2f);
-    else
+    } else {
         moto.roll = std::clamp(moto.roll - deltaT, -M_PI_2f, M_PI_2f);
+    }
+
+    if (abs(moto.roll) >= (float) M_PI_2) {
+        std::cout << "Game over" << std::endl;
+        scene.gameState = GAME_OVER_SCREEN;
+    }
 }

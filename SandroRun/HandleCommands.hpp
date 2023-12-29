@@ -43,13 +43,12 @@ void SandroRun::controller() {
             break;
         case GAME_OVER_ANIMATION:
             gameOverAnimation(deltaT);
-            if (abs(moto.roll) >= (float) M_PI_2) {
-                std::cout << "Game over" << std::endl;
-                scene.gameState = GAME_OVER_SCREEN;
-                scene.splashVisibility = 1.0f;
-            }
             break;
         case GAME_OVER_SCREEN:
+            // Splash screen fading
+            if (scene.splashVisibility != 1.0f) {
+                scene.splashVisibility = glm::clamp(scene.splashVisibility + 2 * deltaT, 0.0f, 1.0f);
+            }
             if (handleFire) {
                 resetGame();
                 std::cout << "Game restarted" << std::endl;

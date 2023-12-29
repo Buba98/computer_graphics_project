@@ -172,7 +172,7 @@ void SandroRun::initSplashModel() {
     MSplash.initMesh(this, &VOverlay);
 
     TSplashStart.init(this, "textures/splash_screens/splashScreenStart.png");
-    TSplashEnd.init(this, "textures/splash_screens/splashScreenEnd.jpeg");
+    TSplashEnd.init(this, "textures/splash_screens/splashScreenEnd.png");
 }
 
 void SandroRun::initHUD() {
