@@ -186,6 +186,7 @@ protected:
     std::vector<SingleText> texts;
     bool wasFire, holdFire;
     bool wasN;
+    bool wasC, holdC;
     bool wasP, holdP;
     Scene scene;
     Camera camera;
@@ -315,6 +316,7 @@ protected:
         wasFire = false, holdFire = false;
         wasN = false;
         wasP = false, holdP = false;
+        wasC = false, holdC = false;
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -501,15 +503,15 @@ protected:
         // Moto
         DSGubo.bind(commandBuffer, PMoto, 0, currentImage);
         PMoto.bind(commandBuffer);
-        MMotos[holdFire ? 0 : 1].bind(commandBuffer);
+        MMotos[holdC ? 0 : 1].bind(commandBuffer);
         DSMoto.bind(commandBuffer, PMoto, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotos[holdFire ? 0 : 1].indices.size()), 1, 0, 0, 0);
+        vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotos[holdC ? 0 : 1].indices.size()), 1, 0, 0, 0);
 
         MFrontWheel.bind(commandBuffer);
         DSFrontWheel.bind(commandBuffer, PMoto, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MFrontWheel.indices.size()), 1, 0, 0, 0);
 
-        if (!holdFire) {
+        if (!holdC) {
             MRearWheel.bind(commandBuffer);
             DSRearWheel.bind(commandBuffer, PMoto, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MRearWheel.indices.size()), 1, 0, 0, 0);
@@ -517,7 +519,7 @@ protected:
         // Moto light
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
         PMesh.bind(commandBuffer);
-        if (!holdFire) {
+        if (!holdC) {
             MMotoLight.bind(commandBuffer);
             DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
@@ -668,7 +670,7 @@ protected:
         DSFrontWheel.map(currentImage, &ubo, sizeof(ubo), 0);
 
 
-        if (!holdFire) {
+        if (!holdC) {
             // Rear wheel
             ubo.gamma = 180.0f;
             ubo.mMat = World * glm::translate(glm::mat4(1), glm::vec3(0, .315f - (.015f * sin(moto.roll)), OFFSET)) *
@@ -817,10 +819,16 @@ protected:
 
     void initSkyboxModel();
 
+    void initHUD();
+
     // Game
     void controller();
 
     void viewHandler(glm::mat4 &ViewProj, glm::mat4 &World);
+
+    void gameOverAnimation(float deltaT);
+
+    void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uz);
 
     void resetGame();
 
@@ -837,12 +845,6 @@ protected:
     bool checkCollisionsWithCars();
 
     bool checkCollisionsWithGuardRails() const;
-
-    void gameOverAnimation(float deltaT);
-
-    void mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm::vec3 ux, glm::vec3 uz);
-
-    void initHUD();
 };
 
 #include "BuildModels.hpp"
