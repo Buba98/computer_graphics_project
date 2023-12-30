@@ -33,6 +33,7 @@ void SandroRun::controller() {
                 scene.currText = 1;
                 scene.startTime = time;
                 createCommandBuffers();
+                refreshAudio();
             }
             break;
         case GAME_SCREEN:
@@ -60,6 +61,7 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
     if (!holdP) {
         if (checkCollisionsWithCars() || checkCollisionsWithGuardRails()) {
             scene.gameState = GAME_OVER_ANIMATION;
+            refreshAudio();
             return;
         }
     }
@@ -195,4 +197,15 @@ void SandroRun::resetGame() {
 
     // Cars positions
     initCars();
+
+    // Audio
+    refreshAudio();
+}
+
+void SandroRun::refreshAudio() {
+    // Audio
+    sound_state.mutex.lock();
+    sound_state.gameState = scene.gameState;
+    sound_state.reload = true;
+    sound_state.mutex.unlock();
 }

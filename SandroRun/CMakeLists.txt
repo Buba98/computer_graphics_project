@@ -28,7 +28,8 @@ list(APPEND SOURCE_FILES main.cpp)
 set(TARGET_BINARY_NAME sandro_run)
 add_executable(${TARGET_BINARY_NAME} ${HEADER_FILES}
         Starter.hpp BuildModels.hpp HandleCommands.hpp ${SOURCE_FILES}
-        Vehicles.hpp)
+        Vehicles.hpp
+        Audio.hpp)
 
 # Set the output directory for the executable
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
@@ -64,5 +65,9 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/models
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/textures
         DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
+# Copy audio files to the binary directory
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/sounds
+        DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+
 # Link libraries
-target_link_libraries(${TARGET_BINARY_NAME} glfw Vulkan::Vulkan glm::glm dl pthread X11 Xxf86vm Xrandr Xi)
+target_link_libraries(${TARGET_BINARY_NAME} glfw Vulkan::Vulkan glm::glm ao sndfile dl pthread X11 Xxf86vm Xrandr Xi)

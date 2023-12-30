@@ -158,5 +158,6 @@ void SandroRun::gameOverAnimation(float deltaT) {
     if (abs(moto.roll) >= (float) M_PI_2) {
         std::cout << "Game over" << std::endl;
         scene.gameState = GAME_OVER_SCREEN;
+        refreshAudio();
     }
 }

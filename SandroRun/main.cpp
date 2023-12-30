@@ -2,6 +2,8 @@
 #include "Starter.hpp"
 #include "TextMaker.hpp"
 #include "Parameters.hpp"
+#include "Audio.hpp"
+#include <thread>
 
 struct MeshUniformBlock {
     alignas(4) float gamma;
@@ -192,6 +194,9 @@ protected:
     Camera camera;
     Moto moto;
     Car cars[NUM_CAR_MODELS];
+    std::thread audioThread;
+    Sound_State sound_state;
+    Audio audio = Audio(&sound_state);
 
     void setWindowParameters() {
         windowWidth = 1280;
@@ -201,7 +206,8 @@ protected:
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
         uniformBlocksInPool = 9 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 76
-        texturesInPool = 12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS) + 2; // min = 186
+        texturesInPool =
+                12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS) + 2; // min = 186
         setsInPool = 10 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 77
 
         Ar = (float) windowWidth / (float) windowHeight;
@@ -317,6 +323,8 @@ protected:
         wasN = false;
         wasP = false, holdP = false;
         wasC = false, holdC = false;
+        audioThread = std::thread(&Audio::start, &audio);
+        audioThread.detach();
     }
 
     void pipelinesAndDescriptorSetsInit() {
@@ -335,8 +343,8 @@ protected:
                                           {1, TEXTURE, 0,                           &TSplashStart},
                                           {2, TEXTURE, 0,                           &TSplashEnd}});
         DSSpeedometer.init(this, &DSLHUD, {{0, UNIFORM, sizeof(HUDUniformBlock), nullptr},
-                                           {1, TEXTURE, 0,                           &TSpeedometer},
-                                           {2, TEXTURE, 0,                           &TSpeedometerHand}});
+                                           {1, TEXTURE, 0,                       &TSpeedometer},
+                                           {2, TEXTURE, 0,                       &TSpeedometerHand}});
         DSMoto.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSFrontWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
         DSRearWheel.init(this, &DSLMoto, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}});
@@ -845,6 +853,9 @@ protected:
     bool checkCollisionsWithCars();
 
     bool checkCollisionsWithGuardRails() const;
+
+    // Audio
+    void refreshAudio();
 };
 
 #include "BuildModels.hpp"
