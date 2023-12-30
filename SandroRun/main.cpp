@@ -14,7 +14,6 @@ struct MeshUniformBlock {
 };
 
 struct CarMeshUniformBlock {
-    alignas(4) int palette;
     alignas(4) float gamma;
     alignas(16) glm::vec3 sColor;
     alignas(16) glm::mat4 mvpMat;
@@ -245,11 +244,7 @@ protected:
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
         DSLCar.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -375,14 +370,11 @@ protected:
                                          {2, TEXTURE, 0,                          &TSkybox[1]},
                                          {3, TEXTURE, 0,                          &TSkybox[2]}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
-        for (DescriptorSet &DSCar: DSCars) {
-            DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                       {1, TEXTURE, 0,                           &TCar[0]},
-                                       {2, TEXTURE, 0,                           &TCar[1]},
-                                       {3, TEXTURE, 0,                           &TCar[2]},
-                                       {4, TEXTURE, 0,                           &TCar[3]},
-                                       {5, TEXTURE, 0,                           &TCar[4]},
-                                       {6, TEXTURE, 0,                           &TCar[5]}});;
+        for (int model = 0; model < NUM_CAR_MODELS; model++) {
+            DSCars[model].init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                               {1, TEXTURE, 0,                           &TCar[model %
+                                                                                               NUM_CAR_PALETTES]},
+                                               {2, TEXTURE, 0,                           &TCar[5]}}); // Emission texture
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -711,7 +703,6 @@ protected:
         uboCar.gamma = 60.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            uboCar.palette = model % NUM_CAR_PALETTES;
             uboCar.mMat = glm::translate(glm::mat4(1), cars[model].pos) *
                           glm::rotate(glm::mat4(1), glm::radians(
                                               cars[model].isGoingForward ? 0.0f : 180.0f),

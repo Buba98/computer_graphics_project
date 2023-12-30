@@ -2,7 +2,6 @@
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
-    int palette;
     float gamma;
     vec3 sColor;
     mat4 mvpMat;

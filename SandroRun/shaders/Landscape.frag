@@ -101,13 +101,10 @@ void main() {
         spotlight_light_moto = SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_moto, spotlight_light_color, false);
 
         for (int i = 0; i < 8; i++){
-            vec3 spotlight_pos = vec3(5.0f, 5.0f, 10.0f - 30.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
-        }
-
-        for (int i = 0; i < 8; i++){
-            vec3 spotlight_pos = vec3(-5.0f, 5.0f, 10.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
+            vec3 spotlight_pos_1 = vec3(5.0f, 5.0f, 10.0f - 30.0f - i * 60.0f + gubo.shift * 120.0f);
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_1, spotlight_light_dir_streetlight, spotlight_light_color, true);
+            vec3 spotlight_pos_2 = vec3(-5.0f, 5.0f, 10.0f - i * 60.0f + gubo.shift * 120.0f);
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_2, spotlight_light_dir_streetlight, spotlight_light_color, true);
         }
     }
 

@@ -10,12 +10,9 @@ layout(location = 0) out vec4 outColor;
 void main() {
     vec4  diffColor = texture(texSampler, fragTexCoord).rgba;
 
-    vec3 color;
     if (diffColor.r > 0.5f) {
-        color = vec3(1.0f, 1.0f, 1.0f);
+        outColor = vec4(1.0f, 1.0f, 1.0f, diffColor.a);
     } else {
-        color = vec3(0.0f, 0.0f, 0.0f);
+        outColor = vec4(0.0f, 0.0f, 0.0f, diffColor.a);
     }
-
-    outColor = vec4(color, diffColor.a);
 }
