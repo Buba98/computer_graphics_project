@@ -187,7 +187,7 @@ protected:
     // Other stuff
     std::vector<SingleText> texts;
     bool wasFire, holdFire;
-    bool wasN;
+    bool wasN, wasR;
     bool wasC, holdC;
     bool wasP, holdP;
     Scene scene;
@@ -320,7 +320,7 @@ protected:
         // Init other stuff
         resetGame();
         wasFire = false, holdFire = false;
-        wasN = false;
+        wasN = false, wasR = false;
         wasP = false, holdP = false;
         wasC = false, holdC = false;
         audioThread = std::thread(&Audio::start, &audio);

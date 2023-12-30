@@ -93,12 +93,14 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
     wasC = c;
 
     // Camera reset
-    if (glfwGetKey(window, GLFW_KEY_R)) {
+    bool r_key = glfwGetKey(window, GLFW_KEY_R);
+    if (!wasR && r_key) {
         camera.yaw = STARTING_YAW;
         camera.yawNew = STARTING_YAW;
         camera.pitch = STARTING_PITCH;
         camera.pitchNew = STARTING_PITCH;
     }
+    wasR = r_key;
 
     // Splash screen fading
     if (scene.splashVisibility != 0.0f) {
@@ -194,6 +196,7 @@ void SandroRun::resetGame() {
     scene.startTime = 0;
     wasN = false;
     wasC = false;
+    wasR = false;
 
     // Cars positions
     initCars();
