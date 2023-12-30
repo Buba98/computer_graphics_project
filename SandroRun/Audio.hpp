@@ -12,6 +12,7 @@ struct Sound_State {
     int gameState;
     bool reload;
     std::mutex mutex;
+    bool stop;
 };
 
 class Audio {
@@ -79,7 +80,13 @@ public:
     void start() {
         int gameState;
         bool reload;
-        while (true) {
+        bool stop;
+
+        sound_state->mutex.lock();
+        stop = sound_state->stop;
+        sound_state->mutex.unlock();
+
+        while (!stop) {
             sound_state->mutex.lock();
             gameState = sound_state->gameState;
             reload = sound_state->reload;
@@ -105,6 +112,10 @@ public:
                     play(2);
                     break;
             }
+
+            sound_state->mutex.lock();
+            stop = sound_state->stop;
+            sound_state->mutex.unlock();
         }
     }
 };

@@ -100,6 +100,15 @@ struct Scene {
 };
 
 class SandroRun : public BaseProject {
+public:
+    ~SandroRun() {
+        sound_state.mutex.lock();
+        sound_state.stop = true;
+        sound_state.mutex.unlock();
+
+        audioThread.join();
+    }
+
 protected:
     float Ar;
 
@@ -324,7 +333,6 @@ protected:
         wasP = false, holdP = false;
         wasC = false, holdC = false;
         audioThread = std::thread(&Audio::start, &audio);
-        audioThread.detach();
     }
 
     void pipelinesAndDescriptorSetsInit() {
