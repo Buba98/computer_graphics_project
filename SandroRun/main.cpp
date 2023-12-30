@@ -13,14 +13,6 @@ struct MeshUniformBlock {
     alignas(16) glm::mat4 nMat;
 };
 
-struct CarMeshUniformBlock {
-    alignas(4) float gamma;
-    alignas(16) glm::vec3 sColor;
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-
 struct SkyboxUniformBlock {
     alignas(4) int time_of_day;
     alignas(16) glm::mat4 mvpMat;
@@ -190,7 +182,6 @@ protected:
     GlobalUniformBlock gubo;
     SkyboxUniformBlock uboSkybox;
     MeshUniformBlock ubo;
-    CarMeshUniformBlock uboCar;
 
     // Other stuff
     std::vector<SingleText> texts;
@@ -371,10 +362,10 @@ protected:
                                          {3, TEXTURE, 0,                          &TSkybox[2]}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            DSCars[model].init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                               {1, TEXTURE, 0,                           &TCar[model %
-                                                                                               NUM_CAR_PALETTES]},
-                                               {2, TEXTURE, 0,                           &TCar[5]}}); // Emission texture
+            DSCars[model].init(this, &DSLCar, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                                               {1, TEXTURE, 0,                        &TCar[model %
+                                                                                            NUM_CAR_PALETTES]},
+                                               {2, TEXTURE, 0,                        &TCar[5]}}); // Emission texture
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -700,16 +691,16 @@ protected:
         }
 
         // Cars
-        uboCar.gamma = 60.0f;
-        uboCar.sColor = glm::vec3(1.0f);
+        ubo.gamma = 60.0f;
+        ubo.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            uboCar.mMat = glm::translate(glm::mat4(1), cars[model].pos) *
-                          glm::rotate(glm::mat4(1), glm::radians(
-                                              cars[model].isGoingForward ? 0.0f : 180.0f),
-                                      glm::vec3(0, 1, 0));
-            uboCar.mvpMat = ViewProj * uboCar.mMat;
-            uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-            DSCars[model].map(currentImage, &uboCar, sizeof(uboCar), 0);
+            ubo.mMat = glm::translate(glm::mat4(1), cars[model].pos) *
+                       glm::rotate(glm::mat4(1), glm::radians(
+                                           cars[model].isGoingForward ? 0.0f : 180.0f),
+                                   glm::vec3(0, 1, 0));
+            ubo.mvpMat = ViewProj * ubo.mMat;
+            ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
+            DSCars[model].map(currentImage, &ubo, sizeof(ubo), 0);
         }
 
         // Trees
