@@ -27,12 +27,8 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
     mat4 nMat;
 } ubo;
 
-layout(set = 1, binding = 1) uniform sampler2D tex_0;
-layout(set = 1, binding = 2) uniform sampler2D tex_1;
-layout(set = 1, binding = 3) uniform sampler2D tex_2;
-layout(set = 1, binding = 4) uniform sampler2D tex_3;
-layout(set = 1, binding = 5) uniform sampler2D tex_4;
-layout(set = 1, binding = 6) uniform sampler2D tex_emissive;
+layout(set = 1, binding = 1) uniform sampler2D tex;
+layout(set = 1, binding = 2) uniform sampler2D tex_emissive;
 
 const float cos_out_street = 0.1f;
 const float cos_out_moto = 0.85f;
@@ -72,16 +68,20 @@ void main() {
     vec3 L = gubo.DlightDir;// light direction
 
     vec3 albedo;// main color
-    if (ubo.palette == 1){
-        albedo = texture(tex_1, fragUV).rgb;
-    } else if (ubo.palette == 2){
-        albedo = texture(tex_2, fragUV).rgb;
-    } else if (ubo.palette == 3){
-        albedo = texture(tex_3, fragUV).rgb;
-    } else if (ubo.palette == 4){
-        albedo = texture(tex_4, fragUV).rgb;
-    } else {
-        albedo = texture(tex_0, fragUV).rgb;
+    switch (ubo.palette){
+        case 0: albedo = texture(tex, fragUV).rgb;
+        break;
+        case 1: albedo = texture(tex, fragUV + vec2(0.0f, 0.2f)).rgb;
+        break;
+        case 2:
+        albedo = texture(tex, fragUV + vec2(0.0f, 0.4f)).rgb;
+        break;
+        case 3:
+        albedo = texture(tex, fragUV + vec2(0.0f, 0.6f)).rgb;
+        break;
+        case 4:
+        albedo = texture(tex, fragUV + vec2(0.0f, 0.8f)).rgb;
+        break;
     }
 
     // Light models
@@ -103,15 +103,14 @@ void main() {
         vec3 spotlight_pos = gubo.motoPos;
         spotlight_light_moto = SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_moto, spotlight_light_color, false);
 
+        vec3 spotlight_pos_right = vec3(5.0f, 5.0f, -20.0f + gubo.shift * 120.0f);
+        vec3 spotlight_pos_left = vec3(-5.0f, 5.0f, 10.0f + gubo.shift * 120.0f);
 
         for (int i = 0; i < 8; i++){
-            vec3 spotlight_pos = vec3(5.0f, 5.0f, 10.0f - 30.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
-        }
-
-        for (int i = 0; i < 8; i++){
-            vec3 spotlight_pos = vec3(-5.0f, 5.0f, 10.0f - i * 60.0f + gubo.shift * 120.0f);
-            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos, spotlight_light_dir_streetlight, spotlight_light_color, true);
+            spotlight_pos_right.z -= 60.0f;
+            spotlight_pos_left.z -= 60.0f;
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_right, spotlight_light_dir_streetlight, spotlight_light_color, true);
+            spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_left, spotlight_light_dir_streetlight, spotlight_light_color, true);
         }
     }
 

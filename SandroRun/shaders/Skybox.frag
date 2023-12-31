@@ -17,11 +17,12 @@ layout(location = 0) in vec3 fragPos;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    if (ubo.time_of_day == 0){
-        outColor = texture(cubeMap1, fragPos);
-    } else if (ubo.time_of_day == 1){
-        outColor  = texture(cubeMap2, fragPos);
-    } else {
-        outColor  = texture(cubeMap3, fragPos);
+    switch (ubo.time_of_day){
+        case 0: outColor = texture(cubeMap1, fragPos);
+        break;
+        case 1: outColor  = texture(cubeMap2, fragPos);
+        break;
+        case 2: outColor  = texture(cubeMap3, fragPos);
+        break;
     }
 }

@@ -186,6 +186,39 @@ def texature():
     # Close file
     file_out.close()
 
+def palette():
+    input_file = sys.argv[2]
+    num_palette = int(sys.argv[3])
+
+    # Open file
+    file_in = open(input_file, "r")
+
+    new_lines = []
+
+    for line in file_in:
+
+        new_line = line
+
+        if line.startswith("vt "):
+            components = new_line.split()
+            new_line = f"vt {components[1]} {round(float(components[2])/num_palette, 6)}\n"
+        
+        new_lines.append(new_line)
+            
+    # Close file
+    file_in.close()
+
+    os.rename(input_file, input_file.split(".")[0] + ".old.obj")
+
+    # Open file
+    file_out = open(input_file, "w")
+
+    # Write lines
+    file_out.writelines(new_lines)
+
+    # Close file
+    file_out.close()
+
 def main():
     if(sys.argv[1] == "--color"):
         color(False)
@@ -197,6 +230,8 @@ def main():
         remove_texture()
     elif(sys.argv[1] == "--texture"):
         texature()
+    elif(sys.argv[1] == "--palette"):
+        palette()
     else:
         print("Usage:\n")
         print("python colorObj.py --color <input_file> <component_name> <r_color> <g_color> <b_color>")
@@ -204,6 +239,7 @@ def main():
         print("python colorObj.py --color-rm <input_file>")
         print("python colorObj.py --texture-rm <input_file>")
         print("python colorObj.py --texture <input_file> <component_name> <u> <v>")
+        print("python colorObj.py --palette <input_file> <num_palette>")
         exit()
 
 if __name__ == "__main__":

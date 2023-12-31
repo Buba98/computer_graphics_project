@@ -36,11 +36,10 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/bin)
 set_target_properties(${TARGET_BINARY_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
 
 # Create directory for shaders
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/shaders
-        DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
+file(MAKE_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders)
 
 # Compile fragment shaders
-file(GLOB SHADER_FILES ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders/*.frag)
+file(GLOB SHADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.frag)
 foreach (FILE ${SHADER_FILES})
     string(REGEX REPLACE ".*/(.*)" "\\1" FILE_NAME ${FILE})
     string(REGEX REPLACE ".frag" "" FILE_NAME ${FILE_NAME})
@@ -50,7 +49,7 @@ foreach (FILE ${SHADER_FILES})
 endforeach ()
 
 # Compile vertex shaders
-file(GLOB SHADER_FILES ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/shaders/*.vert)
+file(GLOB SHADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert)
 foreach (FILE ${SHADER_FILES})
     string(REGEX REPLACE ".*/(.*)" "\\1" FILE_NAME ${FILE})
     string(REGEX REPLACE ".vert" "" FILE_NAME ${FILE_NAME})

@@ -109,7 +109,7 @@ bool SandroRun::checkCollisionsWithCars() {
     return false;
 }
 
-bool SandroRun::checkCollisionsWithGuardRails() const {
+bool SandroRun::checkCollisionsWithGuardRails() {
     float motoLateralInclinationCoord = moto.pos.x + MOTO_HEIGHT * sin(-moto.roll);
     float motoLeft = std::min(moto.pos.x - MOTO_WIDTH / 2, motoLateralInclinationCoord);
     float motoRight = std::max(moto.pos.x + MOTO_WIDTH / 2, motoLateralInclinationCoord);

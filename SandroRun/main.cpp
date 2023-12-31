@@ -119,7 +119,6 @@ protected:
     DescriptorSetLayout DSLMoto;
     DescriptorSetLayout DSLMesh;
     DescriptorSetLayout DSLSkybox;
-    DescriptorSetLayout DSLCar;
 
     // Vertex descriptors
     VertexDescriptor VOverlay;
@@ -177,7 +176,7 @@ protected:
     Texture TTerrain;
     Texture TRail;
     Texture TSkybox[3];
-    Texture TCar[6];
+    Texture TCar[2];
     Texture TStreetlight[2];
     Texture TNoEmission;
     Texture TTree;
@@ -243,13 +242,6 @@ protected:
                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                               {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLGubo.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}});
-        DSLCar.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
-                           {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                           {6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
 
         // Init Vertex Descriptors
         VOverlay.init(this, {{0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}},
@@ -273,7 +265,7 @@ protected:
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
         PSkybox.init(this, &VMesh, "shaders/SkyboxVert.spv", "shaders/SkyboxFrag.spv", {&DSLSkybox});
         PSkybox.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-        PCar.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLCar});
+        PCar.init(this, &VMesh, "shaders/CarVert.spv", "shaders/CarFrag.spv", {&DSLGubo, &DSLMesh});
         PLandscape.init(this, &VMesh, "shaders/LandscapeVert.spv", "shaders/LandscapeFrag.spv", {&DSLGubo, &DSLMesh});
         PStreet.init(this, &VMesh, "shaders/StreetVert.spv", "shaders/StreetFrag.spv", {&DSLGubo, &DSLMesh});
 
@@ -299,11 +291,8 @@ protected:
         TMotoLight[0].init(this, "textures/moto/moto_headlight.jpg");
         TMotoLight[1].init(this, "textures/moto/moto_headlightEmission.png");
         TRail.init(this, "textures/guardrail.jpg");
-        for (int i = 0; i < NUM_CAR_PALETTES; i++) {
-            std::string paletteFile = "textures/car_palettes/palette_" + std::to_string(i) + ".png";
-            TCar[i].init(this, paletteFile.c_str());
-        }
-        TCar[5].init(this, "textures/car_palettes/palette_emission.png");
+        TCar[0].init(this, "textures/car_palettes/palette.png");
+        TCar[1].init(this, "textures/car_palettes/palette_emission.png");
         TStreetlight[0].init(this, "textures/streetlight/streetlight.png");
         TStreetlight[1].init(this, "textures/streetlight/streetlightEmission.png");
         TTree.init(this, "textures/tree.png");
@@ -376,13 +365,9 @@ protected:
                                          {3, TEXTURE, 0,                          &TSkybox[2]}});
         DSGubo.init(this, &DSLGubo, {{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}});
         for (DescriptorSet &DSCar: DSCars) {
-            DSCar.init(this, &DSLCar, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
-                                       {1, TEXTURE, 0,                           &TCar[0]},
-                                       {2, TEXTURE, 0,                           &TCar[1]},
-                                       {3, TEXTURE, 0,                           &TCar[2]},
-                                       {4, TEXTURE, 0,                           &TCar[3]},
-                                       {5, TEXTURE, 0,                           &TCar[4]},
-                                       {6, TEXTURE, 0,                           &TCar[5]}});;
+            DSCar.init(this, &DSLMesh, {{0, UNIFORM, sizeof(CarMeshUniformBlock), nullptr},
+                                        {1, TEXTURE, 0,                           &TCar[0]},
+                                        {2, TEXTURE, 0,                           &TCar[1]}});;
         }
         for (DescriptorSet &DSTree: DSTrees) {
             DSTree.init(this, &DSLMesh, {{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -488,7 +473,6 @@ protected:
         DSLMesh.cleanup();
         DSLSkybox.cleanup();
         DSLGubo.cleanup();
-        DSLCar.cleanup();
 
         // Destroy pipelines
         POverlay.destroy();
@@ -860,7 +844,7 @@ protected:
     // Collisions
     bool checkCollisionsWithCars();
 
-    bool checkCollisionsWithGuardRails() const;
+    bool checkCollisionsWithGuardRails();
 
     // Audio
     void refreshAudio();
