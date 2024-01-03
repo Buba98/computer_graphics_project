@@ -5,7 +5,7 @@ The project features:
 - Splash screens
 - The motorbike of the main character
 - 3 sky-boxes based on the time of the day
-- A periodic scenary composed by:
+- A periodic scenery composed by:
   - A terrain with hills
   - Trees
   - A Street
