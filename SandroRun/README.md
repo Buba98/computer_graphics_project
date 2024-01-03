@@ -1,54 +1,49 @@
-# TO DO LIST:
-- [x] Add a moto
-  - [x] Export the moto from blender in obj format
-  - [x] Add the moto model to the scene
-  - [x] Make the moto move on a straight line
-  - [x] Make the moto accelerate with time (log)
-  - [x] Make the moto turn left and right
-  - [x] Animate the turning of the moto
-  - [x] Bound the camera to the moto (the camera should follow the moto)
-  - [x] Implement camera damping (the camera should not follow the moto instantly)
-  - [x] Implement first person view from the moto
-  - [x] Separate wheels models from moto model
-  - [x] Animate the rotation of the wheels
-  - [x] Implement the wheelie
-- [x] Add road
-  - [x] Add a road texture
-  - [x] Add a road model
-  - [x] Add guardrails on the road
-  - [x] Make the road infinite
-- [x] Add cars
-  - [x] Export the cars from blender in obj format
-  - [x] Add the cars model to the scene
-  - [x] Make the cars move on a straight line
-  - [x] Make the cars appear and disappear and the beginning and at the end of the scene
-  - [x] Handle the random generation of cars in different lanes
-  - [x] Cleanup and restructuring of car related code
-  - [x] Add multiple car models
-  - [x] Handle collisions between cars
-- [x] Add scenery
-  - [x] Add a skybox
-  - [x] Add the terrain around the road
-  - [x] Add trees on the border of the road
-  - [x] Add streetlights
-- [ ] Add a splash screen
-  - [x] Add a splash screen image
-  - [ ] Explain the goal of the game
-  - [ ] Explain the controls
-  - [ ] Explain the rules
-  - [x] Add a button to start the game
-  - [ ] Add the photo of Sandro
-- [ ] Add game logic
-  - [x] Add score counter
-  - [x] Detect collisions
-    - [x] Detect collisions with the guardrails
-    - [x] Detect collisions with cars
-- [ ] Color all the obj
-- [x] Create shaders
-  - [x] Create a shader for the road
-  - [x] Create a shader for the terrain
-  - [x] Create a shader for the skybox
-  - [x] Create a shader for the trees
-  - [x] Create a shader for the guardrails
-  - [x] Create a shader for the cars
-  - [x] Create a shader for the moto
+# Sandro run
+This is the repository for the Computer Graphics course project from Politecnico di Milano.
+The project is a 3D game developed in C++ using Vulkan APIs.
+The project features:
+- Splash screens
+- The motorbike of the main character
+- 3 sky-boxes based on the time of the day
+- A periodic scenary composed by:
+  - A terrain with hills
+  - Trees
+  - A Street
+  - Guard rails
+  - Streetlights
+- Cars that move on the street in both directions
+- Sounds for the motorbike
+- Two camera that follows the motorbike
+  - A third person camera
+  - A first person camera
+- Collision detection between the motorbike and the cars
+- Collision detection between the motorbike and the guard rails
+- Score system
+- Game over screen
+- A presentation mode that deactivates the collision detections and the camera limits
+
+## How to run
+To run the project you need to have the Vulkan SDK installed on your machine.
+To install it, follow the instructions on the [website](https://vulkan-tutorial.com/Development_environment).
+In order to build the project, you need to run the following commands:
+```
+mkdir build
+cd build
+cmake ../
+make
+```
+In order to run the project, you need to run the following command:
+```
+cd build/bin
+./Sandro_run
+```
+
+## Licenses
+The project uses the following objects:
+- 3D models:
+  - [Moto 3D model](https://www.cgtrader.com/free-3d-models/vehicle/motorcycle/suzuki-gsx-750-bike)
+  - [Guard rail 3D model](https://www.cgtrader.com/free-3d-models/exterior/street-exterior/guardrail-fd10776d-d363-4be6-b5bd-6853aa50c539)
+  - [Tree 3D model](https://www.cgtrader.com/free-3d-models/plant/leaf/low-poly-plant-set)
+  - [Car 3D model](https://www.cgtrader.com/free-3d-models/car/car/low-poly-cars-03d6cf0c-0882-44e2-a22c-02d4f8e68eeb)
+- Textures:
+  - [Road texture](https://www.sketchuptextureclub.com/textures/architecture/roads/roads/cracks-road-pbr-texture-seamless-21574)
