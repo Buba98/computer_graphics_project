@@ -1,4 +1,4 @@
-#version 450
+version 450
 #extension GL_ARB_separate_shader_objects : enable
 
 layout(set = 0, binding = 0) uniform UniformBufferObject {

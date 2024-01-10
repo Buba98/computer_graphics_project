@@ -20,7 +20,7 @@ void SetupProjectionMatrices(Assignment04 *A, float Ar) {
     float alpha, beta;
 
     // matrix built specifing each column vector
-    glm::mat4 P_proj = glm::scale(glm::mat4(1), glm::vec3(1, -1, 1)) *
+    P_proj = glm::scale(glm::mat4(1), glm::vec3(1, -1, 1)) *
                        glm::ortho(-half_width, half_width, bottom, top, near_plane, far_plane);
 
     // Isometric projection
