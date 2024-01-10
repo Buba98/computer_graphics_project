@@ -107,6 +107,12 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
         scene.splashVisibility = glm::clamp(scene.splashVisibility - deltaT, 0.0f, 1.0f);
     }
 
+    // 3rd person camera fix
+    if (!holdC) {
+        r.x = -r.x;
+        r.y = -r.y;
+    }
+
     // Camera rotation
     camera.pitchNew += ROT_SPEED * r.x * deltaT;
     if (!holdP) {
@@ -162,7 +168,7 @@ void SandroRun::viewHandler(glm::mat4 &ViewProj, glm::mat4 &World) {
     } else {
         // Third person view
         glm::mat4 rot =
-                glm::rotate(glm::mat4(1), -camera.yaw, glm::vec3(0, 1, 0)) *
+                glm::rotate(glm::mat4(1), camera.yaw, glm::vec3(0, 1, 0)) *
                 glm::rotate(glm::mat4(1), camera.pitch, glm::vec3(1, 0, 0));
         camera.pos = World * rot * glm::vec4(0, CAM_DIST, 0, 1);
         glm::vec3 a = World * glm::vec4(0, 0, 0, 1) + glm::vec4(0, CAM_HEIGHT, 0, 0);
