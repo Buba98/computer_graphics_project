@@ -224,7 +224,7 @@ protected:
 		MWheel.init(this, &VMesh, "models/SlotWheel.obj", OBJ);
 		/* A16 */
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
-		MRoom.init(this, &VVColor, "models/moto.gltf", GLTF);
+		MRoom.init(this, &VVColor, "models/Room.obj", OBJ);
 
 		// Creates a mesh with direct enumeration of vertices and indices
 		MKey.vertices = {{{-0.8f, 0.6f}, {0.0f, 0.0f}}, {{-0.8f, 0.95f}, {0.0f, 1.0f}}, {{0.8f, 0.6f}, {1.0f, 0.0f}}, {{0.8f, 0.95f}, {1.0f, 1.0f}}};

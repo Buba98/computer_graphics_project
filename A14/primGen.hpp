@@ -3,7 +3,7 @@ void Assignment14::createCubeMesh(std::vector <Vertex> &vDef, std::vector <uint3
     // The primitive built here is a cube centered in the origin, whose edge length is 2.
 
     // Fill array vPos with the positions of the vertices of the mesh
-    glm::vec3 positions[8] = {
+    const glm::vec3 positions[8] = {
         {-1, -1, -1},
         {-1, -1, 1},
         {-1, 1, -1},
@@ -14,7 +14,7 @@ void Assignment14::createCubeMesh(std::vector <Vertex> &vDef, std::vector <uint3
         {1, 1, 1},
     };
 
-    glm::vec3 normals[6] = {
+    const glm::vec3 normals[6] = {
         {-1, 0, 0},
         {1, 0, 0},
         {0, -1, 0},
@@ -29,7 +29,7 @@ void Assignment14::createCubeMesh(std::vector <Vertex> &vDef, std::vector <uint3
 
         for (int j = 0; j < 8; j++){
             if(positions[j][pos] == choice){
-                vDef.push_back(positions[j], normals[i]});
+                vDef.push_back({positions[j], normals[i]});
             }
         }
 
