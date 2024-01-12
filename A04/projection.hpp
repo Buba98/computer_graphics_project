@@ -11,11 +11,11 @@ void SetupProjectionMatrices(Assignment04 *A, float Ar) {
     glm::mat4 Ry;
     glm::mat4 Rx;
 
-    float half_width = 10.0;
-    float near_plane = -50.0;
-    float far_plane = 50.0;
-	float top = half_width / Ar;
-	float bottom = -top;
+    const float half_width = 10.0;
+    const float near_plane = -50.0;
+    const float far_plane = 50.0;
+	const float top = half_width / Ar;
+	const float bottom = -top;
 
     float alpha, beta;
 
