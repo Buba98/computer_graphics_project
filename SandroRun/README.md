@@ -47,3 +47,12 @@ The project uses the following objects:
   - [Car 3D model](https://www.cgtrader.com/free-3d-models/car/car/low-poly-cars-03d6cf0c-0882-44e2-a22c-02d4f8e68eeb)
 - Textures:
   - [Road texture](https://www.sketchuptextureclub.com/textures/architecture/roads/roads/cracks-road-pbr-texture-seamless-21574)
+  - [Broken glass texture](https://www.hiclipart.com/free-transparent-background-png-clipart-iyijp/)
+  - [Splash screen](https://www.10wallpaper.com/view/Honda_cb1000r-HD_Desktop_Wallpaper.html)
+  - Skybox:
+    - [Night skybox](https://www.cleanpng.com/png-space-skybox-texture-mapping-cube-mapping-night-sk-776480/)
+    - [Day skybox](https://imgbin.com/png/vD943E4H/skybox-texture-mapping-cube-mapping-desktop-png)
+    - [Sunset skybox](https://gamebanana.com/mods/7921)
+  - Speedometer
+    - [Speedometer](https://freepng.pictures/download/speedometer-19/)
+    - [Speedometer hand](https://www.gtagaming.com/audi-s5-speedometer-f26088.html)

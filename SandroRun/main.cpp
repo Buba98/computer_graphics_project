@@ -151,7 +151,7 @@ protected:
     Model<VertexMesh> MStreetlight;
 
     // Descriptor sets
-    DescriptorSet DSSplash;
+    DescriptorSet DSOverlay;
     DescriptorSet DSSpeedometer;
     DescriptorSet DSGubo;
     DescriptorSet DSMoto;
@@ -171,6 +171,7 @@ protected:
     Texture TSplashEnd;
     Texture TSpeedometer;
     Texture TSpeedometerHand;
+    Texture TBrokenGlass;
     Texture TMotoLight[2];
     Texture TRoad;
     Texture TTerrain;
@@ -185,7 +186,7 @@ protected:
     TextMaker score;
 
     // Uniform blocks
-    OverlayUniformBlock uboSplash;
+    OverlayUniformBlock uboOverlay;
     HUDUniformBlock uboHUD;
     GlobalUniformBlock gubo;
     SkyboxUniformBlock uboSkybox;
@@ -213,10 +214,9 @@ protected:
         windowResizable = GLFW_FALSE;
         initialBackgroundColor = {0.0f, 1.0f, 1.0f, 1.0f};
 
-        uniformBlocksInPool = 9 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 76
-        texturesInPool =
-                12 + (6 * NUM_CAR_MODELS) + 2 * (NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS) + 2; // min = 186
-        setsInPool = 10 + NUM_CAR_MODELS + NUM_TOT_RAILS + NUM_TOT_TREES + NUM_TOT_STREETLIGHTS + 1; // min = 77
+        uniformBlocksInPool = 76;
+        texturesInPool = 147;
+        setsInPool = 77;
 
         Ar = (float) windowWidth / (float) windowHeight;
     }
@@ -229,7 +229,8 @@ protected:
         // Init Descriptor Sets Layouts
         DSLOverlay.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                                {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
+                               {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                               {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
         DSLHUD.init(this, {{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,         VK_SHADER_STAGE_ALL_GRAPHICS},
                            {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                            {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}});
@@ -297,6 +298,7 @@ protected:
         TStreetlight[1].init(this, "textures/streetlight/streetlightEmission.png");
         TTree.init(this, "textures/tree.png");
         TNoEmission.init(this, "textures/no_emission.png");
+        TBrokenGlass.init(this, "textures/broken_glass.png");
 
         // Custom inits
         initSplashModel();
@@ -336,9 +338,10 @@ protected:
         PStreet.create();
 
         // Init Descriptor Sets
-        DSSplash.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-                                          {1, TEXTURE, 0,                           &TSplashStart},
-                                          {2, TEXTURE, 0,                           &TSplashEnd}});
+        DSOverlay.init(this, &DSLOverlay, {{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                                           {1, TEXTURE, 0,                           &TSplashStart},
+                                           {2, TEXTURE, 0,                           &TBrokenGlass},
+                                           {3, TEXTURE, 0,                           &TSplashEnd}});
         DSSpeedometer.init(this, &DSLHUD, {{0, UNIFORM, sizeof(HUDUniformBlock), nullptr},
                                            {1, TEXTURE, 0,                       &TSpeedometer},
                                            {2, TEXTURE, 0,                       &TSpeedometerHand}});
@@ -405,7 +408,7 @@ protected:
             DSRail.cleanup();
         }
         DSSkybox.cleanup();
-        DSSplash.cleanup();
+        DSOverlay.cleanup();
         DSSpeedometer.cleanup();
         DSGubo.cleanup();
         for (DescriptorSet &DSCar: DSCars) {
@@ -443,6 +446,7 @@ protected:
             T.cleanup();
         }
         TTree.cleanup();
+        TBrokenGlass.cleanup();
         TNoEmission.cleanup();
 
         // Cleanup models
@@ -491,7 +495,7 @@ protected:
         // Splash screen
         POverlay.bind(commandBuffer);
         MSplash.bind(commandBuffer);
-        DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
+        DSOverlay.bind(commandBuffer, POverlay, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
 
         // HUD
@@ -709,7 +713,8 @@ protected:
         ubo.gamma = 180.0f;
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
-                                      glm::vec3(ROAD_WIDTH / 2 + TERRAIN_WIDTH / 2, 0, shift * 120.0f - 20 - i * 60));
+                                      glm::vec3(ROAD_WIDTH / 2 + TERRAIN_WIDTH / 2, 0,
+                                                (float) shift * 120.0f - 20 - (float) i * 60));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSTrees[i].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -718,7 +723,7 @@ protected:
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(-ROAD_WIDTH / 2 - 3 * (TERRAIN_WIDTH / 2), 0,
-                                                shift * 120.0f - 20 - i * 60));
+                                                (float) shift * 120.0f - 20 - (float) i * 60));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSTrees[i + NUM_TREE_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -726,7 +731,8 @@ protected:
 
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
-                                      glm::vec3(-ROAD_WIDTH / 2 - TERRAIN_WIDTH / 2, 0, shift * 120.0f + 10 - i * 60));
+                                      glm::vec3(-ROAD_WIDTH / 2 - TERRAIN_WIDTH / 2, 0,
+                                                (float) shift * 120.0f + 10 - (float) i * 60));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSTrees[i + 2 * NUM_TREE_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -735,7 +741,7 @@ protected:
         for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
             ubo.mMat = glm::translate(glm::mat4(1),
                                       glm::vec3(ROAD_WIDTH / 2 + 3 * (TERRAIN_WIDTH / 2), 0,
-                                                shift * 120.0f + 10 - i * 60));
+                                                (float) shift * 120.0f + 10 - (float) i * 60));
             ubo.mvpMat = ViewProj * ubo.mMat;
             ubo.nMat = glm::inverse(glm::transpose(ubo.mMat));
             DSTrees[i + 3 * NUM_TREE_PER_LINE].map(currentImage, &ubo, sizeof(ubo), 0);
@@ -799,9 +805,9 @@ protected:
         }
 
         // Splash screen
-        uboSplash.visible = scene.splashVisibility;
-        uboSplash.splashSelector = scene.gameState == GAME_OVER_SCREEN ? 1 : 0;
-        DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+        uboOverlay.visible = scene.splashVisibility;
+        uboOverlay.splashSelector = scene.gameState;
+        DSOverlay.map(currentImage, &uboOverlay, sizeof(uboOverlay), 0);
 
         // HUD
         uboHUD.visible = scene.gameState == GAME_SCREEN;
