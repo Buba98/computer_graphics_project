@@ -115,10 +115,10 @@ void main() {
         vec3 spotlight_pos_left = vec3(-5.0f, 5.0f, 10.0f + gubo.shift * 120.0f);
 
         for (int i = 0; i < 8; i++){
-            spotlight_pos_right.z -= 60.0f;
-            spotlight_pos_left.z -= 60.0f;
             spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_right, spotlight_light_dir_streetlight, spotlight_light_color, true);
             spotlight_light_streetlight += SpotLightModel(fragPos, spotlight_pos_left, spotlight_light_dir_streetlight, spotlight_light_color, true);
+            spotlight_pos_right.z -= 60.0f;
+            spotlight_pos_left.z -= 60.0f;
         }
     }
 

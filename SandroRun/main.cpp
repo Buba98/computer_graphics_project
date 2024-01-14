@@ -70,6 +70,7 @@ struct VertexVColor {
 
 struct Car {
     glm::vec3 pos;
+    int palette;
     bool isGoingForward;
     float speed;
     float length, width;
@@ -285,7 +286,7 @@ protected:
 
         for (int i = 0; i < 4; ++i) {
             std::string objFile = "models/trees/tree" + std::to_string(i + 1) + ".obj";
-            MTrees[i].init(this, &VMesh, objFile.c_str(), OBJ);
+            MTrees[i].init(this, &VMesh, objFile, OBJ);
         }
 
         // Init textures
@@ -699,7 +700,7 @@ protected:
         uboCar.gamma = 60.0f;
         uboCar.sColor = glm::vec3(1.0f);
         for (int model = 0; model < NUM_CAR_MODELS; model++) {
-            uboCar.palette = model % NUM_CAR_PALETTES;
+            uboCar.palette = cars[model].palette;
             uboCar.mMat = glm::translate(glm::mat4(1), cars[model].pos) *
                           glm::rotate(glm::mat4(1), glm::radians(
                                               cars[model].isGoingForward ? 0.0f : 180.0f),

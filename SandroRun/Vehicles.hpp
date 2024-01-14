@@ -54,6 +54,7 @@ void SandroRun::regenerateCar(Car &car) {
         default:;
     }
 
+    car.palette = (int) (random() % NUM_CAR_PALETTES);;
     car.pos.z = scene.frontWorldLimit;
 
     // Preparing data for collision-free placement
