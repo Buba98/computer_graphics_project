@@ -6,6 +6,7 @@ project(SandroRun)
 
 # Set the C++ standard
 set(CMAKE_CXX_STANDARD 17)
+add_compile_options(-Ofast)
 
 # Set the path to header files
 include_directories(headers)

@@ -22,6 +22,33 @@ The project features:
 - Game over screen
 - A presentation mode that deactivates the collision detections and the camera limits
 
+## Prerequisites (Linux - Ubuntu tutorial)
+### In order to run the project you need to have the following libraries installed:
+
+- [Vulkan](https://vulkan.org/):
+```
+sudo apt install vulkan-tools libvulkan-dev vulkan-validationlayers-dev spirv-tools
+```
+
+- [GLFW](https://www.glfw.org/):
+```
+sudo apt install libglfw3-dev
+```
+
+- [GLM](https://github.com/g-truc/glm):
+```
+sudo apt install libglm-dev
+```
+
+- [GLSLang](https://github.com/google/shaderc/blob/main/downloads.md): get it from the github repository
+
+### Then you need to install the following packages in order to allow sound reproduction:
+
+```
+sudo apt install libsndfile1-dev libao-dev
+```
+
+
 ## How to run
 To run the project you need to have the Vulkan SDK installed on your machine.
 To install it, follow the instructions on the [website](https://vulkan-tutorial.com/Development_environment).
