@@ -861,7 +861,6 @@ protected:
 #include "HandleCommands.hpp"
 #include "Vehicles.hpp"
 
-
 int main() {
     SandroRun app;
 

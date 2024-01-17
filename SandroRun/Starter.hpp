@@ -494,7 +494,7 @@ protected:
                 static_cast<uint32_t>(extensions.size());
         createInfo.ppEnabledExtensionNames = extensions.data();
 
-        createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+//        createInfo.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 
         if (!checkValidationLayerSupport()) {
             throw std::runtime_error("validation layers requested, but not available!");
@@ -528,13 +528,13 @@ protected:
 
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 
-        if (checkIfItHasExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) {
-            extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
-
-        }
-        if (checkIfItHasExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
-            extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-        }
+//        if (checkIfItHasExtension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME)) {
+//            extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+//
+//        }
+//        if (checkIfItHasExtension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)) {
+//            extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+//        }
 
         return extensions;
     }
@@ -870,7 +870,7 @@ protected:
 
         if (result != VK_SUCCESS) {
             PrintVkError(result);
-            throw std::runtime_error("failed to create logical device!");
+            throw std::runtime_error("failed to create logical devices!");
         }
 
         vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
@@ -1194,7 +1194,7 @@ protected:
             }
         }
 
-        throw std::runtime_error("failed to find supported format!");
+        throw std::runtime_error("failed to find supported formats!");
     }
 
     bool hasStencilComponent(VkFormat format) {
@@ -1257,7 +1257,7 @@ protected:
 
         if (!(formatProperties.optimalTilingFeatures &
               VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
-            throw std::runtime_error("texture image format does not support linear blitting!");
+            throw std::runtime_error("texture image formats does not support linear blitting!");
         }
 
         VkCommandBuffer commandBuffer = beginSingleTimeCommands();
@@ -1954,7 +1954,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
                             std::cout << "Vertex Position - wrong size\n";
                         }
                     } else {
-                        std::cout << "Vertex Position - wrong format\n";
+                        std::cout << "Vertex Position - wrong formats\n";
                     }
                     break;
                 case VertexDescriptorElementUsage::NORMAL:
@@ -1966,7 +1966,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
                             std::cout << "Vertex Normal - wrong size\n";
                         }
                     } else {
-                        std::cout << "Vertex Normal - wrong format\n";
+                        std::cout << "Vertex Normal - wrong formats\n";
                     }
                     break;
                 case VertexDescriptorElementUsage::UV:
@@ -1978,7 +1978,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
                             std::cout << "Vertex UV - wrong size\n";
                         }
                     } else {
-                        std::cout << "Vertex UV - wrong format\n";
+                        std::cout << "Vertex UV - wrong formats\n";
                     }
                     break;
                 case VertexDescriptorElementUsage::COLOR:
@@ -1990,7 +1990,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
                             std::cout << "Vertex Color - wrong size\n";
                         }
                     } else {
-                        std::cout << "Vertex Color - wrong format\n";
+                        std::cout << "Vertex Color - wrong formats\n";
                     }
                     break;
                 case VertexDescriptorElementUsage::TANGENT:
@@ -2002,7 +2002,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
                             std::cout << "Vertex Tangent - wrong size\n";
                         }
                     } else {
-                        std::cout << "Vertex Tangent - wrong format\n";
+                        std::cout << "Vertex Tangent - wrong formats\n";
                     }
                     break;
                 default:
@@ -2010,7 +2010,7 @@ void VertexDescriptor::init(BaseProject *bp, std::vector<VertexBindingDescriptor
             }
         }
     } else {
-        throw std::runtime_error("Vertex format with more than one binding is not supported yet\n");
+        throw std::runtime_error("Vertex formats with more than one binding is not supported yet\n");
     }
 }
 

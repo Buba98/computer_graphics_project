@@ -216,5 +216,6 @@ void SandroRun::refreshAudio() {
     sound_state.mutex.lock();
     sound_state.gameState = scene.gameState;
     sound_state.reload = true;
+    sound_state.stop = false;
     sound_state.mutex.unlock();
 }
