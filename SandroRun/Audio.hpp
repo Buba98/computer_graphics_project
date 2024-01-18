@@ -21,7 +21,7 @@ protected:
     ao_sample_format formats[3];
     SF_INFO sfinfo[3];
     SNDFILE *infile[3];
-    bool done[3];
+    bool dones[3];
     int default_driver;
     Sound_State *sound_state;
 public:
@@ -34,9 +34,9 @@ public:
         infile[1] = sf_open("sounds/going.wav", SFM_READ, &sfinfo[1]);
         infile[2] = sf_open("sounds/crash.wav", SFM_READ, &sfinfo[2]);
 
-        done[0] = false;
-        done[1] = false;
-        done[2] = false;
+        dones[0] = false;
+        dones[1] = false;
+        dones[2] = false;
 
         for(int i = 0; i < 3; i++){
             formats[i].bits = 16;
@@ -64,10 +64,10 @@ public:
     void play(int sound) {
         int16_t buffer[BUFFER_SIZE];
 
-        if (done[sound]) {
+        if (dones[sound]) {
             if (sound == 1) {
                 sf_seek(infile[1], 0, SEEK_SET);
-                done[1] = false;
+                dones[1] = false;
             } else {
                 return;
             }
@@ -78,7 +78,7 @@ public:
         if (items_read > 0) {
             ao_play(devices[sound], (char *) buffer, items_read * sizeof(int16_t));
         } else {
-            done[sound] = true;
+            dones[sound] = true;
         }
     }
 
@@ -99,6 +99,10 @@ public:
                 sf_seek(infile[0], 0, SEEK_SET);
                 sf_seek(infile[1], 0, SEEK_SET);
                 sf_seek(infile[2], 0, SEEK_SET);
+
+                for(bool &done : dones){
+                    done = false;
+                }
 
                 sound_state->mutex.lock();
                 sound_state->reload = false;
