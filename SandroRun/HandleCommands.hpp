@@ -78,6 +78,11 @@ void SandroRun::mainGame(float deltaT, float time, glm::vec3 m, glm::vec3 r, glm
     bool handleP = (!(wasP) && p);
     if (handleP) {
         holdP = !holdP;
+        if (holdP) {
+            std::cout << "Presentation mode ON" << std::endl;
+        } else {
+            std::cout << "Presentation mode OFF" << std::endl;
+        }
     }
     wasP = p;
 
