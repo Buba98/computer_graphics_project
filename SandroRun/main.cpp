@@ -529,30 +529,6 @@ protected:
             DSMotoLight.bind(commandBuffer, PMesh, 1, currentImage);
             vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MMotoLight.indices.size()), 1, 0, 0, 0);
         }
-        // Trees
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i].bind(commandBuffer, PMesh, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[i % 2].bind(commandBuffer);
-            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
-
-        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
-            MTrees[(i % 2) + 2].bind(commandBuffer);
-            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PMesh, 1, currentImage);
-            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
-        }
 
         // Streetlights
         MStreetlight.bind(commandBuffer);
@@ -581,6 +557,31 @@ protected:
         MTerrain.bind(commandBuffer);
         DSTerrain.bind(commandBuffer, PLandscape, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTerrain.indices.size()), 1, 0, 0, 0);
+
+        // Trees
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i].bind(commandBuffer, PLandscape, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[i % 2].bind(commandBuffer);
+            DSTrees[i + NUM_TREE_PER_LINE].bind(commandBuffer, PLandscape, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[i % 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 2 * NUM_TREE_PER_LINE].bind(commandBuffer, PLandscape, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
+
+        for (int i = 0; i < NUM_TREE_PER_LINE; i++) {
+            MTrees[(i % 2) + 2].bind(commandBuffer);
+            DSTrees[i + 3 * NUM_TREE_PER_LINE].bind(commandBuffer, PLandscape, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(MTrees[(i % 2) + 2].indices.size()), 1, 0, 0, 0);
+        }
 
         // Cars
         DSGubo.bind(commandBuffer, PCar, 0, currentImage);
