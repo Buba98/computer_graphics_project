@@ -1,23 +1,29 @@
+# Compiler flags
 CFLAGS = -std=c++17 -O2
+# Linker flags
 LDFLAGS = -lglfw -lvulkan -ldl -lpthread -lX11 -lXxf86vm -lXrandr -lXi
+# Source directory
 SOURCE = $(word 2,$(MAKECMDGOALS))
-SOURCE2 = $(word 3,$(MAKECMDGOALS))
+# Headers directory
 HEADERS = headers/
 
+# Target for compilation
 compile: $(SOURCE)/$(SOURCE).cpp
 	cd $(SOURCE) && g++ -I $(HEADERS) $(CFLAGS) -o VulkanProgram $(SOURCE).cpp $(LDFLAGS)
 
-.PHONY: test clean
-
+# Target for running the program
 run: $(SOURCE)/VulkanProgram
 	cd $(SOURCE) && ./VulkanProgram
 
+# Target for cleaning up
 clean:
-	cd $(SOURCE) && rm -f VulkanProgram
+	rm -f $(SOURCE)/VulkanProgram
+	cd $(SOURCE)/shaders && ./clean_shaders.sh
 
-shaders: $(SOURCE)/shaders/compile.sh
-	cd $(SOURCE)/shaders && ./compile.sh && cd ../..
+# Target for compiling shaders
+shaders:
+	cd $(SOURCE)/shaders && ./compile.sh
 
-all: clean compile run
-
-all_shaders: clean shaders compile run
+# Phony target for executing all targets
+.PHONY: all clean shaders compile run
+all: clean shaders compile run

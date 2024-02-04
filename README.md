@@ -1,85 +1,77 @@
-# Sandro run
-This is the repository for the Computer Graphics course project from Politecnico di Milano.
-The project is a 3D game developed in C++ using Vulkan APIs.
-The project features:
-- Splash screens
-- The motorbike of the main character
-- 3 sky-boxes based on the time of the day
-- A periodic scenery composed by:
-  - A terrain with hills
-  - Trees
-  - A Street
-  - Guard rails
-  - Streetlights
-- Cars that move on the street in both directions
-- Sounds for the motorbike
-- Two camera that follows the motorbike
-  - A third person camera
-  - A first person camera
-- Collision detection between the motorbike and the cars
-- Collision detection between the motorbike and the guard rails
-- Score system
-- Game over screen
-- A presentation mode that deactivates the collision detections and the camera limits
+# Sandro Run: A 3D Game Project
 
-## Prerequisites (Linux - Ubuntu tutorial)
-### In order to run the project you need to have the following libraries installed:
+Welcome to the repository for "Sandro Run", a 3D game developed as part of the Computer Graphics course at Politecnico di Milano. This project, which achieved a final evaluation of 30 cum laude, is written in C++ and utilizes Vulkan APIs.
+This repository contains also the course assignments. Check the `Assignments` folder for more information.
 
-- [Vulkan](https://vulkan.org/):
-```
-sudo apt install vulkan-tools libvulkan-dev vulkan-validationlayers-dev spirv-tools
-```
+## Game Features
 
-- [GLFW](https://www.glfw.org/):
-```
-sudo apt install libglfw3-dev
-```
+"Sandro Run" boasts a variety of features that contribute to an immersive gaming experience:
 
-- [GLM](https://github.com/g-truc/glm):
-```
-sudo apt install libglm-dev
-```
+- **Multiple Shaders & Pipelines**: Enhance the visual appeal of the game.
+- **Splash Screens**: Provide an engaging introduction to the game.
+- **Motorbike Main Character**: The player navigates the game world on a motorbike.
+- **Dynamic Sky-Boxes**: The game environment changes with three different sky-boxes based on the time of day.
+- **Periodic Scenery**: The game world includes a terrain with hills, trees, a street, guard rails, and streetlights.
+- **Moving Cars**: Cars move in both directions on the street, adding to the game's challenge.
+- **Motorbike Sounds**: Enhance the realism of the motorbike.
+- **Two Cameras**: The game can be viewed from a third-person camera or a first-person camera.
+- **Collision Detection**: Collisions are detected between the motorbike and the cars, as well as between the motorbike and the guard rails.
+- **Score System**: Players can track their progress and aim to improve their scores.
+- **HUD Display**: A heads-up display (HUD) shows the player’s score and the velocity of the speedometer.
+- **Game Over Screen**: Displays when the game ends.
+- **Presentation Mode**: This mode deactivates collision detections and camera limits for a more relaxed gaming experience.
 
-- [GLSLang](https://github.com/google/shaderc/blob/main/downloads.md): get it from the github repository
+## Installation & Running
 
-### Then you need to install the following packages in order to allow sound reproduction:
+### Prerequisites
 
-```
+Before you can run "Sandro Run", you'll need to install some dependencies. For the basic dependencies, please refer to this [website](https://vulkan-tutorial.com/Development_environment).
+
+For the audio dependencies, you'll need to install `libao` and `libsndfile`. On Ubuntu distributions, you can do this with the following command:
+
+```bash
 sudo apt install libsndfile1-dev libao-dev
 ```
 
+### Building the Project
 
-## How to run
-To run the project you need to have the Vulkan SDK installed on your machine.
-To install it, follow the instructions on the [website](https://vulkan-tutorial.com/Development_environment).
-In order to build the project, you need to run the following commands:
-```
+To build the project, run the following commands:
+
+```bash
 mkdir build
 cd build
 cmake ../
 make
 ```
-In order to run the project, you need to run the following command:
-```
+
+### Running the Project
+
+To run the project, navigate to the `bin` directory in the `build` folder and execute the `Sandro_run` file:
+
+```bash
 cd build/bin
 ./Sandro_run
 ```
 
 ## Licenses
-The project uses the following objects:
-- 3D models:
-  - [Moto 3D model](https://www.cgtrader.com/free-3d-models/vehicle/motorcycle/suzuki-gsx-750-bike)
-  - [Guard rail 3D model](https://www.cgtrader.com/free-3d-models/exterior/street-exterior/guardrail-fd10776d-d363-4be6-b5bd-6853aa50c539)
-  - [Tree 3D model](https://www.cgtrader.com/free-3d-models/plant/leaf/low-poly-plant-set)
-  - [Car 3D model](https://www.cgtrader.com/free-3d-models/car/car/low-poly-cars-03d6cf0c-0882-44e2-a22c-02d4f8e68eeb)
+
+"Sandro Run" uses several 3D models and textures. You can find the sources for these assets below:
+
+- 3D Models:
+  - [Motorbike](https://www.cgtrader.com/free-3d-models/vehicle/motorcycle/suzuki-gsx-750-bike)
+  - [Guard Rail](https://www.cgtrader.com/free-3d-models/exterior/street-exterior/guardrail-fd10776d-d363-4be6-b5bd-6853aa50c539)
+  - [Tree](https://www.cgtrader.com/free-3d-models/plant/leaf/low-poly-plant-set)
+  - [Car](https://www.cgtrader.com/free-3d-models/car/car/low-poly-cars-03d6cf0c-0882-44e2-a22c-02d4f8e68eeb)
 - Textures:
-  - [Road texture](https://www.sketchuptextureclub.com/textures/architecture/roads/roads/cracks-road-pbr-texture-seamless-21574)
-  - [Broken glass texture](https://www.hiclipart.com/free-transparent-background-png-clipart-iyijp/)
-  - [Splash screen](https://www.10wallpaper.com/view/Honda_cb1000r-HD_Desktop_Wallpaper.html)
+  - [Road](https://www.sketchuptextureclub.com/textures/architecture/roads/roads/cracks-road-pbr-texture-seamless-21574)
+  - [Broken Glass](https://www.hiclipart.com/free-transparent-background-png-clipart-iyijp/)
+  - [Splash Screen](https://www.10wallpaper.com/view/Honda_cb1000r-HD_Desktop_Wallpaper.html)
   - Skybox:
-    - [Night skybox](https://www.cleanpng.com/png-space-skybox-texture-mapping-cube-mapping-night-sk-776480/)
-    - [Day skybox](https://imgbin.com/png/vD943E4H/skybox-texture-mapping-cube-mapping-desktop-png)
-    - [Sunset skybox](https://gamebanana.com/mods/7921)
-  - Speedometer
+    - [Night](https://www.cleanpng.com/png-space-skybox-texture-mapping-cube-mapping-night-sk-776480/)
+    - [Day](https://imgbin.com/png/vD943E4H/skybox-texture-mapping-cube-mapping-desktop-png)
+    - [Sunset](https://gamebanana.com/mods/7921)
+  - Speedometer:
     - [Speedometer](https://freepng.pictures/download/speedometer-19/)
-    - [Speedometer hand](https://www.gtagaming.com/audi-s5-speedometer-f26088.html)
+    - [Speedometer Hand](https://www.gtagaming.com/audi-s5-speedometer-f26088.html)
+
+We hope you enjoy playing "Sandro Run"! If you have any questions or feedback, feel free to open an issue or submit a pull request. Happy gaming! 🎮
